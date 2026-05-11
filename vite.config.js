@@ -3,6 +3,11 @@ import laravel from 'laravel-vite-plugin'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+
+    build: {
+        outDir: 'public/build',
+    },
+
     plugins: [
 
         laravel({
