@@ -34,4 +34,32 @@ class Partner extends Model
     {
         return $this->hasMany(ReportRouting::class);
     }
+
+    public static function routeByCategory($category)
+{
+    return match(strtolower($category)) {
+
+        'salah tangkap' =>
+            self::where('partner_type', 'legal')
+                ->where('verified', true)
+                ->first(),
+
+        'pelecehan' =>
+            self::where('partner_type', 'legal')
+                ->where('verified', true)
+                ->first(),
+
+        'kecelakaan' =>
+            self::where('partner_type', 'ambulance')
+                ->where('verified', true)
+                ->first(),
+
+        'kekerasan' =>
+            self::where('partner_type', 'counselor')
+                ->where('verified', true)
+                ->first(),
+
+        default => null,
+    };
+}
 }

@@ -11,8 +11,13 @@ class PartnerController extends Controller
 {
     public function index()
     {
-        $reports = Report::withCount('evidences')->latest()->get();
-
+        $partnerId = auth()->user()->partner_id;
+        
+        $reports = Report::withCount('evidences')
+            ->where('routed_partner_id', $partnerId)
+            ->latest()
+            ->get();
+            
         $stats = [
             'submitted' => Report::where('status', 'Submitted')->count(),
             'progress' => Report::where('status', 'In Progress')->count(),
@@ -29,6 +34,10 @@ class PartnerController extends Controller
             'statusLogs',
             'witnessReports.evidences',
         ])->findOrFail($id);
+
+        if ($report->routed_partner_id !== auth()->user()->partner_id) {
+            abort(403, 'Laporan ini bukan untuk mitra anda.');
+        }
 
         // Catat bahwa mitra telah melihat laporan
         if ($report->status === 'Routed') {
@@ -55,6 +64,9 @@ class PartnerController extends Controller
         $request->validate(['status' => 'required|string|in:Submitted,Routed,Viewed,In Progress,Resolved']);
 
         $report = Report::findOrFail($id);
+        if ($report->routed_partner_id !== auth()->user()->partner_id) {
+            abort(403, 'Anda tidak punya akses.');
+        }
         $oldStatus = $report->status;
 
         $report->status = $request->status;

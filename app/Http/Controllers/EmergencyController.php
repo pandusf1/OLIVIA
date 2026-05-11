@@ -32,27 +32,39 @@ class EmergencyController extends Controller
             $userId = null;
         }
 
+        $partner = Partner::routeByCategory($request->category);
         $report = Report::create([
-            'user_id'           => $userId,
-            'report_type'       => 'quick_emergency',
-            'category'          => $request->category,
-            'description'       => $request->description,
-            'latitude'          => $request->latitude ?: null,
-            'longitude'         => $request->longitude ?: null,
-            'location_text'     => $request->location_text ?: null,
-            'anonymous'         => $request->has('anonymous'),
-            'status'            => 'Submitted',
-            'routed_partner_id' => null,
+            'user_id' => auth()->id(),
+            'report_type' => 'Emergency',
+            'category' => $request->category,
+            'description' => $request->description,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'location_text' => $request->location_text,
+            'anonymous' => $request->anonymous ?? false,
+
+            'status' => $partner ? 'Routed' : 'Submitted',
+
+            'routed_partner_id' => $partner?->id,
         ]);
 
         ReportStatusLog::create([
             'report_id'  => $report->id,
             'old_status' => null,
             'new_status' => 'Submitted',
-            'changed_by' => $userId,
+            'changed_by' => auth()->id(),
             'changed_at' => now(),
         ]);
 
+        if ($partner) {
+            ReportStatusLog::create([
+                'report_id' => $report->id,
+                'old_status' => 'Submitted',
+                'new_status' => 'Routed',
+                'changed_by' => auth()->id(),
+                'changed_at' => now(),
+            ]);
+        }
         try {
             AuditLog::log('create_report', 'report', $report->id);
         } catch (\Exception $e) {
@@ -79,9 +91,6 @@ class EmergencyController extends Controller
             // skip jika offline
         }
 
-        // Smart routing: kirim ke mitra
-        $this->routeToPartner($report);
-
         // Alert ke trusted contacts jika user login
         if ($userId) {
             $this->notifyTrustedContacts($report, $trackingLink, $mapsLink);
@@ -89,58 +98,6 @@ class EmergencyController extends Controller
 
         return redirect('/tracking/' . $report->id);
     }
-
-private function routeToPartner(Report $report)
-{
-    $old = $report->status;
-
-    $report->status = 'Routed';
-    $report->save();
-
-    ReportStatusLog::create([
-        'report_id'  => $report->id,
-        'old_status' => $old,
-        'new_status' => 'Routed',
-        'changed_by' => null,
-        'changed_at' => now(),
-    ]);
-
-    $partner = null;
-
-    if ($report->category == 'wrong_arrest') {
-        $partner = Partner::where('partner_type', 'lbh')
-            ->where('verified', true)
-            ->first();
-    }
-
-    elseif ($report->category == 'harassment') {
-        $partner = Partner::where('partner_type', 'psychologist')
-            ->where('verified', true)
-            ->first();
-    }
-
-    elseif ($report->category == 'accident') {
-        $partner = Partner::where('partner_type', 'ambulance')
-            ->where('verified', true)
-            ->first();
-    }
-
-    if (!$partner) {
-        $partner = Partner::where('verified', true)->first();
-    }
-
-    if ($partner) {
-        $report->routed_partner_id = $partner->id;
-        $report->save();
-
-        ReportRouting::create([
-            'report_id'  => $report->id,
-            'partner_id' => $partner->id,
-            'routed_at'  => now(),
-        ]);
-    }
-}
-
     private function notifyTrustedContacts(Report $report, $trackingLink, $mapsLink)
     {
         $user = auth()->user();
