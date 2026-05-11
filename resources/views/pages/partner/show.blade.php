@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuraRa — Detail Laporan</title>
+    @vite('resources/css/app.css')
+    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');*{font-family:'Inter',sans-serif;}</style>
+</head>
+<body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
+    @php $backUrl = route('partner.index'); $backLabel = 'Dashboard Mitra'; @endphp
+    @include('partials.nav-auth')
+
+    <div class="max-w-3xl mx-auto px-6 py-10">
+
+        @if(session('success'))<div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl mb-6 text-sm">✓ {{ session('success') }}</div>@endif
+
+        @php
+        $sc=['Submitted'=>'bg-gray-100 text-gray-600','Routed'=>'bg-blue-50 text-blue-700','Viewed'=>'bg-yellow-50 text-yellow-700','In Progress'=>'bg-orange-50 text-orange-700','Resolved'=>'bg-green-50 text-green-700'];
+        $stages=[['Submitted','Terkirim'],['Routed','Diteruskan'],['Viewed','Dilihat'],['In Progress','Ditangani'],['Resolved','Selesai']];
+        $ci=array_search($report->status,array_column($stages,0));
+        @endphp
+
+        {{-- Header --}}
+        <div class="mb-6">
+            <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">LAPORAN #{{ strtoupper(substr($report->id,0,8)) }}</p>
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <h1 class="font-unbounded text-3xl font-black text-gray-900">{{ $report->category }}</h1>
+                    <div class="flex items-center gap-3 mt-1 text-sm text-gray-400 flex-wrap">
+                        @if($report->anonymous)<span class="bg-purple-50 text-purple-700 text-xs px-2 py-0.5 rounded-full font-semibold">Anonim</span>@endif
+                        <span>{{ $report->created_at->format('d M Y, H:i') }}</span>
+                        @if($report->latitude)<a href="https://maps.google.com/?q={{ $report->latitude }},{{ $report->longitude }}" target="_blank" class="text-red-700 hover:text-red-800 text-xs underline">📍 Lihat Peta</a>@endif
+                    </div>
+                </div>
+                <span class="px-3 py-1.5 rounded-full text-sm font-semibold {{ $sc[$report->status]??'bg-gray-100 text-gray-600' }} whitespace-nowrap">{{ $report->status }}</span>
+            </div>
+        </div>
+
+        @if($report->description)
+        <div class="bg-white border border-gray-200 rounded-2xl p-5 mb-6">
+            <p class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Deskripsi</p>
+            <p class="text-gray-700">{{ $report->description }}</p>
+        </div>
+        @endif
+
+        {{-- Update Status --}}
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
+            <h2 class="font-bold text-gray-900 mb-4">Update Status</h2>
+            <form action="/partner/report/{{ $report->id }}/status" method="POST" class="flex gap-3">
+                @csrf
+                <select name="status" class="flex-1 border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-2.5 text-sm focus:outline-none bg-white">
+                    @foreach(['Submitted','Routed','Viewed','In Progress','Resolved'] as $s)
+                    <option value="{{ $s }}" {{ $report->status===$s?'selected':'' }}>{{ $s }}</option>
+                    @endforeach
+                </select>
+                <button type="submit" class="bg-gray-900 hover:bg-gray-700 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition">Update</button>
+            </form>
+        </div>
+
+        {{-- Status Timeline --}}
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
+            <h2 class="font-bold text-gray-900 mb-5">Timeline Status</h2>
+
+            {{-- Step indicator --}}
+            <div class="flex items-center mb-6">
+                @foreach($stages as $i=>[$key,$label])
+                <div class="flex flex-col items-center flex-1">
+                    <div class="flex items-center w-full">
+                        @if($i>0)<div class="flex-1 h-0.5 {{ $i<=$ci?'bg-green-500':'bg-gray-200' }} transition-all"></div>@endif
+                        <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0
+                            {{ $i<$ci?'bg-green-500 text-white':($i==$ci?'bg-green-500 text-white ring-4 ring-green-100':'bg-gray-100 text-gray-400') }}">
+                            @if($i<$ci)<svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                            @elseif($i==$ci)<div class="w-2 h-2 bg-white rounded-full"></div>
+                            @else{{ $i+1 }}@endif
+                        </div>
+                        @if($i<count($stages)-1)<div class="flex-1 h-0.5 {{ $i<$ci?'bg-green-500':'bg-gray-200' }}"></div>@endif
+                    </div>
+                    <p class="text-xs mt-1 {{ $i<=$ci?'text-gray-700 font-semibold':'text-gray-400' }} text-center hidden sm:block">{{ $label }}</p>
+                </div>
+                @endforeach
+            </div>
+
+            <div class="space-y-3 border-t border-gray-100 pt-4">
+                @foreach($report->statusLogs as $log)
+                <div class="flex items-start gap-3">
+                    <div class="w-2 h-2 bg-red-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                    <div>
+                        <p class="text-sm font-semibold text-gray-900">{{ $log->new_status }}</p>
+                        <p class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($log->changed_at)->format('d/m/Y, H:i:s') }}</p>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- Bukti Korban --}}
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
+            <h2 class="font-bold text-gray-900 mb-4">Bukti dari Korban ({{ $report->evidences->count() }})</h2>
+            @if($report->evidences->count() > 0)
+            <div class="space-y-2">
+                @foreach($report->evidences as $ev)
+                <div class="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
+                    <div>
+                        <p class="text-sm text-gray-700">{{ $ev->file_type }}</p>
+                        <p class="text-xs text-gray-400 font-mono">{{ substr($ev->file_hash,0,28) }}...</p>
+                        <p class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($ev->uploaded_at)->format('d M Y, H:i') }}</p>
+                    </div>
+                    <a href="{{ asset('storage/'.$ev->file_url) }}" target="_blank" class="text-red-700 hover:text-red-800 text-sm font-semibold transition">Buka →</a>
+                </div>
+                @endforeach
+            </div>
+            @else
+            <p class="text-gray-400 text-sm">Belum ada bukti diupload.</p>
+            @endif
+        </div>
+
+        {{-- Bukti Saksi --}}
+        @if($report->witnessReports && $report->witnessReports->count() > 0)
+        <div class="bg-white border border-gray-200 rounded-2xl p-6">
+            <h2 class="font-bold text-gray-900 mb-4">Bukti dari Saksi</h2>
+            <div class="space-y-4">
+                @foreach($report->witnessReports as $w)
+                <div class="border border-gray-100 rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <p class="font-semibold text-gray-900 text-sm">{{ $w->witness_name ?: 'Anonim' }}</p>
+                        @if($w->witness_phone)<p class="text-gray-400 text-xs">{{ $w->witness_phone }}</p>@endif
+                    </div>
+                    @if($w->witness_note)<p class="text-gray-500 text-sm italic mb-2">"{{ $w->witness_note }}"</p>@endif
+                    @foreach($w->evidences as $we)
+                    <div class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 mb-1">
+                        <div><p class="text-xs text-gray-600">{{ $we->file_type }}</p><p class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($we->uploaded_at)->format('d M Y, H:i') }}</p></div>
+                        <a href="{{ asset('storage/'.$we->file_url) }}" target="_blank" class="text-green-700 hover:text-green-800 text-xs font-semibold transition">Buka →</a>
+                    </div>
+                    @endforeach
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+    </div>
+</body>
+</html>
