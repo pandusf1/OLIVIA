@@ -17,7 +17,7 @@ class User extends Authenticatable
     protected $primaryKey = 'id';
 
     protected $fillable = [
-        'name', 'email', 'phone', 'password', 'role',
+        'name', 'email', 'phone', 'password', 'role', 'partner_id',
     ];
 
     protected $hidden = [
@@ -40,6 +40,11 @@ class User extends Authenticatable
     public function reports(): HasMany
     {
         return $this->hasMany(Report::class);
+    }
+
+    public function isUser()
+    {
+        return $this->role === 'user';
     }
 
     public function isPartner(): bool

@@ -27,10 +27,6 @@ class RegisteredUserController extends Controller
             'name'     => ['required', 'string', 'max:255'],
             'email'    => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'phone'    => ['nullable', 'string', 'max:20'],
-            'role'     => ['required', 'in:user,partner'],
-            'partner_name' => ['nullable', 'string', 'max:255'],
-            'partner_type' => ['nullable', 'string', 'max:255'],
-            'city' => ['nullable', 'string', 'max:255'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -39,19 +35,10 @@ class RegisteredUserController extends Controller
             'email'    => $request->email,
             'phone'    => $request->phone ?: null,
             'password' => Hash::make($request->password),
-            'role' => $request->role,
-        ]);
 
-        if ($request->role === 'partner') {
-            Partner::create([
-                'partner_name' => $request->partner_name ?: $request->name,
-                'partner_type' => $request->partner_type,
-                'city' => $request->city,
-                'phone' => $request->phone,
-                'email' => $request->email,
-                'verified' => false,
-            ]);
-        }
+            // semua register publik = user biasa
+            'role' => 'user',
+        ]);
 
         event(new Registered($user));
 
@@ -59,6 +46,6 @@ class RegisteredUserController extends Controller
 
         AuditLog::log('register', 'user', $user->id);
 
-        return redirect($user->role === 'partner' ? route('partner.index') : route('dashboard'));
+        return redirect(route('dashboard'));
     }
 }

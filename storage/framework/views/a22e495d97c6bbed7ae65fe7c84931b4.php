@@ -10,6 +10,15 @@
 <?php $component->withAttributes([]); ?>
     <h1 class="font-unbounded text-xl font-black text-gray-900 mb-1">Buat Akun</h1>
     <p class="text-gray-400 text-sm mb-6">Gratis. Trusted contact, histori laporan & lebih.</p>
+    <?php if($errors->any()): ?>
+    <div class="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm">
+        <ul class="list-disc pl-5 space-y-1">
+            <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <li><?php echo e($error); ?></li>
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+        </ul>
+    </div>
+<?php endif; ?>
     <form method="POST" action="<?php echo e(route('register')); ?>" class="space-y-4">
         <?php echo csrf_field(); ?>
         <div>
