@@ -26,7 +26,7 @@ foreach ($attributes->all() as $__key => $__value) {
     if (array_key_exists($__key, $__defined_vars)) unset($$__key);
 }
 
-unset($__defined_vars, $__key, $__value); ?>
+unset($__defined_vars); ?>
 
 <?php if($status): ?>
     <div <?php echo e($attributes->merge(['class' => 'font-medium text-sm text-green-600'])); ?>>

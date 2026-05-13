@@ -78,36 +78,7 @@
 
             {{-- ===== LEFT: Map Partner + Emergency + Laporan ===== --}}
             <div class="lg:col-span-2 space-y-6">
-
-                {{-- Map Partner (Style Card berurut jarak) --}}
-                <div class="bg-white border border-gray-200 rounded-2xl p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <h2 class="font-bold text-gray-900">Partner Terdekat</h2>
-                            <p class="text-gray-400 text-xs mt-0.5">Urut berdasarkan jarak dari lokasi kamu.</p>
-                        </div>
-                        <a href="/partner-nearby" class="text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full transition">Lihat semua</a>
-                    </div>
-
-                    <div id="nearby-map" class="relative overflow-hidden rounded-xl bg-[#faf9f7] border border-gray-100">
-                        <div class="absolute inset-0 pointer-events-none" style="background-image: radial-gradient(rgba(0,0,0,0.06) 1px, transparent 1px); background-size: 18px 18px;"></div>
-                        <div class="p-4 relative">
-                            <div class="flex items-center gap-2 mb-3">
-                                <span class="w-2.5 h-2.5 rounded-full bg-red-700" title="Kamu"></span>
-                                <p class="text-xs font-semibold text-gray-600">Lokasi kamu</p>
-                            </div>
-
-                            <div id="nearby-partners" class="space-y-2">
-                                <div class="text-sm text-gray-400">Memuat partner terdekat...</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Emergency + Laporan ===== --}}
-
-
-                {{-- Panic Button Card --}}
+                                {{-- Panic Button Card --}}
                 <div class="bg-white border border-gray-200 rounded-2xl p-6 relative overflow-hidden">
                     {{-- decorative bg --}}
                     <div class="absolute right-0 top-0 w-40 h-40 bg-red-50 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
@@ -135,6 +106,78 @@
                         <div id="cd-category" class="text-center text-gray-400 text-xs mb-3"></div>
                         <button onclick="cancelPanic()" class="w-full border border-gray-300 hover:border-gray-400 text-gray-700 py-3 rounded-xl font-semibold text-sm transition">BATAL</button>
                     </div>
+                </div>
+
+                {{-- Map Partner (Style Card berurut jarak) --}}
+                <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h2 class="font-bold text-gray-900">Partner Terdekat</h2>
+                            <p class="text-gray-400 text-xs mt-0.5">Urut berdasarkan jarak dari lokasi kamu.</p>
+                        </div>
+                        <a href="/partner-nearby" class="text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full transition">Lihat semua</a>
+                    </div>
+
+                    <div id="nearby-map" class="relative overflow-hidden rounded-xl bg-[#faf9f7] border border-gray-100">
+                        {{-- Topographic / map-like background (no real map API) --}}
+                        <div class="absolute inset-0 pointer-events-none" style="
+                            background:
+                                radial-gradient(circle at 30% 25%, rgba(239,68,68,0.10) 0%, rgba(239,68,68,0.00) 55%),
+                                radial-gradient(circle at 70% 65%, rgba(239,68,68,0.08) 0%, rgba(239,68,68,0.00) 50%),
+                                repeating-linear-gradient(135deg, rgba(0,0,0,0.05) 0, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 14px),
+                                repeating-linear-gradient(45deg, rgba(0,0,0,0.03) 0, rgba(0,0,0,0.03) 1px, transparent 1px, transparent 18px);
+                            filter: saturate(1.05) contrast(1.02);
+                        "></div>
+
+                        <div class="absolute -top-24 -left-24 w-56 h-56 bg-red-50/60 rounded-full blur-2xl pointer-events-none"></div>
+                        <div class="absolute -bottom-24 -right-24 w-56 h-56 bg-red-50/40 rounded-full blur-2xl pointer-events-none"></div>
+
+                        <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+                            <div id="range-ring" class="w-[78%] h-[78%] rounded-full border border-red-200/70 bg-red-50/20" style="box-shadow: inset 0 0 0 1px rgba(220,38,38,0.08);"></div>
+                        </div>
+
+                        <div class="p-4 relative">
+                            {{-- Map header row --}}
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="w-2.5 h-2.5 rounded-full bg-red-700" title="Kamu"></span>
+                                <p class="text-xs font-semibold text-gray-600">Lokasi kamu</p>
+                            </div>
+
+
+
+                            {{-- Map canvas (visual only) --}}
+                            <div class="relative w-full h-44 rounded-xl border border-gray-100 bg-white/40 overflow-hidden" aria-label="Peta semu partner terdekat">
+                                {{-- Center user marker --}}
+                                <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                                    <div class="w-3 h-3 rounded-full bg-red-700 shadow-md shadow-red-200"></div>
+                                    <div class="w-6 h-6 rounded-full border-2 border-red-200/80 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" style="animation-duration:2.2s"></div>
+                                </div>
+
+                                <div id="nearby-markers" class="absolute inset-0"></div>
+
+                                <div class="absolute left-3 bottom-3 flex items-center gap-2 text-[11px] text-gray-500">
+                                    <span class="w-2 h-2 rounded-full bg-red-700"></span><span>Kamu</span>
+                                    <span class="w-2 h-2 rounded-full bg-red-300"></span><span>Lokasi</span>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2 mb-3 mt-3">
+                                <select id="map-search-type" class="w-1/2 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
+                                    <option value="">Semua</option>
+                                    <option value="ambulance">Ambulans</option>
+                                    <option value="legal">LBH / Pengacara</option>
+                                    <option value="counselor">Psikolog</option>
+                                </select>
+                                <input id="map-search-query" type="text" placeholder="Cari (mis. Semarang)" class="w-1/2 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
+                            </div>
+
+                            <div id="nearby-partners" class="space-y-2">
+                                <div class="text-sm text-gray-400">Memuat partner terdekat...</div>
+                            </div>
+
+                        </div>
+                    </div>
+
                 </div>
 
                 {{-- Laporan Saya --}}
@@ -327,21 +370,76 @@
         );
     }
 
-    // Load partner terdekat (card-style map)
-    async function loadNearbyPartners(){
+
+
+    // Load partner gabungan (ambulans + LBH + psikolog + dll) + marker + search
+    async function loadNearbyPartners({type = '', query = ''} = {}){
         const el = document.getElementById('nearby-partners');
+        const markersEl = document.getElementById('nearby-markers');
+
         if(!el) return;
+
         try{
-            el.innerHTML = '<div class="text-sm text-gray-400">Memuat partner terdekat...</div>';
-            const res = await fetch('/partner-nearby', { headers: { 'Accept':'application/json' } });
+            el.innerHTML = '<div class="text-sm text-gray-400">Memuat partner...</div>';
+            if(markersEl) markersEl.innerHTML = '';
+
+            const params = new URLSearchParams();
+            if(type) params.set('type', type);
+            if(query) params.set('query', query);
+
+            const res = await fetch(`/map-search?${params.toString()}`, { headers: { 'Accept':'application/json' } });
             if(!res.ok) throw new Error('HTTP '+res.status);
+
             const json = await res.json();
             const items = json.data || [];
+
             if(items.length===0){
-                el.innerHTML = '<div class="text-sm text-gray-400">Belum ada partner terdekat.</div>';
+                el.innerHTML = '<div class="text-sm text-gray-400">Belum ada partner yang cocok.</div>';
                 return;
             }
-            el.innerHTML = items.slice(0,5).map((x,i)=>{
+
+            const top = items.slice(0,5);
+
+            // Visual marker layout: tanpa konversi koordinat ke piksel real map.
+            if(markersEl){
+                const maxKm = Math.max(...top.map(x => Number(x.distance_km) || 0), 1);
+
+                top.forEach((x, i) => {
+                    const p = x.partner;
+                    const km = Number(x.distance_km) || 0;
+                    const t = Math.min(km / maxKm, 1);
+                    const rPct = 18 + t * 44;
+                    const angle = (i * 73 + (p.partner_name?.length || 0) * 11) * Math.PI / 180;
+
+                    const cx = 50;
+                    const cy = 50;
+                    const xPct = cx + Math.cos(angle) * rPct;
+                    const yPct = cy + Math.sin(angle) * rPct;
+
+                    const marker = document.createElement('a');
+                    marker.href = `/pembayaran/partner/${p.id}`;
+                    marker.className = 'absolute -translate-x-1/2 -translate-y-1/2 group';
+                    marker.style.left = `${xPct}%`;
+                    marker.style.top = `${yPct}%`;
+
+                    marker.innerHTML = `
+                        <div class="w-2.5 h-2.5 rounded-full bg-red-300 border border-red-200 shadow-sm"></div>
+                        <div class="absolute -top-2 left-1/2 -translate-x-1/2">
+                            <div class="hidden group-hover:block">
+                                <div class="text-[11px] bg-white/95 border border-gray-100 rounded-lg px-2 py-1 shadow text-gray-700 whitespace-nowrap">
+                                    ${String(p.partner_name).replace(/</g,'<').replace(/>/g,'>')}<br/>
+                                    ${p.partner_type} • ${Number(km).toFixed(2)} km
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    marker.style.zIndex = '2';
+                    markersEl.appendChild(marker);
+                });
+            }
+
+            el.innerHTML = top.map((x,i)=>{
                 const p = x.partner;
                 return `
                     <a href="/pembayaran/partner/${p.id}" class="block bg-white border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition">
@@ -355,11 +453,42 @@
                     </a>
                 `;
             }).join('');
+
         }catch(e){
-            el.innerHTML = '<div class="text-sm text-gray-400">Gagal memuat partner terdekat.</div>';
+            el.innerHTML = '<div class="text-sm text-gray-400">Gagal memuat partner.</div>';
         }
     }
+
+    // Filter map (type + query) -> refresh marker & list
+    const mapTypeEl = document.getElementById('map-search-type');
+    const mapQueryEl = document.getElementById('map-search-query');
+
+    function triggerMapSearch(){
+        const t = mapTypeEl?.value || '';
+        const q = mapQueryEl?.value || '';
+        loadNearbyPartners({ type: t, query: q });
+    }
+
+    if(mapTypeEl){
+        mapTypeEl.addEventListener('change', ()=>triggerMapSearch());
+    }
+    if(mapQueryEl){
+        mapQueryEl.addEventListener('keydown', (e)=>{
+            if(e.key === 'Enter'){
+                e.preventDefault();
+                triggerMapSearch();
+            }
+        });
+    }
+
+    // initial load (semua)
     loadNearbyPartners();
+
+
+
+
+
+
 
     function startPanic(){
         document.getElementById('panic-btn').classList.add('hidden');

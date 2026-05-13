@@ -46,11 +46,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/trusted-contact', [TrustedContactController::class, 'store'])->name('trusted-contact.store');
     Route::delete('/trusted-contact/{id}', [TrustedContactController::class, 'destroy'])->name('trusted-contact.destroy');
 
-    // Partner terdekat
+    // Partner terdekat (gabungan: semua tipe)
     Route::get('/partner-nearby', [\App\Http\Controllers\PartnerNearbyController::class, 'index'])->name('partner.nearby');
 
-    // Psikolog & pengacara terdekat
+    // Psikolog & pengacara terdekat (khusus kategori)
     Route::get('/psikolog-pengacara-nearby', [\App\Http\Controllers\PsikologPengacaraController::class, 'index'])->name('psikolog-pengacara.nearby');
+
+    // Pencarian di map (type + query)
+    Route::get('/map-search', [\App\Http\Controllers\MapSearchController::class, 'search'])->name('map.search');
+
 
     // Pembayaran dummy
     Route::get('/pembayaran/partner/{partnerId}', [\App\Http\Controllers\PembayaranMockController::class, 'show'])->name('pembayaran.show');

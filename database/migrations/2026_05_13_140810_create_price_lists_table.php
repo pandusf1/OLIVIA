@@ -11,15 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('reports', function (Blueprint $table) {
-
-            $table->uuid('partner_id')->nullable();
+        Schema::create('price_lists', function (Blueprint $table) {
+            $table->id();
+            $table->uuid('partner_id');
+            $table->string('service_name');
+            $table->decimal('price', 12, 2);
+            $table->string('currency')->default('IDR');
+            $table->string('duration')->nullable();
+            $table->timestamps();
 
             $table->foreign('partner_id')
                 ->references('id')
                 ->on('partners')
-                ->nullOnDelete();
-
+                ->cascadeOnDelete();
         });
     }
 
@@ -28,11 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('reports', function (Blueprint $table) {
-
-            $table->dropForeign(['partner_id']);
-            $table->dropColumn('partner_id');
-
-        });
+        Schema::dropIfExists('price_lists');
     }
 };

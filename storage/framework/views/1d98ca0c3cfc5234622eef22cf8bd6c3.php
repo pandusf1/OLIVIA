@@ -26,7 +26,7 @@ foreach ($attributes->all() as $__key => $__value) {
     if (array_key_exists($__key, $__defined_vars)) unset($$__key);
 }
 
-unset($__defined_vars, $__key, $__value); ?>
+unset($__defined_vars); ?>
 <?php if($messages): ?>
     <ul <?php echo e($attributes->merge(['class' => 'text-red-500 text-xs space-y-0.5 mt-1'])); ?>>
         <?php $__currentLoopData = (array) $messages; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $message): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>

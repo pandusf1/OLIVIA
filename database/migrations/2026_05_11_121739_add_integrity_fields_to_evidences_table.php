@@ -9,9 +9,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('evidences', function (Blueprint $table) {
-            $table->text('file_hash')->nullable();
-            $table->text('uploaded_ip')->nullable();
-            $table->text('device_info')->nullable();
+            if (!Schema::hasColumn('evidences', 'file_hash')) {
+                $table->text('file_hash')->nullable();
+            }
+
+            if (!Schema::hasColumn('evidences', 'uploaded_ip')) {
+                $table->text('uploaded_ip')->nullable();
+            }
+
+            if (!Schema::hasColumn('evidences', 'device_info')) {
+                $table->text('device_info')->nullable();
+            }
         });
     }
 

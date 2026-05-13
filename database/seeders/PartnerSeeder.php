@@ -128,24 +128,58 @@ class PartnerSeeder extends Seeder
 
         // Seed User korban/saksi + lokasi
         // (mengisi user biasa agar map/card & chat bisa dipakai)
-        $user = 
-            \App\Models\User::firstOrCreate(
-                ['email' => 'korban@surara.id'],
+        $users = [
+            [
+                'email' => 'korban@surara.id',
+                'name' => 'Korban Demo',
+                'latitude' => -6.966900,
+                'longitude' => 110.413000,
+            ],
+            [
+                'email' => 'saksi1@surara.id',
+                'name' => 'Saksi Demo 1',
+                'latitude' => -6.970200,
+                'longitude' => 110.416000,
+            ],
+            [
+                'email' => 'saksi2@surara.id',
+                'name' => 'Saksi Demo 2',
+                'latitude' => -6.962800,
+                'longitude' => 110.419500,
+            ],
+            [
+                'email' => 'korban2@surara.id',
+                'name' => 'Korban Demo 2',
+                'latitude' => -6.975000,
+                'longitude' => 110.410800,
+            ],
+            [
+                'email' => 'korban3@surara.id',
+                'name' => 'Korban Demo 3',
+                'latitude' => -6.958500,
+                'longitude' => 110.421200,
+            ],
+        ];
+
+        foreach ($users as $u) {
+            $user = \App\Models\User::firstOrCreate(
+                ['email' => $u['email']],
                 [
-                    'name' => 'Korban Demo',
+                    'name' => $u['name'],
                     'password' => \Illuminate\Support\Facades\Hash::make('surara2024'),
                     'role' => 'user',
                 ]
             );
 
-        if (!\App\Models\UserLocation::where('user_id', $user->id)->exists()) {
-            \App\Models\UserLocation::create([
-                'user_id' => $user->id,
-                'latitude' => -6.966900,
-                'longitude' => 110.413000,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
+            if (!\App\Models\UserLocation::where('user_id', $user->id)->exists()) {
+                \App\Models\UserLocation::create([
+                    'user_id' => $user->id,
+                    'latitude' => $u['latitude'],
+                    'longitude' => $u['longitude'],
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+            }
         }
     }
 }
