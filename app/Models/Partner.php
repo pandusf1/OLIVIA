@@ -18,6 +18,8 @@ class Partner extends Model
         'phone',
         'email',
         'verified',
+        'latitude',
+        'longitude',
     ];
 
     public $incrementing = false;
@@ -28,12 +30,20 @@ class Partner extends Model
 
     protected $casts = [
         'verified' => 'boolean',
+        'latitude' => 'float',
+        'longitude' => 'float',
     ];
 
     public function reportRoutings()
     {
         return $this->hasMany(ReportRouting::class);
     }
+
+    public function priceLists()
+    {
+        return $this->hasMany(PriceList::class);
+    }
+
 
     public static function routeByCategory($category)
 {

@@ -42,6 +42,13 @@ class User extends Authenticatable
         return $this->hasMany(Report::class);
     }
 
+    public function userLocation()
+    {
+        return $this->hasOne(UserLocation::class, 'user_id', 'id');
+    }
+
+
+
     public function isUser()
     {
         return $this->role === 'user';

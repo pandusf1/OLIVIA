@@ -76,8 +76,36 @@
 
         <div class="grid lg:grid-cols-3 gap-6">
 
-            {{-- ===== LEFT: Emergency + Laporan ===== --}}
+            {{-- ===== LEFT: Map Partner + Emergency + Laporan ===== --}}
             <div class="lg:col-span-2 space-y-6">
+
+                {{-- Map Partner (Style Card berurut jarak) --}}
+                <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h2 class="font-bold text-gray-900">Partner Terdekat</h2>
+                            <p class="text-gray-400 text-xs mt-0.5">Urut berdasarkan jarak dari lokasi kamu.</p>
+                        </div>
+                        <a href="/partner-nearby" class="text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full transition">Lihat semua</a>
+                    </div>
+
+                    <div id="nearby-map" class="relative overflow-hidden rounded-xl bg-[#faf9f7] border border-gray-100">
+                        <div class="absolute inset-0 pointer-events-none" style="background-image: radial-gradient(rgba(0,0,0,0.06) 1px, transparent 1px); background-size: 18px 18px;"></div>
+                        <div class="p-4 relative">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="w-2.5 h-2.5 rounded-full bg-red-700" title="Kamu"></span>
+                                <p class="text-xs font-semibold text-gray-600">Lokasi kamu</p>
+                            </div>
+
+                            <div id="nearby-partners" class="space-y-2">
+                                <div class="text-sm text-gray-400">Memuat partner terdekat...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Emergency + Laporan ===== --}}
+
 
                 {{-- Panic Button Card --}}
                 <div class="bg-white border border-gray-200 rounded-2xl p-6 relative overflow-hidden">
@@ -298,6 +326,41 @@
             ()=>{document.getElementById('loc-info').innerHTML='<div class="w-2 h-2 bg-red-400 rounded-full"></div><span class="text-red-500">GPS tidak tersedia.</span>';}
         );
     }
+
+    // Load partner terdekat (card-style map)
+    async function loadNearbyPartners(){
+        const el = document.getElementById('nearby-partners');
+        if(!el) return;
+        try{
+            el.innerHTML = '<div class="text-sm text-gray-400">Memuat partner terdekat...</div>';
+            const res = await fetch('/partner-nearby', { headers: { 'Accept':'application/json' } });
+            if(!res.ok) throw new Error('HTTP '+res.status);
+            const json = await res.json();
+            const items = json.data || [];
+            if(items.length===0){
+                el.innerHTML = '<div class="text-sm text-gray-400">Belum ada partner terdekat.</div>';
+                return;
+            }
+            el.innerHTML = items.slice(0,5).map((x,i)=>{
+                const p = x.partner;
+                return `
+                    <a href="/pembayaran/partner/${p.id}" class="block bg-white border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition">
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="min-w-0">
+                                <p class="font-bold text-gray-900 text-sm truncate">${p.partner_name}</p>
+                                <p class="text-xs text-gray-500 mt-1">${p.partner_type} • ${Number(x.distance_km).toFixed(2)} km</p>
+                            </div>
+                            <span class="text-xs font-semibold px-2 py-1 rounded-full bg-red-50 text-red-700 shrink-0">${i+1}</span>
+                        </div>
+                    </a>
+                `;
+            }).join('');
+        }catch(e){
+            el.innerHTML = '<div class="text-sm text-gray-400">Gagal memuat partner terdekat.</div>';
+        }
+    }
+    loadNearbyPartners();
+
     function startPanic(){
         document.getElementById('panic-btn').classList.add('hidden');
         document.getElementById('countdown-area').classList.remove('hidden');

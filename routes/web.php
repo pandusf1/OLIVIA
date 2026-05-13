@@ -46,6 +46,22 @@ Route::middleware('auth')->group(function () {
     Route::post('/trusted-contact', [TrustedContactController::class, 'store'])->name('trusted-contact.store');
     Route::delete('/trusted-contact/{id}', [TrustedContactController::class, 'destroy'])->name('trusted-contact.destroy');
 
+    // Partner terdekat
+    Route::get('/partner-nearby', [\App\Http\Controllers\PartnerNearbyController::class, 'index'])->name('partner.nearby');
+
+    // Psikolog & pengacara terdekat
+    Route::get('/psikolog-pengacara-nearby', [\App\Http\Controllers\PsikologPengacaraController::class, 'index'])->name('psikolog-pengacara.nearby');
+
+    // Pembayaran dummy
+    Route::get('/pembayaran/partner/{partnerId}', [\App\Http\Controllers\PembayaranMockController::class, 'show'])->name('pembayaran.show');
+    Route::post('/pembayaran', [\App\Http\Controllers\PembayaranMockController::class, 'pay'])->name('pembayaran.pay');
+
+    // Chat
+    Route::get('/chat/threads', [\App\Http\Controllers\ChatController::class, 'indexThreads'])->name('chat.threads');
+    Route::get('/chat/start/{partnerId}', [\App\Http\Controllers\ChatController::class, 'start'])->name('chat.start');
+    Route::post('/chat/send/{partnerId}', [\App\Http\Controllers\ChatController::class, 'send'])->name('chat.send');
+
+
     // Evidence locker (halaman galeri bukti user)
     Route::get('/evidence', [EvidenceController::class, 'index'])->name('evidence.index');
 

@@ -10,49 +10,143 @@ class PartnerSeeder extends Seeder
 {
     public function run(): void
     {
+        $now = now();
+
+        // Koordinat dummy (Semarang)
+        $coords = [
+            'LBH Semarang' => [-6.966667, 110.416664],
+            'Kantor Pengacara Nusa' => [-6.972500, 110.406900],
+            'Konselor Kota Semarang' => [-6.959200, 110.420800],
+            'Psikolog Spesialis Trauma' => [-6.975300, 110.424200],
+        ];
+
+        // Pastikan partner_type sesuai kebutuhan fitur:
+        // - legal (pengacara)
+        // - counselor (psikolog)
         $partners = [
             [
-                'id'           => Str::uuid(),
+                'id' => Str::uuid(),
                 'partner_name' => 'LBH Semarang',
                 'partner_type' => 'legal',
-                'city'         => 'Semarang',
-                'phone'        => '6224356565',
-                'email'        => 'lbhsemarang@gmail.com',
-                'verified'     => true,
-                'created_at'   => now(),
+                'city' => 'Semarang',
+                'phone' => '6224356565',
+                'email' => 'lbhsemarang@gmail.com',
+                'verified' => true,
+                'latitude' => $coords['LBH Semarang'][0],
+                'longitude' => $coords['LBH Semarang'][1],
+                'created_at' => $now,
             ],
             [
-                'id'           => Str::uuid(),
-                'partner_name' => 'RSUD KRMT Wongsonegoro',
-                'partner_type' => 'medical',
-                'city'         => 'Semarang',
-                'phone'        => '6224543797',
-                'email'        => null,
-                'verified'     => true,
-                'created_at'   => now(),
+                'id' => Str::uuid(),
+                'partner_name' => 'Kantor Pengacara Nusa',
+                'partner_type' => 'legal',
+                'city' => 'Semarang',
+                'phone' => '6224501234',
+                'email' => 'kontak@nusa-advokat.id',
+                'verified' => true,
+                'latitude' => $coords['Kantor Pengacara Nusa'][0],
+                'longitude' => $coords['Kantor Pengacara Nusa'][1],
+                'created_at' => $now,
             ],
             [
-                'id'           => Str::uuid(),
-                'partner_name' => 'P2TP2A Kota Semarang',
-                'partner_type' => 'shelter',
-                'city'         => 'Semarang',
-                'phone'        => '62243541687',
-                'email'        => null,
-                'verified'     => true,
-                'created_at'   => now(),
-            ],
-            [
-                'id'           => Str::uuid(),
-                'partner_name' => 'Yayasan Pulih (Konselor)',
+                'id' => Str::uuid(),
+                'partner_name' => 'Konselor Kota Semarang',
                 'partner_type' => 'counselor',
-                'city'         => 'Semarang',
-                'phone'        => '6221788909',
-                'email'        => null,
-                'verified'     => true,
-                'created_at'   => now(),
+                'city' => 'Semarang',
+                'phone' => '6224012345',
+                'email' => null,
+                'verified' => true,
+                'latitude' => $coords['Konselor Kota Semarang'][0],
+                'longitude' => $coords['Konselor Kota Semarang'][1],
+                'created_at' => $now,
+            ],
+            [
+                'id' => Str::uuid(),
+                'partner_name' => 'Psikolog Spesialis Trauma',
+                'partner_type' => 'counselor',
+                'city' => 'Semarang',
+                'phone' => '6224098765',
+                'email' => null,
+                'verified' => true,
+                'latitude' => $coords['Psikolog Spesialis Trauma'][0],
+                'longitude' => $coords['Psikolog Spesialis Trauma'][1],
+                'created_at' => $now,
             ],
         ];
 
-        DB::table('partners')->insertOrIgnore($partners);
+        DB::table('partners')->insert($partners);
+
+        // Seed Price Lists dummy
+        $legalPartners = DB::table('partners')->whereIn('partner_type', ['legal'])->get();
+        $counselorPartners = DB::table('partners')->whereIn('partner_type', ['counselor'])->get();
+
+        foreach ($legalPartners as $p) {
+            DB::table('price_lists')->insert([
+                [
+                    'partner_id' => $p->id,
+                    'service_name' => 'Konsultasi Pengacara (20 menit)',
+                    'price' => 150000,
+                    'currency' => 'IDR',
+                    'duration' => '20 menit',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ],
+                [
+                    'partner_id' => $p->id,
+                    'service_name' => 'Pendampingan Lanjutan (1 jam)',
+                    'price' => 400000,
+                    'currency' => 'IDR',
+                    'duration' => '1 jam',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ],
+            ]);
+        }
+
+        foreach ($counselorPartners as $p) {
+            DB::table('price_lists')->insert([
+                [
+                    'partner_id' => $p->id,
+                    'service_name' => 'Konsultasi Psikolog (30 menit)',
+                    'price' => 120000,
+                    'currency' => 'IDR',
+                    'duration' => '30 menit',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ],
+                [
+                    'partner_id' => $p->id,
+                    'service_name' => 'Sesi Pendampingan (45 menit)',
+                    'price' => 250000,
+                    'currency' => 'IDR',
+                    'duration' => '45 menit',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ],
+            ]);
+        }
+
+        // Seed User korban/saksi + lokasi
+        // (mengisi user biasa agar map/card & chat bisa dipakai)
+        $user = 
+            \App\Models\User::firstOrCreate(
+                ['email' => 'korban@surara.id'],
+                [
+                    'name' => 'Korban Demo',
+                    'password' => \Illuminate\Support\Facades\Hash::make('surara2024'),
+                    'role' => 'user',
+                ]
+            );
+
+        if (!\App\Models\UserLocation::where('user_id', $user->id)->exists()) {
+            \App\Models\UserLocation::create([
+                'user_id' => $user->id,
+                'latitude' => -6.966900,
+                'longitude' => 110.413000,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
     }
 }
+
