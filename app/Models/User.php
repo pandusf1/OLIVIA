@@ -52,13 +52,13 @@ class User extends Authenticatable
         return in_array($this->role, ['partner', 'admin']);
     }
 
-    public function isAdmin(): bool
-    {
-        return $this->role === 'admin';
-    }
-
     public function partner()
     {
         return $this->belongsTo(Partner::class);
+    }
+
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
     }
 }

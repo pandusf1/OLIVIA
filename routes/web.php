@@ -10,7 +10,8 @@ use App\Http\Controllers\WitnessController;
 use App\Http\Controllers\PartnerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SettingsController;
-
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminPartnerController;
 // Landing page
 Route::get('/', fn() => view('welcome'))->name('home');
 
@@ -55,6 +56,18 @@ Route::middleware('auth')->group(function () {
         Route::post('/report/{id}/status', [PartnerController::class, 'updateStatus'])->name('partner.status');
     });
 
+Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
+
+    Route::get('/', [AdminController::class, 'index'])->name('admin.index');
+
+    Route::get('/partners', [AdminPartnerController::class, 'index'])->name('admin.partners');
+
+    Route::get('/partners/create', [AdminPartnerController::class, 'create'])->name('admin.partners.create');
+
+    Route::post('/partners', [AdminPartnerController::class, 'store'])->name('admin.partners.store');
+
+    Route::patch('/partners/{id}/verify', [AdminPartnerController::class, 'toggleVerify'])->name('admin.partners.verify');
+});
 });
 
 require __DIR__.'/auth.php';

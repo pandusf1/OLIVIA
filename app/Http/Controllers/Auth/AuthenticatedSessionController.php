@@ -17,21 +17,29 @@ class AuthenticatedSessionController extends Controller
         return view('auth.login');
     }
 
-    public function store(LoginRequest $request): RedirectResponse
-    {
-        $request->authenticate();
-        $request->session()->regenerate();
+public function store(LoginRequest $request): RedirectResponse
+{
+    $request->authenticate();
 
-        $user = Auth::user();
+    $request->session()->regenerate();
 
-        AuditLog::log('login', 'user', $user->id);
+    $user = Auth::user();
 
-        if ($user->isPartner()) {
-            return redirect()->intended(route('partner.index'));
-        }
+    AuditLog::log('login', 'user', $user->id);
 
-        return redirect()->intended(route('dashboard'));
+    // ADMIN
+    if ($user->role === 'admin') {
+        return redirect()->intended(route('admin.index'));
     }
+
+    // PARTNER
+    if ($user->isPartner()) {
+        return redirect()->intended(route('partner.index'));
+    }
+
+    // USER BIASA
+    return redirect()->intended(route('dashboard'));
+}
 
     public function destroy(Request $request): RedirectResponse
     {
