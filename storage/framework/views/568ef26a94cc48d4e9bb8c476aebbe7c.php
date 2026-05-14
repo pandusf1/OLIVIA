@@ -94,7 +94,8 @@
 
                     <button onclick="startPanic()"
                         id="panic-btn"
-                        class="panic-pulse w-full bg-red-700 hover:bg-red-800 text-white py-5 rounded-xl font-bold text-base tracking-wide transition flex items-center justify-center gap-3 relative z-10">
+                        class="panicdashboard:574 Reload lokasi gagal: Cannot read properties of null (reading 'getAttribute')
+(anonymous)	@	dashboard:574-pulse w-full bg-red-700 hover:bg-red-800 text-white py-5 rounded-xl font-bold text-base tracking-wide transition flex items-center justify-center gap-3 relative z-10">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
                         TEKAN UNTUK BANTUAN
                     </button>
@@ -113,13 +114,23 @@
 
                 
                 <div class="bg-white border border-gray-200 rounded-2xl p-6">
-                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center justify-between mb-4">
                         <div>
                             <h2 class="font-bold text-gray-900">Partner Terdekat</h2>
                             <p class="text-gray-400 text-xs mt-0.5">Urut berdasarkan jarak dari lokasi kamu.</p>
                         </div>
-                        <a href="/partner-nearby" class="text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full transition">Lihat semua</a>
+                        <div class="flex items-center gap-2">
+                            <button type="button" id="btn-view-all-partners" aria-label="Lihat semua partner" title="Lihat semua partner"
+                                class="hidden sm:inline-flex text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full transition">
+                                Lihat Semua
+                            </button>
+                            <button type="button" id="btn-reload-location" aria-label="Reload lokasi" title="Reload lokasi"
+                                class="text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full transition">
+                                <img src="/reload.png" alt="Reload lokasi" class="w-4 h-4 object-cover rounded" onerror="this.style.display='none'">
+                            </button>
+                        </div>
                     </div>
+
 
                     <div id="nearby-map" class="relative overflow-hidden rounded-xl bg-[#faf9f7] border border-gray-100">
                         
@@ -325,7 +336,46 @@
     </div>
 
     
+    <div id="all-partners-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center px-4">
+        <div class="bg-white rounded-2xl w-full max-w-lg p-5 shadow-2xl max-h-[85vh] overflow-hidden flex flex-col">
+            <div class="flex items-start justify-between gap-3 mb-3">
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                        <div class="w-2 h-2 bg-red-700 rounded-full animate-pulse"></div>
+                        <p class="text-red-700 text-xs font-semibold uppercase tracking-widest">Semua Partner</p>
+                    </div>
+                    <h2 class="font-black text-xl text-gray-900 mb-1 font-unbounded leading-tight">Hasil sesuai filter</h2>
+                    <p id="all-partners-subtitle" class="text-gray-400 text-xs">Menampilkan semua partner yang cocok.</p>
+                </div>
+                <button type="button" onclick="closeAllPartnersModal()" class="text-gray-400 hover:text-gray-600 transition p-2 rounded-full">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="flex items-center gap-2 mb-3">
+                <select id="all-partners-type" class="w-1/2 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
+                    <option value="">Semua</option>
+                    <option value="ambulance">Ambulans</option>
+                    <option value="legal">LBH / Pengacara</option>
+                    <option value="counselor">Psikolog</option>
+                </select>
+                <input id="all-partners-query" type="text" placeholder="Cari (mis. Semarang)" class="w-1/2 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
+            </div>
+
+            <div class="flex-1 overflow-auto">
+                <div id="all-partners-list" class="space-y-2">
+                    <div class="text-sm text-gray-400">Memuat partner...</div>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <button type="button" onclick="closeAllPartnersModal()" class="w-full bg-gray-900 hover:bg-gray-700 text-white py-3 rounded-xl font-semibold text-sm transition">Tutup</button>
+            </div>
+        </div>
+    </div>
+
     <div id="cat-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center px-4">
+
         <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
             <div class="flex items-center gap-2 mb-4">
                 <div class="w-2 h-2 bg-red-700 rounded-full animate-pulse"></div>
@@ -368,6 +418,21 @@
 
     <script>
     let cdInterval=null, lat=null, lng=null;
+
+    function openAllPartnersModal(){
+        const m = document.getElementById('all-partners-modal');
+        if(!m) return;
+        document.body.style.overflow = 'hidden';
+        m.classList.remove('hidden');
+    }
+
+    function closeAllPartnersModal(){
+        const m = document.getElementById('all-partners-modal');
+        if(!m) return;
+        m.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
     if(navigator.geolocation){
         navigator.geolocation.getCurrentPosition(
             p=>{lat=p.coords.latitude;lng=p.coords.longitude;document.getElementById('f-lat').value=lat;document.getElementById('f-lng').value=lng;document.getElementById('loc-info').innerHTML='<div class="w-2 h-2 bg-green-500 rounded-full"></div><span class="text-green-600">Lokasi: '+lat.toFixed(4)+', '+lng.toFixed(4)+'</span>';},
@@ -403,13 +468,21 @@
                 return;
             }
 
-            const top = items.slice(0,5);
+            // Cache full result untuk dipakai fitur “Lihat Semua”
+            window.__lastNearbyItems = items;
+
+            // Di bawah map hanya tampilkan 4 partner terdekat (preview)
+            const previewTop = items.slice(0,4);
+            // Namun titik di map tetap menampilkan semua hasil sesuai filter
+            const mapAll = items;
 
             // Visual marker layout: tanpa konversi koordinat ke piksel real map.
             if(markersEl){
-                const maxKm = Math.max(...top.map(x => Number(x.distance_km) || 0), 1);
+                const maxKm = Math.max(...mapAll.map(x => Number(x.distance_km) || 0), 1);
 
-                top.forEach((x, i) => {
+                mapAll.forEach((x, i)=>{
+
+
                     const p = x.partner;
                     const km = Number(x.distance_km) || 0;
                     const t = Math.min(km / maxKm, 1);
@@ -444,7 +517,7 @@
                 });
             }
 
-            el.innerHTML = top.map((x,i)=>{
+            el.innerHTML = previewTop.map((x,i)=>{
                 const p = x.partner;
                 return `
                     <a href="/pembayaran/partner/${p.id}" class="block bg-white border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition">
@@ -459,10 +532,15 @@
                 `;
             }).join('');
 
+
         }catch(e){
-            el.innerHTML = '<div class="text-sm text-gray-400">Gagal memuat partner.</div>';
+            const el = document.getElementById('nearby-partners');
+            if(el){
+                el.innerHTML = `<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">Gagal memuat partner: ${String(e && e.message ? e.message : e)}</div>`;
+            }
         }
     }
+
 
     // Filter map (type + query) -> refresh marker & list
     const mapTypeEl = document.getElementById('map-search-type');
@@ -472,22 +550,249 @@
         const t = mapTypeEl?.value || '';
         const q = mapQueryEl?.value || '';
         loadNearbyPartners({ type: t, query: q });
+
+        // jika modal sedang terbuka, ikut refresh juga
+        const allModal = document.getElementById('all-partners-modal');
+        if(allModal && !allModal.classList.contains('hidden')){
+            const items = window.__lastNearbyItems || [];
+            renderAllPartners(items);
+        }
     }
+
 
     if(mapTypeEl){
         mapTypeEl.addEventListener('change', ()=>triggerMapSearch());
     }
     if(mapQueryEl){
-        mapQueryEl.addEventListener('keydown', (e)=>{
-            if(e.key === 'Enter'){
-                e.preventDefault();
-                triggerMapSearch();
+        let mapDebounceTimer = null;
+        mapQueryEl.addEventListener('input', ()=>{
+            if(mapDebounceTimer) clearTimeout(mapDebounceTimer);
+            mapDebounceTimer = setTimeout(()=>triggerMapSearch(), 250);
+        });
+    }
+
+
+    // initial load (semua)
+    loadNearbyPartners();
+
+    // Lihat Semua
+    const btnViewAll = document.getElementById('btn-view-all-partners');
+    const allTypeEl = document.getElementById('all-partners-type');
+    const allQueryEl = document.getElementById('all-partners-query');
+
+    function renderAllPartners(items){
+        const listEl = document.getElementById('all-partners-list');
+        const subtitleEl = document.getElementById('all-partners-subtitle');
+        if(!listEl) return;
+
+        if(!items || items.length === 0){
+            listEl.innerHTML = '<div class="text-sm text-gray-400">Belum ada partner yang cocok.</div>';
+            if(subtitleEl) subtitleEl.textContent = '0 hasil untuk filter & pencarian saat ini.';
+            return;
+        }
+
+        if(subtitleEl){
+            subtitleEl.textContent = `Menampilkan ${items.length} partner. (Preview map tetap 4 di bawah, tapi marker menampilkan semua.)`;
+        }
+
+        listEl.innerHTML = items.map((x, i)=>{
+            const p = x.partner;
+            const km = Number(x.distance_km) || 0;
+            return `
+                <a href="/pembayaran/partner/${p.id}" class="block bg-white border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="min-w-0">
+                            <p class="font-bold text-gray-900 text-sm truncate">${p.partner_name}</p>
+                            <p class="text-xs text-gray-500 mt-1">${p.partner_type} • ${km.toFixed(2)} km</p>
+                        </div>
+                        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-red-50 text-red-700 shrink-0">${i+1}</span>
+                    </div>
+                </a>
+            `;
+        }).join('');
+    }
+
+    // open modal sync input ke filter map yang aktif
+    btnViewAll && btnViewAll.addEventListener('click', async ()=>{
+        const t = mapTypeEl?.value || '';
+        const q = mapQueryEl?.value || '';
+
+        if(allTypeEl) allTypeEl.value = t;
+        if(allQueryEl) allQueryEl.value = q;
+
+        openAllPartnersModal();
+
+        const items = window.__lastNearbyItems || [];
+        renderAllPartners(items);
+    });
+
+    // modal search realtime (gunakan API yang sama)
+    let allDebounceTimer = null;
+    const allTriggerSearch = ()=>{
+        if(allDebounceTimer) clearTimeout(allDebounceTimer);
+        allDebounceTimer = setTimeout(async ()=>{
+            const t = allTypeEl?.value || '';
+            const q = allQueryEl?.value || '';
+            const el = document.getElementById('all-partners-list');
+            if(el) el.innerHTML = '<div class="text-sm text-gray-400">Memuat partner...</div>';
+
+            try{
+                const params = new URLSearchParams();
+                if(t) params.set('type', t);
+                if(q) params.set('query', q);
+
+                const res = await fetch(`/map-search?${params.toString()}`, { headers: { 'Accept':'application/json' } });
+                if(!res.ok) throw new Error('HTTP '+res.status);
+                const json = await res.json();
+                const items = json.data || [];
+                window.__lastNearbyItems = items; // biar konsisten dengan map
+                renderAllPartners(items);
+
+                // refresh map juga agar marker & preview sesuai modal
+                loadNearbyPartners({ type: t, query: q });
+            }catch(e){
+                if(el) el.innerHTML = `<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">Gagal memuat partner: ${String(e && e.message ? e.message : e)}</div>`;
+            }
+        }, 250);
+    };
+
+    if(allTypeEl) allTypeEl.addEventListener('change', ()=>allTriggerSearch());
+    if(allQueryEl) allQueryEl.addEventListener('input', ()=>allTriggerSearch());
+
+    // close on backdrop click
+    const allModal = document.getElementById('all-partners-modal');
+    allModal && allModal.addEventListener('click', function(e){
+        if(e.target === this) closeAllPartnersModal();
+    });
+
+
+    // Reload lokasi user -> simpan ke backend -> reload partner
+    const reloadBtn = document.getElementById('btn-reload-location');
+    if(reloadBtn){
+        reloadBtn.addEventListener('click', async () => {
+            reloadBtn.disabled = true;
+            // Jangan ubah isi tombol (ikon) pakai innerText, karena icon hilang.
+            reloadBtn.dataset.originalLabel = reloadBtn.dataset.originalLabel || 'Reload';
+            reloadBtn.classList.add('opacity-70');
+
+            // Saat loading: ikon disembunyikan, hanya tampilkan teks.
+            const imgEl = reloadBtn.querySelector('img');
+            if(imgEl){ imgEl.style.display = 'none'; }
+
+            let loadingSpan = document.getElementById('reload-loading-span');
+            if(!loadingSpan){
+                loadingSpan = document.createElement('span');
+                loadingSpan.id = 'reload-loading-span';
+                loadingSpan.className = 'text-xs font-semibold';
+                loadingSpan.textContent = 'Memuat...';
+                reloadBtn.appendChild(loadingSpan);
+            }
+            reloadBtn.setAttribute('data-loading','1');
+            reloadBtn.setAttribute('title','Memuat...');
+
+            try{
+                if(!navigator.geolocation){
+                    throw new Error('Geolocation tidak didukung');
+                }
+
+                const pos = await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    });
+                });
+
+                const latitude = pos.coords.latitude;
+                const longitude = pos.coords.longitude;
+
+                // update hidden inputs emergency (opsional)
+                const latEl = document.getElementById('f-lat');
+                const lngEl = document.getElementById('f-lng');
+                if(latEl) latEl.value = latitude;
+                if(lngEl) lngEl.value = longitude;
+
+                console.log('attempt reload location', { latitude, longitude });
+
+                // Pastikan request benar-benar terkirim, dan jangan silent fallback bila reload lokasi gagal.
+                // (Jika lokasi belum tersimpan, fallback loadNearbyPartners akan menampilkan error dari API map-search)
+                const res = await fetch('/user-location/reload', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ latitude, longitude })
+                });
+
+                // Debug: pastikan response benar-benar ada ok=true
+                let reloadJson = null;
+                try {
+                    reloadJson = await res.json();
+                } catch(e) {
+                    reloadJson = { parse_error: String(e) };
+                }
+                console.log('user-location/reload response', reloadJson);
+
+                if(!res.ok) {
+                    throw new Error('HTTP ' + res.status + ' body=' + JSON.stringify(reloadJson));
+                }
+
+                // Pastikan lokasi benar-benar tersimpan dengan cara mencoba load partner.
+                // Jika map-search mengeluh lokasi belum tersedia, berarti relasi userLocation yang dipakai MapSearch belum terbentuk.
+                const quickCheckRes = await fetch(`/map-search?type=&query=`, { headers: { 'Accept':'application/json' } });
+                let quickCheckJson = null;
+                try { quickCheckJson = await quickCheckRes.json(); } catch(e) { quickCheckJson = { parse_error: String(e) }; }
+                console.log('quickCheck map-search after reload', { ok: quickCheckRes.ok, json: quickCheckJson });
+
+                if(!quickCheckRes.ok || (quickCheckJson && quickCheckJson.error)){
+                    const msg = quickCheckJson && quickCheckJson.error ? quickCheckJson.error : 'Lokasi tidak tersimpan / belum terbaca oleh map-search.';
+                    throw new Error(msg);
+                }
+
+
+
+
+                // reload partner list/map
+                await loadNearbyPartners({
+                    type: mapTypeEl?.value || '',
+                    query: mapQueryEl?.value || ''
+                });
+            }catch(e){
+                const msg = (e && e.message) ? e.message : String(e);
+                console.error('Reload lokasi gagal:', msg);
+
+                // tampilkan error agar tidak silent fallback
+                const el = document.getElementById('nearby-partners');
+                if(el){
+                    el.innerHTML = `<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">Gagal menyimpan lokasi: ${msg}</div>`;
+                }
+
+                // fallback tetap mencoba reload partner (tapi UI error sudah ditampilkan)
+                await loadNearbyPartners({
+                    type: mapTypeEl?.value || '',
+                    query: mapQueryEl?.value || ''
+                });
+            }finally{ 
+                reloadBtn.disabled = false;
+                reloadBtn.classList.remove('opacity-70');
+                reloadBtn.removeAttribute('data-loading');
+                reloadBtn.setAttribute('title','Reload lokasi');
+
+                // Hilangkan teks loading setelah selesai.
+                const loadingSpan = document.getElementById('reload-loading-span');
+                if(loadingSpan){ loadingSpan.remove(); }
+
+                // Tampilkan kembali ikon.
+                const imgEl = reloadBtn.querySelector('img');
+                if(imgEl){ imgEl.style.display = ''; }
+
+
             }
         });
     }
 
-    // initial load (semua)
-    loadNearbyPartners();
 
 
 

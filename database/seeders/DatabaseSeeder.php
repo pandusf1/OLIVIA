@@ -20,16 +20,8 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Akun mitra demo
-        User::firstOrCreate(
-            ['email' => 'lbh@surara.id'],
-            [
-                'name'     => 'LBH Semarang',
-                'password' => Hash::make('surara2024'),
-                'role'     => 'partner',
-            ]
-        );
-
+        // Seed demo users biasa + partner + lokasi + price_lists dilakukan oleh PartnerSeeder.
         $this->call(PartnerSeeder::class);
+
     }
 }

@@ -48,10 +48,13 @@
                         <p class="font-semibold text-gray-900">{{ $c->contact_name }}</p>
                         <p class="text-gray-400 text-sm">{{ $c->contact_phone }}</p>
                     </div>
-                    <form action="/trusted-contact/{{ $c->id }}" method="POST">
-                        @csrf @method('DELETE')
-                        <button class="text-red-500 hover:text-red-700 text-sm font-semibold transition">Hapus</button>
-                    </form>
+                    <div class="flex items-center gap-3">
+                        <a href="{{ route('trusted-contact.edit', $c->id) }}" class="text-gray-600 hover:text-gray-900 text-sm font-semibold transition">Edit</a>
+                        <form action="/trusted-contact/{{ $c->id }}" method="POST">
+                            @csrf @method('DELETE')
+                            <button class="text-red-500 hover:text-red-700 text-sm font-semibold transition">Hapus</button>
+                        </form>
+                    </div>
                 </div>
                 @endforeach
             </div>

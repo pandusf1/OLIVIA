@@ -14,10 +14,29 @@ class MapSearchController extends Controller
             'query' => 'nullable|string',
         ]);
 
-        $userLocation = auth()->user()->userLocation()->first();
+        $user = auth()->user();
+        $userLocation = $user?->userLocation()->first();
         if (!$userLocation) {
-            return response()->json(['error' => 'Lokasi user belum tersedia.'], 422);
+            // Debug: berikan clue kenapa lokasi belum ada.
+            $debugLocationExists = \App\Models\UserLocation::where('user_id', auth()->id())->first();
+
+            // Debug tambahan: kirim juga nilai latitude/longitude jika ada record-nya.
+            $debugLoc = $debugLocationExists;
+            return response()->json([
+                'data' => [],
+                'error' => 'Lokasi user belum tersedia (relasi userLocation null).',
+                'user_id' => auth()->id(),
+                'user_location_table_found' => (bool) $debugLocationExists,
+                'user_location_debug' => $debugLoc ? [
+                    'latitude' => $debugLoc->latitude,
+                    'longitude' => $debugLoc->longitude,
+                ] : null,
+            ], 200);
+
         }
+
+
+
 
         $lat = (float) $userLocation->latitude;
         $lng = (float) $userLocation->longitude;
@@ -53,7 +72,7 @@ class MapSearchController extends Controller
         $partnersWithDistance = $partners->map(function ($partner) use ($lat, $lng) {
             return [
                 'partner' => $partner,
-                'distance_km' => $this->haversineKm($lat, $lng, (float) $partner->latitude, (float) $partner->longitude),
+                'distance_km' => round($this->haversineKm($lat, $lng, (float) $partner->latitude, (float) $partner->longitude), 2),
             ];
         })
         ->sortBy('distance_km')

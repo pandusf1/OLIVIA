@@ -32,13 +32,14 @@ class PsikologPengacaraController extends Controller
 
         $legalSorted = $legal->map(fn ($p) => [
             'partner' => $p,
-            'distance_km' => $this->haversineKm($lat, $lng, (float) $p->latitude, (float) $p->longitude),
+            'distance_km' => round($this->haversineKm($lat, $lng, (float) $p->latitude, (float) $p->longitude), 2),
         ])->sortBy('distance_km')->values()->take(3);
 
         $counselorSorted = $counselor->map(fn ($p) => [
             'partner' => $p,
-            'distance_km' => $this->haversineKm($lat, $lng, (float) $p->latitude, (float) $p->longitude),
+            'distance_km' => round($this->haversineKm($lat, $lng, (float) $p->latitude, (float) $p->longitude), 2),
         ])->sortBy('distance_km')->values()->take(3);
+
 
         return response()->json([
             'legal' => $legalSorted,

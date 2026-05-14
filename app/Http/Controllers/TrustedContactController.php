@@ -30,6 +30,34 @@ class TrustedContactController extends Controller
         return back()->with('success', 'Kontak terpercaya berhasil ditambahkan.');
     }
 
+    public function edit($id)
+    {
+        $contact = TrustedContact::where('id', $id)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        return view('trusted-contacts.edit', compact('contact'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'contact_name'  => 'required|string|max:100',
+            'contact_phone' => 'required|string|max:20',
+        ]);
+
+        $contact = TrustedContact::where('id', $id)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        $contact->update([
+            'contact_name' => $request->contact_name,
+            'contact_phone' => $request->contact_phone,
+        ]);
+
+        return redirect()->route('trusted-contact.index')->with('success', 'Kontak berhasil diperbarui.');
+    }
+
     public function destroy($id)
     {
         TrustedContact::where('id', $id)

@@ -23,12 +23,14 @@ class PartnerNearbyController extends Controller
         $lat = $userLocation->latitude;
         $lng = $userLocation->longitude;
 
+        // Tidak ada batas radius untuk memastikan tetap ada hasil terdekat,
+        // sekalipun jaraknya sangat jauh.
         $partnersWithDistance = $partners->map(function ($partner) use ($lat, $lng) {
             $distanceKm = $this->haversineKm($lat, $lng, (float) $partner->latitude, (float) $partner->longitude);
 
             return [
                 'partner' => $partner,
-                'distance_km' => $distanceKm,
+                'distance_km' => round($distanceKm, 2),
             ];
         })
         ->sortBy('distance_km')

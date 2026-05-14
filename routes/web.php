@@ -12,6 +12,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminPartnerController;
+use App\Http\Controllers\UserLocationController;
 // Landing page
 Route::get('/', fn() => view('welcome'))->name('home');
 
@@ -44,6 +45,8 @@ Route::middleware('auth')->group(function () {
     // Trusted Contacts
     Route::get('/trusted-contacts', [TrustedContactController::class, 'index'])->name('trusted-contact.index');
     Route::post('/trusted-contact', [TrustedContactController::class, 'store'])->name('trusted-contact.store');
+    Route::get('/trusted-contact/{id}/edit', [TrustedContactController::class, 'edit'])->name('trusted-contact.edit');
+    Route::patch('/trusted-contact/{id}', [TrustedContactController::class, 'update'])->name('trusted-contact.update');
     Route::delete('/trusted-contact/{id}', [TrustedContactController::class, 'destroy'])->name('trusted-contact.destroy');
 
     // Partner terdekat (gabungan: semua tipe)
@@ -51,6 +54,9 @@ Route::middleware('auth')->group(function () {
 
     // Psikolog & pengacara terdekat (khusus kategori)
     Route::get('/psikolog-pengacara-nearby', [\App\Http\Controllers\PsikologPengacaraController::class, 'index'])->name('psikolog-pengacara.nearby');
+
+    // Reload lokasi user (tanpa reload halaman)
+    Route::post('/user-location/reload', [UserLocationController::class, 'reload'])->name('user-location.reload');
 
     // Pencarian di map (type + query)
     Route::get('/map-search', [\App\Http\Controllers\MapSearchController::class, 'search'])->name('map.search');
@@ -87,7 +93,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/partners', [AdminPartnerController::class, 'store'])->name('admin.partners.store');
 
     Route::patch('/partners/{id}/verify', [AdminPartnerController::class, 'toggleVerify'])->name('admin.partners.verify');
+
+    // Export CSV untuk semua user
+    Route::get('/users/export-csv', [\App\Http\Controllers\AdminUsersExportController::class, 'exportCsv'])
+        ->name('admin.users.exportCsv');
 });
 });
+
 
 require __DIR__.'/auth.php';
