@@ -7,7 +7,11 @@
     <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');*{font-family:'Inter',sans-serif;}</style>
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
-    <?php $backUrl = route('dashboard'); $backLabel = 'Dashboard'; ?>
+    <?php
+        $backUrl = request()->headers->get('referer') ?: route('dashboard');
+        $backLabel = 'Kembali';
+        $showBrand = false;
+    ?>
     <?php echo $__env->make('partials.nav-auth', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <div class="max-w-lg mx-auto px-6 py-10">

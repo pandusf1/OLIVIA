@@ -2,23 +2,33 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Partner;
 use App\Models\PriceList;
 use Illuminate\Http\Request;
 
+
 class PembayaranMockController extends Controller
 {
-    public function show(Request $request, string $partnerId)
+    public function showDataPartner(Request $request, string $partnerId)
     {
-        $priceLists = PriceList::query()
-            ->where('partner_id', $partnerId)
-            ->orderBy('price')
-            ->get();
+        $partner = \App\Models\Partner::query()->findOrFail($partnerId);
 
-        return view('pages.user.pembayaran_mock', [
-            'partnerId' => $partnerId,
+        // Section 3: pricelist hanya untuk psikolog (counselor) dan pengacara (legal)
+        $priceLists = collect();
+        if (in_array($partner->partner_type, ['legal', 'counselor'], true)) {
+            $priceLists = PriceList::query()
+                ->where('partner_id', $partnerId)
+                ->orderBy('price')
+                ->get();
+        }
+
+        return view('pages.user.data_partner', [
+            'partner' => $partner,
             'priceLists' => $priceLists,
         ]);
+
     }
+
 
     public function pay(Request $request)
     {

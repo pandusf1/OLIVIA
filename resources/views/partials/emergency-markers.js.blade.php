@@ -49,9 +49,18 @@
                         <div class="w-3.5 h-3.5 rounded-full border-2 border-white shadow-md shadow-red-200 ${c.dot} ${c.ring}"></div>
                         <div class="absolute -top-2 left-1/2 -translate-x-1/2 hidden group-hover:block">
                             <div class="text-[11px] bg-white/95 border border-gray-100 rounded-lg px-2 py-1 shadow text-gray-700 whitespace-nowrap">
-                                <div class="font-semibold">${m.category}</div>
+                                <div class="font-semibold mb-1">${m.category}</div>
+                                ${m.partner ? `
+                                  <div class="text-[11px] text-gray-700 mb-1">${String(m.partner.partner_name||'').replace(/</g,'<')}</div>
+                                  <div class="text-[11px] text-gray-600">📞 ${m.partner.phone || '-'}</div>
+                                  <div class="mt-2">
+                                    <img src="${m.partner.image_url || ''}" alt="${String(m.partner.partner_name||'') }" class="w-12 h-12 rounded border border-gray-100 object-cover"/>
+                                  </div>
+                                  <div class="mt-2 text-[11px] text-gray-500">${m.partner.address || '-'}</div>
+                                ` : ''}
                                 <div class="text-gray-500">${m.status}</div>
                                 <div class="text-gray-400">${Number(m.distance_km).toFixed(2)} km</div>
+
                             </div>
                         </div>
                     </div>

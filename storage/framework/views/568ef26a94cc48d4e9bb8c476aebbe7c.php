@@ -498,32 +498,49 @@
                     const yPct = cy + Math.sin(angle) * rPct;
 
                     const marker = document.createElement('a');
-                    marker.href = `/pembayaran/partner/${p.id}`;
+                    marker.href = `/data-partner/${p.id}`;
                     marker.className = 'absolute -translate-x-1/2 -translate-y-1/2 group';
+                    marker.style.zIndex = '0';
+
                     marker.style.left = `${xPct}%`;
                     marker.style.top = `${yPct}%`;
 
                     marker.innerHTML = `
                         <div class="w-2.5 h-2.5 rounded-full bg-red-300 border border-red-200 shadow-sm"></div>
                         <div class="absolute -top-2 left-1/2 -translate-x-1/2">
-                            <div class="hidden group-hover:block">
-                                <div class="text-[11px] bg-white/95 border border-gray-100 rounded-lg px-2 py-1 shadow text-gray-700 whitespace-nowrap">
-                                    ${String(p.partner_name).replace(/</g,'<').replace(/>/g,'>')}<br/>
-                                    ${p.partner_type} • ${Number(km).toFixed(2)} km
+                            <div class="hidden group-hover:block relative z-[999]">
+                                <div class="text-[11px] bg-white/95 border border-gray-100 rounded-lg px-2 py-2 shadow text-gray-700 whitespace-nowrap max-w-[240px] relative z-[1000]">
+
+                                    <div class="flex items-start gap-2">
+                                        ${p.image_url ? `
+                                            <img src="${p.image_url}" class="w-12 h-12 object-cover rounded border border-gray-100 shrink-0" alt="${String(p.partner_name).replace(/</g,'<').replace(/>/g,'>')}">
+                                        ` : `
+                                            <div class="w-12 h-12 bg-gray-100 rounded border border-gray-100 shrink-0"></div>
+                                        `}
+                                        <div class="min-w-0">
+                                            <div class="font-semibold leading-tight">${String(p.partner_name).replace(/</g,'<').replace(/>/g,'>')}</div>
+                                            <div class="text-gray-500 leading-tight">${p.partner_type} • ${Number(km).toFixed(2)} km</div>
+                                            <div class="text-gray-600 leading-tight mt-1">${p.phone ? `📞 ${p.phone}` : '-'}</div>
+                                            <div class="text-gray-500 leading-tight mt-1">${p.address ? String(p.address).replace(/</g,'<').replace(/>/g,'>') : '-'}</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     `;
 
-                    marker.style.zIndex = '2';
+                    marker.style.zIndex = '0';
+
                     markersEl.appendChild(marker);
+
+
                 });
             }
 
             el.innerHTML = previewTop.map((x,i)=>{
                 const p = x.partner;
                 return `
-                    <a href="/pembayaran/partner/${p.id}" class="block bg-white border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition">
+                    <a href="/data-partner/${p.id}" class="block bg-white border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition">
                         <div class="flex items-center justify-between gap-3">
                             <div class="min-w-0">
                                 <p class="font-bold text-gray-900 text-sm truncate">${p.partner_name}</p>
@@ -602,7 +619,7 @@
             const p = x.partner;
             const km = Number(x.distance_km) || 0;
             return `
-                <a href="/pembayaran/partner/${p.id}" class="block bg-white border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition">
+                <a href="/data-partner/${p.id}" class="block bg-white border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition">
                     <div class="flex items-center justify-between gap-3">
                         <div class="min-w-0">
                             <p class="font-bold text-gray-900 text-sm truncate">${p.partner_name}</p>

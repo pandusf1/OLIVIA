@@ -3,30 +3,26 @@
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SuraRa — Jadi Saksi</title>
-    @vite('resources/css/app.css')
+    <?php echo app('Illuminate\Foundation\Vite')('resources/css/app.css'); ?>
     <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');*{font-family:'Inter',sans-serif;}</style>
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
-    @php
-        $backUrl = request()->headers->get('referer') ?: (auth()->check() ? route('dashboard') : '/');
-        $backLabel = 'Kembali';
-        $showBrand = false;
-    @endphp
-    @include('partials.nav-auth')
+    <?php $backUrl = auth()->check() ? route('dashboard') : '/'; $backLabel = auth()->check() ? 'Dashboard' : 'Beranda'; ?>
+    <?php echo $__env->make('partials.nav-auth', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
     <div class="max-w-lg mx-auto px-6 py-12">
         <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">COMMUNITY WITNESS</p>
         <h1 class="font-unbounded text-3xl font-black text-gray-900 mb-2">Bantu dengan buktimu.</h1>
         <p class="text-gray-500 text-sm mb-8">Upload bukti untuk laporan yang kamu saksikan. Bersifat rahasia — hanya bisa diakses korban dan mitra terverifikasi.</p>
 
-        @if(session('success'))<div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl mb-6 text-sm">✓ {{ session('success') }}</div>@endif
-        @if($errors->any())<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 text-sm">@foreach($errors->all() as $e)<p>• {{ $e }}</p>@endforeach</div>@endif
+        <?php if(session('success')): ?><div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl mb-6 text-sm">✓ <?php echo e(session('success')); ?></div><?php endif; ?>
+        <?php if($errors->any()): ?><div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 text-sm"><?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $e): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><p>• <?php echo e($e); ?></p><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?></div><?php endif; ?>
 
         <div class="bg-white border border-gray-200 rounded-2xl p-6">
             <form action="/witness" method="POST" enctype="multipart/form-data" class="space-y-4">
-                @csrf
+                <?php echo csrf_field(); ?>
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">ID Laporan *</label>
-                    <input type="text" name="report_id" value="{{ old('report_id', request('report_id')) }}" placeholder="ID laporan dari korban..."
+                    <input type="text" name="report_id" value="<?php echo e(old('report_id', request('report_id'))); ?>" placeholder="ID laporan dari korban..."
                         class="w-full border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-3 text-sm focus:outline-none transition" required>
                     <p class="text-gray-400 text-xs mt-1">Minta ID dari korban atau lihat di URL tracking mereka.</p>
                 </div>
@@ -42,7 +38,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">Keterangan</label>
-                    <textarea name="witness_note" rows="3" placeholder="Ceritakan apa yang kamu lihat..." class="w-full border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-3 text-sm focus:outline-none transition resize-none">{{ old('witness_note') }}</textarea>
+                    <textarea name="witness_note" rows="3" placeholder="Ceritakan apa yang kamu lihat..." class="w-full border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-3 text-sm focus:outline-none transition resize-none"><?php echo e(old('witness_note')); ?></textarea>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">Upload Bukti (opsional)</label>
@@ -61,3 +57,4 @@
     </div>
 </body>
 </html>
+<?php /**PATH D:\CODING\olivia_final\resources\views/pages/witness/index.blade.php ENDPATH**/ ?>

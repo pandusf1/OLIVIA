@@ -18,8 +18,9 @@
 
 <body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
 
-    @php $backUrl = null; @endphp
+@php $backUrl = null; @endphp
 
+    @php $showBrand = true; @endphp
     @include('partials.nav-auth')
 
     <div class="max-w-6xl mx-auto px-6 py-10">

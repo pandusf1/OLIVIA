@@ -9,7 +9,11 @@
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
 
-    @php $backUrl = auth()->check() ? route('dashboard') : '/'; $backLabel = auth()->check() ? 'Dashboard' : 'Beranda'; @endphp
+    @php
+        $backUrl = request()->headers->get('referer') ?: (auth()->check() ? route('dashboard') : '/');
+        $backLabel = 'Kembali';
+        $showBrand = false;
+    @endphp
     @include('partials.nav-auth')
 
     <div class="fixed top-16 right-4 z-50">

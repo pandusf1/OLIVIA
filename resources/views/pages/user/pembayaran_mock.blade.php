@@ -7,9 +7,15 @@
     @vite('resources/css/app.css')
 </head>
 <body class="bg-[#faf9f7] text-gray-900 min-h-screen">
-    @include('partials.nav-auth')
+@php
+    $showBrand = false;
+    $backUrl = $backUrl ?? request()->headers->get('referer');
+    $backLabel = $backLabel ?? 'Kembali';
+@endphp
+@include('partials.nav-auth')
 
     <div class="max-w-3xl mx-auto px-6 py-10">
+
         <div class="mb-6">
             <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">PEMBAYARAN BOHONGAN</p>
             <h1 class="text-3xl font-black">Pilih Paket & Lanjut Chat</h1>

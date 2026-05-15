@@ -3,29 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
     <title>SuraRa — Darurat</title>
-    @vite('resources/css/app.css')
+    <?php echo app('Illuminate\Foundation\Vite')('resources/css/app.css'); ?>
     <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');*{font-family:'Inter',sans-serif;} h1,.font-unbounded{font-family:\'Unbounded\',sans-serif!important;}</style>
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
 
-    @php
-        $backUrl = request()->headers->get('referer') ?: (auth()->check() ? route('dashboard') : '/');
-        $backLabel = 'Kembali';
-        $showBrand = false;
-    @endphp
+    <?php $backUrl = auth()->check() ? route('dashboard') : '/'; $backLabel = auth()->check() ? 'Dashboard' : 'Beranda'; ?>
+    <?php echo $__env->make('partials.nav-auth', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-    @include('partials.nav-auth')
-
-    {{-- Stealth --}}
+    
     <div class="fixed top-16 right-4 z-50">
         <button onclick="document.getElementById('stealth').classList.remove('hidden')" class="bg-white border border-gray-200 hover:border-gray-300 text-gray-500 px-3 py-1.5 rounded-lg text-xs font-mono transition shadow-sm">🔢</button>
     </div>
 
     <div class="max-w-2xl mx-auto px-6 py-12">
 
-        {{-- Alert info --}}
+        
         <div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-3 mb-8 text-sm">
             <span class="text-amber-500 mt-0.5">ⓘ</span>
             <p class="text-amber-800">Untuk darurat jiwa: hubungi 112 (darurat nasional) atau 118 (ambulans). SuraRa bekerja paralel untuk menyimpan bukti & menghubungkan ke LBH/psikolog.</p>
@@ -35,7 +30,7 @@
         <h1 class="font-unbounded text-4xl font-black text-gray-900 mb-2">Tarik nafas. Kami di sini.</h1>
         <p class="text-gray-500 mb-10">Tekan tombol di bawah. Kategori & lokasi akan diatur otomatis.</p>
 
-        {{-- PHASE 1: PANIC BUTTON --}}
+        
         <div id="phase-panic">
             <button onclick="startCountdown()"
                 class="w-full bg-red-700 hover:bg-red-800 text-white py-6 rounded-2xl font-black text-xl tracking-wide transition flex items-center justify-center gap-3 mb-8">
@@ -43,7 +38,7 @@
                 TEKAN UNTUK BANTUAN
             </button>
 
-            {{-- Other options --}}
+            
             <div class="grid grid-cols-2 gap-4">
                 <div class="bg-white border border-gray-200 rounded-2xl p-5 cursor-pointer hover:border-gray-300 transition" onclick="document.getElementById('detailed-form').classList.toggle('hidden')">
                     <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center mb-3">
@@ -62,7 +57,7 @@
             </div>
         </div>
 
-        {{-- PHASE 2: COUNTDOWN --}}
+        
         <div id="phase-countdown" class="hidden">
             <div class="bg-white border border-gray-200 rounded-2xl p-8 text-center">
                 <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">MENGIRIM DALAM</p>
@@ -75,7 +70,7 @@
             </div>
         </div>
 
-        {{-- PHASE 3: FORM --}}
+        
         <div id="phase-form" class="hidden">
             <div class="bg-white border border-gray-200 rounded-2xl p-6">
                 <div class="flex items-center gap-2 mb-4">
@@ -85,20 +80,20 @@
                 <h2 class="font-black text-xl text-gray-900 mb-1">Apa yang terjadi?</h2>
                 <p class="text-gray-400 text-sm mb-5">Pilih kategori. Lokasi sudah terekam otomatis.</p>
                 <form id="emergencyForm" action="/emergency" method="POST">
-                    @csrf
+                    <?php echo csrf_field(); ?>
                     <input type="hidden" name="latitude" id="f-latitude">
                     <input type="hidden" name="longitude" id="f-longitude">
                     <div class="grid grid-cols-2 gap-3 mb-5">
-                        @foreach([['Salah Tangkap','⚖️','Penyalahgunaan wewenang'],['Pelecehan','🛡️','Pelecehan seksual / verbal'],['Kekerasan','👊','KDRT atau kekerasan fisik'],['Kecelakaan','🚑','Butuh ambulans']] as [$val,$icon,$desc])
+                        <?php $__currentLoopData = [['Salah Tangkap','⚖️','Penyalahgunaan wewenang'],['Pelecehan','🛡️','Pelecehan seksual / verbal'],['Kekerasan','👊','KDRT atau kekerasan fisik'],['Kecelakaan','🚑','Butuh ambulans']]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as [$val,$icon,$desc]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                         <label class="cursor-pointer">
-                            <input type="radio" name="category" value="{{ $val }}" class="peer hidden" required>
+                            <input type="radio" name="category" value="<?php echo e($val); ?>" class="peer hidden" required>
                             <div class="peer-checked:bg-red-50 peer-checked:border-red-400 border border-gray-200 rounded-xl p-4 text-center hover:border-gray-300 transition">
-                                <p class="text-2xl mb-1.5">{{ $icon }}</p>
-                                <p class="text-sm font-bold text-gray-900">{{ $val }}</p>
-                                <p class="text-xs text-gray-400 mt-0.5">{{ $desc }}</p>
+                                <p class="text-2xl mb-1.5"><?php echo e($icon); ?></p>
+                                <p class="text-sm font-bold text-gray-900"><?php echo e($val); ?></p>
+                                <p class="text-xs text-gray-400 mt-0.5"><?php echo e($desc); ?></p>
                             </div>
                         </label>
-                        @endforeach
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                     </div>
                     <div class="flex items-center justify-between border border-gray-200 rounded-xl px-4 py-3 mb-4">
                         <div><p class="text-sm font-semibold text-gray-900">Mode Anonim</p><p class="text-xs text-gray-400">Identitas tidak ditampilkan publik</p></div>
@@ -116,7 +111,7 @@
             </div>
         </div>
 
-        {{-- Detailed form (hidden by default) --}}
+        
         <div id="detailed-form" class="hidden mt-6">
             <div class="bg-white border border-gray-200 rounded-2xl p-6">
                 <h3 class="font-bold text-gray-900 mb-4">📄 Laporan Detail</h3>
@@ -126,14 +121,14 @@
         </div>
     </div>
 
-    {{-- STEALTH CALCULATOR --}}
+    
     <div id="stealth" class="hidden fixed inset-0 bg-gray-100 z-[100] flex items-center justify-center">
         <div class="bg-white rounded-3xl shadow-2xl w-80 overflow-hidden border border-gray-200">
             <div class="bg-gray-900 px-6 py-4 text-right"><div id="cd" class="text-white text-3xl font-light">0</div></div>
             <div class="grid grid-cols-4">
-                @foreach(['AC','±','%','÷','7','8','9','×','4','5','6','−','1','2','3','+','0','0','.','='] as $k)
-                <button onclick="cp('{{ $k }}')" class="py-5 text-xl font-medium border border-gray-100 {{ in_array($k,['÷','×','−','+','='])?'bg-orange-400 text-white':(in_array($k,['AC','±','%'])?'bg-gray-100 text-black':'bg-white text-black') }}">{{ $k }}</button>
-                @endforeach
+                <?php $__currentLoopData = ['AC','±','%','÷','7','8','9','×','4','5','6','−','1','2','3','+','0','0','.','=']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $k): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <button onclick="cp('<?php echo e($k); ?>')" class="py-5 text-xl font-medium border border-gray-100 <?php echo e(in_array($k,['÷','×','−','+','='])?'bg-orange-400 text-white':(in_array($k,['AC','±','%'])?'bg-gray-100 text-black':'bg-white text-black')); ?>"><?php echo e($k); ?></button>
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
             </div>
         </div>
         <button onclick="document.getElementById('stealth').classList.add('hidden')" class="fixed bottom-8 text-xs text-gray-400 underline">Kembali</button>
@@ -474,3 +469,4 @@ if (localStorage.getItem('surara_pending_report')) {
 </script>
 </body>
 </html>
+<?php /**PATH D:\CODING\olivia_final\resources\views/pages/emergency.blade.php ENDPATH**/ ?>

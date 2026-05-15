@@ -7,7 +7,13 @@
     @vite('resources/css/app.css')
 </head>
 <body class="bg-[#faf9f7] text-gray-900 min-h-screen">
+    @php
+        $showBrand = false;
+        $backUrl = $backUrl ?? request()->headers->get('referer');
+        $backLabel = $backLabel ?? 'Kembali';
+    @endphp
     @include('partials.nav-auth')
+
 
     <div class="max-w-5xl mx-auto px-6 py-10">
         <div class="mb-6">
@@ -65,7 +71,7 @@
                         const no = i+1;
 
                         return `
-                            <a href="/pembayaran/partner/${p.id}" class="block bg-[#faf9f7] hover:bg-gray-50 border border-gray-100 rounded-xl p-3 transition">
+                            <a href="/data-partner/${p.id}" class="block bg-[#faf9f7] hover:bg-gray-50 border border-gray-100 rounded-xl p-3 transition">
                                 <div class="flex items-center justify-between gap-3">
                                     <div class="min-w-0">
                                         <p class="font-bold text-gray-900 text-sm truncate">${p.partner_name}</p>

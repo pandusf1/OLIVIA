@@ -7,7 +7,11 @@
     <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');*{font-family:'Inter',sans-serif;} h1,.font-unbounded{font-family:\'Unbounded\',sans-serif!important;}</style>
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
-    @php $backUrl = auth()->check() ? route('dashboard') : '/'; $backLabel = auth()->check() ? 'Dashboard' : 'Beranda'; @endphp
+    @php
+        $backUrl = request()->headers->get('referer') ?: (auth()->check() ? route('dashboard') : '/');
+        $backLabel = 'Kembali';
+        $showBrand = false;
+    @endphp
     @include('partials.nav-auth')
     <div class="max-w-md mx-auto px-6 py-20">
         <div class="text-center mb-8">

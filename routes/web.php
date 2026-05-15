@@ -66,10 +66,17 @@ Route::middleware('auth')->group(function () {
         ->name('dashboard.emergency.markers');
 
 
-    // Pembayaran dummy
+    // Data Partner (pengganti pembanyaran demo)
+    Route::get('/data-partner/{partnerId}', [\App\Http\Controllers\PembayaranMockController::class, 'showDataPartner'])->name('partner.data');
 
-    Route::get('/pembayaran/partner/{partnerId}', [\App\Http\Controllers\PembayaranMockController::class, 'show'])->name('pembayaran.show');
+    // Kompatibilitas: route lama redirect ke page baru
+    Route::get('/pembayaran/partner/{partnerId}', function (string $partnerId) {
+        return redirect()->route('partner.data', ['partnerId' => $partnerId]);
+    });
+
+    // (endpoint submit payment demo masih dibiarkan agar tidak error jika masih ada form lama)
     Route::post('/pembayaran', [\App\Http\Controllers\PembayaranMockController::class, 'pay'])->name('pembayaran.pay');
+
 
     // Chat
     Route::get('/chat/threads', [\App\Http\Controllers\ChatController::class, 'indexThreads'])->name('chat.threads');

@@ -153,11 +153,38 @@ class PartnerSeeder extends Seeder
                     $lat = $cLat + ((($cityIndex + 1) % 11) - 5) * 0.03 + ($i % 3) * 0.008;
                     $lng = $cLng + ((($cityIndex + 7) % 13) - 6) * 0.03 + ($i % 4) * 0.006;
 
+                    // dummy 1x1 building + address for tooltip
+                    $streetNo = 10 + (($cityIndex * 7 + $i) % 90);
+                    $district = match(true){
+                        $cityName === 'Semarang' => 'Tembalang',
+                        $cityName === 'Kab. Semarang' => 'Banyubiru',
+                        $cityName === 'Demak' => 'Sayung',
+                        $cityName === 'Salatiga' => 'Sidomukti',
+                        $cityName === 'Kendal' => 'Kaliwungu',
+                        $cityName === 'Grobogan' => 'Grobogan',
+                        $cityName === 'Kudus' => 'Kota',
+                        $cityName === 'Pati' => 'Pati',
+                        $cityName === 'Jepara' => 'Jepara',
+                        default => 'Kecamatan',
+                    };
+
+                    // Reuse existing public placeholder images (1x1-ish). You can replace with real ones later.
+                    $img = match(true){
+                        $partnerType === 'legal' => '/192.jpg',
+                        $partnerType === 'counselor' => '/512.jpg',
+                        $partnerType === 'ambulance' => '/192.jpg',
+                        default => '/512.jpg',
+                    };
+
+                    $address = "$district, Jalan Veteran No. {$streetNo}, {$cityName}";
+
                     $partnersToInsert[] = [
                         'id' => $partnerId,
                         'partner_name' => $partnerName,
                         'partner_type' => $partnerType,
                         'city' => $cityName,
+                        'address' => $address,
+                        'image_url' => $img,
                         'phone' => $phone,
                         'email' => $email,
                         'verified' => true,
@@ -165,6 +192,7 @@ class PartnerSeeder extends Seeder
                         'longitude' => $lng,
                         'created_at' => $now,
                     ];
+
 
                     $usersToInsert[] = [
                         'id' => (string) Str::uuid(),

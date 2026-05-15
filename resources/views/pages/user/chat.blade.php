@@ -7,9 +7,15 @@
     @vite('resources/css/app.css')
 </head>
 <body class="bg-[#faf9f7] text-gray-900 min-h-screen">
-    @include('partials.nav-auth')
+@php
+    $showBrand = false;
+    $backUrl = $backUrl ?? request()->headers->get('referer');
+    $backLabel = $backLabel ?? 'Kembali';
+@endphp
+@include('partials.nav-auth')
 
     <div class="max-w-4xl mx-auto px-6 py-10">
+
         <div class="flex items-start justify-between gap-4 mb-6">
             <div>
                 <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">CHAT</p>
