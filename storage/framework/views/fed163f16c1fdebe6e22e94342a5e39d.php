@@ -116,7 +116,18 @@
                     <div>
                         <p class="text-sm font-semibold text-gray-900"><?php echo e($log->new_status); ?></p>
                         <p class="text-xs text-gray-400"><?php echo e(\Carbon\Carbon::parse($log->changed_at)->format('d/m/Y, H:i:s')); ?></p>
-                        <?php if($log->new_status === 'Routed'): ?><p class="text-xs text-gray-500">Diteruskan ke lbh</p><?php endif; ?>
+                        <?php if($log->new_status === 'Routed'): ?>
+                            <?php if($report->partner): ?>
+                                <div class="mt-2 bg-white border border-gray-100 rounded-lg p-3 shadow-sm inline-block min-w-full">
+                                    <p class="text-xs text-gray-500 mb-1">Diteruskan ke:</p>
+                                    <p class="text-sm font-semibold text-gray-800"><?php echo e($report->partner->partner_name); ?></p>
+                                    <p class="text-[11px] text-gray-500 mt-1 flex items-center gap-1.5"><span class="w-3.5 flex justify-center">📞</span> <?php echo e($report->partner->phone ?? '-'); ?></p>
+                                    <p class="text-[11px] text-gray-500 mt-0.5 flex items-start gap-1.5"><span class="w-3.5 flex justify-center mt-0.5">📍</span> <span class="flex-1"><?php echo e($report->partner->address ?? '-'); ?></span></p>
+                                </div>
+                            <?php else: ?>
+                                <p class="text-xs text-gray-500">Diteruskan ke partner</p>
+                            <?php endif; ?>
+                        <?php endif; ?>
                         <?php if($log->new_status === 'Submitted'): ?><p class="text-xs text-gray-500">Laporan dikirim</p><?php endif; ?>
                     </div>
                 </div>

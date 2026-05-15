@@ -231,6 +231,22 @@
                                     @endif
                                 </div>
                                 <p class="text-gray-400 text-xs mt-0.5">{{ $report->created_at->format('d M Y, H:i') }}</p>
+                                @if($report->partner)
+                                <div class="mt-2 bg-white border border-gray-100 rounded-lg p-2.5 shadow-sm">
+                                    <p class="text-xs font-semibold text-gray-800 flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                                        {{ $report->partner->partner_name }}
+                                    </p>
+                                    <div class="mt-1 space-y-0.5">
+                                        <p class="text-[11px] text-gray-500 flex items-center gap-1.5">
+                                            <span class="w-3.5 flex justify-center">📞</span> {{ $report->partner->phone ?? '-' }}
+                                        </p>
+                                        <p class="text-[11px] text-gray-500 flex items-center gap-1.5 line-clamp-1" title="{{ $report->partner->address }}">
+                                            <span class="w-3.5 flex justify-center">📍</span> {{ $report->partner->address ?? '-' }}
+                                        </p>
+                                    </div>
+                                </div>
+                                @endif
                             </div>
                             <div class="flex items-center gap-2 ml-3">
                                 <span class="text-xs font-semibold px-2.5 py-1 rounded-full {{ $s['bg'] }} {{ $s['text'] }} flex items-center gap-1.5 whitespace-nowrap">

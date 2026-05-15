@@ -14,6 +14,7 @@ class DashboardController extends Controller
         }
 
         $reports = Report::where('user_id', auth()->id())
+            ->with(['partner'])
             ->withCount('evidences')
             ->latest()
             ->get();

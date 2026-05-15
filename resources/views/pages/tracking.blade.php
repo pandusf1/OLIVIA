@@ -112,7 +112,18 @@
                     <div>
                         <p class="text-sm font-semibold text-gray-900">{{ $log->new_status }}</p>
                         <p class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($log->changed_at)->format('d/m/Y, H:i:s') }}</p>
-                        @if($log->new_status === 'Routed')<p class="text-xs text-gray-500">Diteruskan ke lbh</p>@endif
+                        @if($log->new_status === 'Routed')
+                            @if($report->partner)
+                                <div class="mt-2 bg-white border border-gray-100 rounded-lg p-3 shadow-sm inline-block min-w-full">
+                                    <p class="text-xs text-gray-500 mb-1">Diteruskan ke:</p>
+                                    <p class="text-sm font-semibold text-gray-800">{{ $report->partner->partner_name }}</p>
+                                    <p class="text-[11px] text-gray-500 mt-1 flex items-center gap-1.5"><span class="w-3.5 flex justify-center">📞</span> {{ $report->partner->phone ?? '-' }}</p>
+                                    <p class="text-[11px] text-gray-500 mt-0.5 flex items-start gap-1.5"><span class="w-3.5 flex justify-center mt-0.5">📍</span> <span class="flex-1">{{ $report->partner->address ?? '-' }}</span></p>
+                                </div>
+                            @else
+                                <p class="text-xs text-gray-500">Diteruskan ke partner</p>
+                            @endif
+                        @endif
                         @if($log->new_status === 'Submitted')<p class="text-xs text-gray-500">Laporan dikirim</p>@endif
                     </div>
                 </div>
