@@ -10,7 +10,12 @@
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
 
-    <?php $backUrl = auth()->check() ? route('dashboard') : '/'; $backLabel = auth()->check() ? 'Dashboard' : 'Beranda'; ?>
+    <?php
+        $backUrl = request()->headers->get('referer') ?: (auth()->check() ? route('dashboard') : '/');
+        $backLabel = 'Kembali';
+        $showBrand = false;
+    ?>
+
     <?php echo $__env->make('partials.nav-auth', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     

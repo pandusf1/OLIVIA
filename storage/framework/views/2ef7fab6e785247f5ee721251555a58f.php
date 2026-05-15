@@ -1,26 +1,29 @@
 <?php
-    $referer = request()->headers->get('referer');
-
     // show back only when we're inside dashboard flow (user/admin/partner)
     // and not on the initial dashboard page (/dashboard).
-    $isDashboardInitial = url()->current() === route('dashboard');
+    $isDashboardInitial = in_array(request()->route()?->getName(), ['dashboard', 'admin.index', 'partner.index']);
 
-    $resolvedBackUrl = (isset($backUrl) && $backUrl)
-        ? $backUrl
-        : ($referer && !$isDashboardInitial ? $referer : null);
+    // Default fallback to dashboard if opened directly (no history)
+    $fallbackUrl = auth()->check() ? route('dashboard') : url('/');
+
+    // If backUrl is provided explicitly (e.g., from controller/view), we use it as fallback.
+    // In many pages, $backUrl is assigned request()->headers->get('referer').
+    $resolvedFallbackUrl = (isset($backUrl) && $backUrl) ? $backUrl : $fallbackUrl;
 
     $resolvedBackLabel = $backLabel ?? 'Kembali';
-
-    // default behavior: keep brand on normal pages, but hide brand on dashboard pages
-    // when a backUrl/referer navigation is happening (dashboard user/admin/partner detail pages).
-    $hideBrand = (isset($showBrand) && $showBrand === false);
+    $hideBrand = !$isDashboardInitial;
+    
+    // Only show back button if not on initial dashboard
+    $showBackButton = !$isDashboardInitial;
 ?>
 
 <nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
         <div class="flex items-center gap-3">
-            <?php if($resolvedBackUrl): ?>
-                <a href="<?php echo e($resolvedBackUrl); ?>" class="text-gray-400 hover:text-gray-700 text-sm transition flex items-center gap-1">
+            <?php if($showBackButton): ?>
+                <a href="<?php echo e($resolvedFallbackUrl); ?>" 
+                   onclick="if(window.history.length > 1 && document.referrer.indexOf(window.location.host) !== -1) { history.back(); return false; }"
+                   class="text-gray-400 hover:text-gray-700 text-sm transition flex items-center gap-1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                     <?php echo e($resolvedBackLabel); ?>
 

@@ -123,7 +123,9 @@
                             </button>
                             <button type="button" id="btn-reload-location" aria-label="Reload lokasi" title="Reload lokasi"
                                 class="text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full transition">
-                                <img src="/reload.png" alt="Reload lokasi" class="w-4 h-4 object-cover rounded" onerror="this.style.display='none'">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                                </svg>
                             </button>
                         </div>
                     </div>
@@ -201,7 +203,7 @@
                             <h2 class="font-bold text-gray-900">Riwayat Laporan</h2>
                             <p class="text-gray-400 text-xs mt-0.5">{{ $totalReports }} laporan tercatat</p>
                         </div>
-                        <a href="/emergency" class="text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition">+ Buat Laporan</a>
+                        <a href="{{ route('report.create') }}" class="text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition">+ Buat Laporan</a>
                     </div>
 
                     @if($reports->count() > 0)
@@ -691,7 +693,7 @@
             reloadBtn.classList.add('opacity-70');
 
             // Saat loading: ikon disembunyikan, hanya tampilkan teks.
-            const imgEl = reloadBtn.querySelector('img');
+            const imgEl = reloadBtn.querySelector('svg');
             if(imgEl){ imgEl.style.display = 'none'; }
 
             let loadingSpan = document.getElementById('reload-loading-span');
@@ -810,7 +812,7 @@
                 if(loadingSpan){ loadingSpan.remove(); }
 
                 // Tampilkan kembali ikon.
-                const imgEl = reloadBtn.querySelector('img');
+                const imgEl = reloadBtn.querySelector('svg');
                 if(imgEl){ imgEl.style.display = ''; }
 
 

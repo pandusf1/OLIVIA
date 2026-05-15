@@ -38,6 +38,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    // Past Report (Laporan Biasa)
+    Route::get('/report/create', [\App\Http\Controllers\PastReportController::class, 'create'])->name('report.create');
+    Route::post('/report', [\App\Http\Controllers\PastReportController::class, 'store'])->name('report.store');
 
     // Password (dipakai di settings tab keamanan)
     Route::put('/password', [\App\Http\Controllers\Auth\PasswordController::class, 'update'])->name('password.update');
