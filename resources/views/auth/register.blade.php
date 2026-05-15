@@ -25,6 +25,14 @@
             <x-input-error :messages="$errors->get('email')" class="mt-1 text-red-500 text-xs" />
         </div>
         <div>
+            <label class="block text-gray-600 text-xs font-semibold mb-1.5 uppercase tracking-wider">Nomor WhatsApp (opsional)</label>
+            <input type="tel" name="phone" value="{{ old('phone') }}"
+                placeholder="628xxxxxxxxx"
+                class="w-full border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-3 text-sm focus:outline-none transition">
+            <x-input-error :messages="$errors->get('phone')" class="mt-1 text-red-500 text-xs" />
+            <p class="text-gray-400 text-xs mt-1">Format internasional tanpa + (contoh: 6281234567890)</p>
+        </div>
+        <div>
             <label class="block text-gray-600 text-xs font-semibold mb-1.5 uppercase tracking-wider">Password</label>
             <input type="password" name="password" required
                 class="w-full border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-3 text-sm focus:outline-none transition">

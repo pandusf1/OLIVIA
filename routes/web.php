@@ -61,8 +61,13 @@ Route::middleware('auth')->group(function () {
     // Pencarian di map (type + query)
     Route::get('/map-search', [\App\Http\Controllers\MapSearchController::class, 'search'])->name('map.search');
 
+    // Emergency markers untuk dashboard user terdekat
+    Route::get('/dashboard/emergency-markers', [\App\Http\Controllers\DashboardEmergencyMarkersController::class, 'index'])
+        ->name('dashboard.emergency.markers');
+
 
     // Pembayaran dummy
+
     Route::get('/pembayaran/partner/{partnerId}', [\App\Http\Controllers\PembayaranMockController::class, 'show'])->name('pembayaran.show');
     Route::post('/pembayaran', [\App\Http\Controllers\PembayaranMockController::class, 'pay'])->name('pembayaran.pay');
 

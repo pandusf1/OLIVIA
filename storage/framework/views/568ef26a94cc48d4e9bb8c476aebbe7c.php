@@ -167,9 +167,12 @@
                                     <div class="w-6 h-6 rounded-full border-2 border-red-200/80 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" style="animation-duration:2.2s"></div>
                                 </div>
 
-                                <div id="nearby-markers" class="absolute inset-0"></div>
+                            <div id="nearby-markers" class="absolute inset-0"></div>
 
-                                <div class="absolute left-3 bottom-3 flex items-center gap-2 text-[11px] text-gray-500">
+
+
+
+                            <div class="absolute left-3 bottom-3 flex items-center gap-2 text-[11px] text-gray-500">
                                     <span class="w-2 h-2 rounded-full bg-red-700"></span><span>Kamu</span>
                                     <span class="w-2 h-2 rounded-full bg-red-300"></span><span>Lokasi</span>
                                 </div>
@@ -759,6 +762,11 @@
                     type: mapTypeEl?.value || '',
                     query: mapQueryEl?.value || ''
                 });
+
+                // refresh emergency markers juga
+                if (window.__loadEmergencyMarkers) {
+                    await window.__loadEmergencyMarkers();
+                }
             }catch(e){
                 const msg = (e && e.message) ? e.message : String(e);
                 console.error('Reload lokasi gagal:', msg);
@@ -774,6 +782,11 @@
                     type: mapTypeEl?.value || '',
                     query: mapQueryEl?.value || ''
                 });
+
+                // refresh emergency markers juga
+                if (window.__loadEmergencyMarkers) {
+                    await window.__loadEmergencyMarkers();
+                }
             }finally{ 
                 reloadBtn.disabled = false;
                 reloadBtn.classList.remove('opacity-70');

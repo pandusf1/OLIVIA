@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class UserLocation extends Model
 {
-
     protected $table = 'user_locations';
 
     protected $fillable = [
@@ -19,5 +18,10 @@ class UserLocation extends Model
         'latitude' => 'float',
         'longitude' => 'float',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }
 
