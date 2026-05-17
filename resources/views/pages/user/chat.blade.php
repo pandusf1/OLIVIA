@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuraRa — Chat</title>
-    @vite('resources/css/app.css')
+    <title>Savora — Chat</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-[#faf9f7] text-gray-900 min-h-screen">
 @php
@@ -62,4 +62,5 @@
     </div>
 </body>
 </html>
+
 

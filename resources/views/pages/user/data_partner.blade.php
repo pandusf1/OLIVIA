@@ -3,8 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuraRa — Data Partner</title>
-    @vite('resources/css/app.css')
+    <title>Savora — Data Partner</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style> @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+        * { font-family: 'Space Grotesk', sans-serif; }
+        h1 { font-family: 'Space Grotesk', sans-serif !important; }
+        .font-unbounded { font-family: 'Space Grotesk', sans-serif !important; }
+    </style>
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
     @include('partials.nav-auth')
@@ -40,7 +45,7 @@
 
                 <div class="min-w-0">
                     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">INFORMASI DATA PARTNER</p>
-                    <p class="text-gray-900 font-black text-xl truncate">{{ $partner->partner_name }}</p>
+<p class="text-gray-900 font-bold text-xl truncate">{{ $partner->partner_name }}</p>
                     <p class="text-gray-500 text-sm mt-1">{{ $partner->partner_type }}</p>
                 </div>
             </div>
@@ -53,7 +58,7 @@
             @endphp
 
             <div>
-                <h2 class="font-bold text-gray-900 mb-6">Map & Informasi Partner</h2>
+                <h2 class="font-semibold text-gray-900 mb-6">Map & Informasi Partner</h2>
 
                 <div class="grid lg:grid-cols-12 gap-6 items-start">
                     {{-- Map (kiri) --}}
@@ -63,8 +68,6 @@
 
                             <div class="absolute inset-0 pointer-events-none" style="
                             background:
-
-
                                 radial-gradient(circle at 30% 25%, rgba(239,68,68,0.10) 0%, rgba(239,68,68,0.00) 55%),
                                 radial-gradient(circle at 70% 65%, rgba(239,68,68,0.08) 0%, rgba(239,68,68,0.00) 50%),
                                 repeating-linear-gradient(135deg, rgba(0,0,0,0.05) 0, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 14px),
@@ -141,11 +144,8 @@
                 </div>
             </div>
         </div>
+    </div>
 
-
-        {{-- Section 3: pricelist (khusus legal & counselor) --}}
-        <div class="bg-white border border-gray-200 rounded-2xl p-6">
-            <h2 class="font-bold text-gray-900 mb-4">Daftar Pricelist</h2>
 
             @php
                 $canShowPriceList = in_array($partner->partner_type, ['legal', 'counselor'], true);
@@ -153,25 +153,29 @@
 
             @if(!$canShowPriceList)
                 <div class="text-sm text-gray-500 bg-[#faf9f7] border border-gray-100 rounded-xl p-4">
-                    Pricelist hanya tersedia untuk <b>Psikolog</b> dan <b>Pengacara</b>.
                 </div>
             @else
+        {{-- Section 3: pricelist (khusus legal & counselor) --}}
+        <div class="bg-white border border-gray-200 rounded-2xl p-6">
+            <h2 class="font-semibold text-gray-900 mb-4">Daftar Pricelist</h2>
+            
                 @if($priceLists->count() === 0)
                     <div class="text-sm text-gray-500 bg-[#faf9f7] border border-gray-100 rounded-xl p-4">
                         Belum ada price list untuk partner ini.
                     </div>
                 @else
+                
                     <div class="space-y-3">
                         @foreach($priceLists as $pl)
                             <div class="flex items-start justify-between gap-4 bg-[#faf9f7] border border-gray-100 rounded-xl p-4">
                                 <div>
-                                    <p class="font-bold text-gray-900">{{ $pl->service_name }}</p>
+                                    <p class="font-semibold text-gray-900">{{ $pl->service_name }}</p>
                                     @if($pl->duration)
                                         <p class="text-xs text-gray-500 mt-1">Durasi: {{ $pl->duration }}</p>
                                     @endif
                                 </div>
                                 <div class="text-right shrink-0">
-                                    <p class="font-black text-gray-900">Rp {{ number_format($pl->price, 0, ',', '.') }}</p>
+                                    <p class="font-black text-gray-900 font-semibold">Rp {{ number_format($pl->price, 0, ',', '.') }}</p>
                                     <p class="text-xs text-gray-400 mt-1">{{ $pl->currency }}</p>
                                 </div>
                             </div>
@@ -181,7 +185,7 @@
             @endif
         </div>
 
-    </div>
 </body>
 </html>
+
 

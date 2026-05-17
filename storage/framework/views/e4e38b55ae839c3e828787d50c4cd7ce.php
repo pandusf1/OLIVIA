@@ -2,9 +2,9 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuraRa — Jadi Saksi</title>
-    <?php echo app('Illuminate\Foundation\Vite')('resources/css/app.css'); ?>
-    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');*{font-family:'Inter',sans-serif;}</style>
+    <title>Savora — Jadi Saksi</title>
+    <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
+    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');*{font-family:'Inter',sans-serif;} h1,.font-unbounded{font-family:'Space Grotesk',sans-serif!important;}</style>
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
     <?php
@@ -15,7 +15,7 @@
     <?php echo $__env->make('partials.nav-auth', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
     <div class="max-w-lg mx-auto px-6 py-12">
         <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">COMMUNITY WITNESS</p>
-        <h1 class="font-unbounded text-3xl font-black text-gray-900 mb-2">Bantu dengan buktimu.</h1>
+<h1 class="font-unbounded text-3xl font-semibold text-gray-900 mb-2">Bantu dengan buktimu.</h1>
         <p class="text-gray-500 text-sm mb-8">Upload bukti untuk laporan yang kamu saksikan. Bersifat rahasia — hanya bisa diakses korban dan mitra terverifikasi.</p>
 
         <?php if(session('success')): ?><div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl mb-6 text-sm">✓ <?php echo e(session('success')); ?></div><?php endif; ?>
@@ -61,4 +61,5 @@
     </div>
 </body>
 </html>
+
 <?php /**PATH D:\CODING\olivia_final\resources\views/pages/witness/index.blade.php ENDPATH**/ ?>

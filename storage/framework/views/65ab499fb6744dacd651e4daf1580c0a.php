@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuraRa — Suara & Perlindungan</title>
-    <?php echo app('Illuminate\Foundation\Vite')('resources/css/app.css'); ?>
+    <title>Savora — Suara & Perlindungan</title>
+    <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
         * { font-family: 'Inter', sans-serif; }
@@ -23,7 +23,7 @@
                     <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd"/></svg>
                 </div>
                 <div>
-                    <span class="font-bold text-gray-900 text-sm">SuraRa</span>
+                    <span class="font-bold text-gray-900 text-sm">Savora</span>
                     <span class="text-gray-400 text-xs ml-1 hidden sm:inline">SUARA & PERLINDUNGAN</span>
                 </div>
             </div>
@@ -48,7 +48,7 @@
                 <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4 fade-up d1">PLATFORM UNTUK INDONESIA · TAHAP AWAL: SEMARANG</p>
                 <h1 class="font-unbounded text-5xl md:text-6xl font-black text-gray-900 leading-tight mb-6 fade-up d2">
                     Saat dunia diam,<br>
-                    <span class="text-red-700">SuraRa</span> jadi suaramu.
+                    <span class="text-red-700">Savora</span> jadi suaramu.
                 </h1>
                 <p class="text-gray-500 text-lg leading-relaxed mb-8 fade-up d3">
                     Platform respons darurat sosial & hukum berbasis web. Kirim laporan, simpan bukti otomatis, dan terhubung ke LBH, ambulans, atau psikolog terverifikasi — bahkan tanpa akun.
@@ -61,7 +61,7 @@
                         Cara Kerja
                     </a>
                 </div>
-                <p class="text-gray-400 text-xs mt-4 fade-up d3">SuraRa adalah penghubung & pelindung bukti digital — bukan pengganti layanan darurat resmi pemerintah.</p>
+                <p class="text-gray-400 text-xs mt-4 fade-up d3">Savora adalah penghubung & pelindung bukti digital — bukan pengganti layanan darurat resmi pemerintah.</p>
             </div>
             <div class="hidden md:block">
                 <div class="bg-gray-900 rounded-2xl overflow-hidden aspect-video flex items-end p-6 relative">
@@ -78,13 +78,13 @@
     
     <section class="bg-white py-20 px-6">
         <div class="max-w-6xl mx-auto">
-            <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">MENGAPA SURARA</p>
+            <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-4">MENGAPA SAVORA</p>
             <h2 class="text-4xl font-black text-gray-900 mb-12">Tiga isu, satu platform.</h2>
             <div class="grid md:grid-cols-3 gap-6">
                 <?php $__currentLoopData = [
-                    ['⚖️','Salah tangkap & penyalahgunaan wewenang','Korban takut, bukti hilang, keluarga bingung. SuraRa mengamankan bukti & menghubungkan ke LBH terverifikasi.'],
+                    ['⚖️','Salah tangkap & penyalahgunaan wewenang','Korban takut, bukti hilang, keluarga bingung. Savora mengamankan bukti & menghubungkan ke LBH terverifikasi.'],
                     ['🛡️','Pelecehan & kekerasan','Mode anonim melindungi identitas. Hanya LBH terverifikasi yang akses. Psikolog tersedia via smart routing.'],
-                    ['🚑','Darurat publik','Kecelakaan, butuh ambulans cepat, warga sekitar tidak tahu kontak darurat. SuraRa routing otomatis.'],
+                    ['🚑','Darurat publik','Kecelakaan, butuh ambulans cepat, warga sekitar tidak tahu kontak darurat. Savora routing otomatis.'],
                 ]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as [$icon, $title, $desc]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                 <div class="border border-gray-200 rounded-2xl p-6 hover:border-gray-300 transition">
                     <p class="text-2xl mb-4"><?php echo e($icon); ?></p>
@@ -159,7 +159,7 @@
                 <div class="w-6 h-6 bg-red-700 rounded flex items-center justify-center">
                     <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944z" clip-rule="evenodd"/></svg>
                 </div>
-                <span class="font-bold text-gray-900 text-sm">SuraRa</span>
+                <span class="font-bold text-gray-900 text-sm">Savora</span>
                 <span class="text-gray-400 text-sm">— Suara & Perlindungan Rakyat</span>
             </div>
             <div class="flex gap-6 text-sm text-gray-500">
@@ -172,4 +172,5 @@
 
 </body>
 </html>
+
 <?php /**PATH D:\CODING\olivia_final\resources\views/welcome.blade.php ENDPATH**/ ?>

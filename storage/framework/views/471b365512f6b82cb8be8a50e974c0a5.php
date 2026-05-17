@@ -3,8 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuraRa — Data Partner</title>
-    <?php echo app('Illuminate\Foundation\Vite')('resources/css/app.css'); ?>
+    <title>Savora — Data Partner</title>
+    <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
+    <style> @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+        * { font-family: 'Space Grotesk', sans-serif; }
+        h1 { font-family: 'Space Grotesk', sans-serif !important; }
+        .font-unbounded { font-family: 'Space Grotesk', sans-serif !important; }
+    </style>
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
     <?php echo $__env->make('partials.nav-auth', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
@@ -41,7 +46,7 @@
 
                 <div class="min-w-0">
                     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">INFORMASI DATA PARTNER</p>
-                    <p class="text-gray-900 font-black text-xl truncate"><?php echo e($partner->partner_name); ?></p>
+<p class="text-gray-900 font-bold text-xl truncate"><?php echo e($partner->partner_name); ?></p>
                     <p class="text-gray-500 text-sm mt-1"><?php echo e($partner->partner_type); ?></p>
                 </div>
             </div>
@@ -54,7 +59,7 @@
             ?>
 
             <div>
-                <h2 class="font-bold text-gray-900 mb-6">Map & Informasi Partner</h2>
+                <h2 class="font-semibold text-gray-900 mb-6">Map & Informasi Partner</h2>
 
                 <div class="grid lg:grid-cols-12 gap-6 items-start">
                     
@@ -64,8 +69,6 @@
 
                             <div class="absolute inset-0 pointer-events-none" style="
                             background:
-
-
                                 radial-gradient(circle at 30% 25%, rgba(239,68,68,0.10) 0%, rgba(239,68,68,0.00) 55%),
                                 radial-gradient(circle at 70% 65%, rgba(239,68,68,0.08) 0%, rgba(239,68,68,0.00) 50%),
                                 repeating-linear-gradient(135deg, rgba(0,0,0,0.05) 0, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 14px),
@@ -143,11 +146,8 @@
                 </div>
             </div>
         </div>
+    </div>
 
-
-        
-        <div class="bg-white border border-gray-200 rounded-2xl p-6">
-            <h2 class="font-bold text-gray-900 mb-4">Daftar Pricelist</h2>
 
             <?php
                 $canShowPriceList = in_array($partner->partner_type, ['legal', 'counselor'], true);
@@ -155,25 +155,29 @@
 
             <?php if(!$canShowPriceList): ?>
                 <div class="text-sm text-gray-500 bg-[#faf9f7] border border-gray-100 rounded-xl p-4">
-                    Pricelist hanya tersedia untuk <b>Psikolog</b> dan <b>Pengacara</b>.
                 </div>
             <?php else: ?>
+        
+        <div class="bg-white border border-gray-200 rounded-2xl p-6">
+            <h2 class="font-semibold text-gray-900 mb-4">Daftar Pricelist</h2>
+            
                 <?php if($priceLists->count() === 0): ?>
                     <div class="text-sm text-gray-500 bg-[#faf9f7] border border-gray-100 rounded-xl p-4">
                         Belum ada price list untuk partner ini.
                     </div>
                 <?php else: ?>
+                
                     <div class="space-y-3">
                         <?php $__currentLoopData = $priceLists; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $pl): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <div class="flex items-start justify-between gap-4 bg-[#faf9f7] border border-gray-100 rounded-xl p-4">
                                 <div>
-                                    <p class="font-bold text-gray-900"><?php echo e($pl->service_name); ?></p>
+                                    <p class="font-semibold text-gray-900"><?php echo e($pl->service_name); ?></p>
                                     <?php if($pl->duration): ?>
                                         <p class="text-xs text-gray-500 mt-1">Durasi: <?php echo e($pl->duration); ?></p>
                                     <?php endif; ?>
                                 </div>
                                 <div class="text-right shrink-0">
-                                    <p class="font-black text-gray-900">Rp <?php echo e(number_format($pl->price, 0, ',', '.')); ?></p>
+                                    <p class="font-black text-gray-900 font-semibold">Rp <?php echo e(number_format($pl->price, 0, ',', '.')); ?></p>
                                     <p class="text-xs text-gray-400 mt-1"><?php echo e($pl->currency); ?></p>
                                 </div>
                             </div>
@@ -183,8 +187,8 @@
             <?php endif; ?>
         </div>
 
-    </div>
 </body>
 </html>
+
 
 <?php /**PATH D:\CODING\olivia_final\resources\views/pages/user/data_partner.blade.php ENDPATH**/ ?>

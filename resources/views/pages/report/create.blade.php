@@ -2,9 +2,13 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuraRa — Buat Laporan</title>
-    @vite('resources/css/app.css')
-    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');*{font-family:'Inter',sans-serif;}</style>
+    <title>Savora — Buat Laporan</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+        * { font-family: 'Space Grotesk', sans-serif; }
+        h1 { font-family: 'Space Grotesk', sans-serif !important; }
+        .font-unbounded { font-family: 'Space Grotesk', sans-serif !important; }
+    </style>
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
     @php
@@ -14,7 +18,7 @@
     @include('partials.nav-auth')
     <div class="max-w-lg mx-auto px-6 py-12">
         <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">LAPORAN BIASA</p>
-        <h1 class="font-unbounded text-3xl font-black text-gray-900 mb-2">Buat Laporan Baru</h1>
+        <h1 class="font-unbounded text-3xl font-bold text-gray-900 mb-2">Buat Laporan Baru</h1>
         <p class="text-gray-500 text-sm mb-8">Gunakan formulir ini untuk melaporkan kejadian yang sudah berlalu (bukan darurat). Kamu bisa menceritakan kronologi dan lokasi kejadian secara spesifik.</p>
 
         @if($errors->any())<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 text-sm">@foreach($errors->all() as $e)<p>• {{ $e }}</p>@endforeach</div>@endif

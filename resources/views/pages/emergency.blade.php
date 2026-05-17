@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>SuraRa — Darurat</title>
-    @vite('resources/css/app.css')
-    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');*{font-family:'Inter',sans-serif;} h1,.font-unbounded{font-family:\'Unbounded\',sans-serif!important;}</style>
+    <title>Savora — Darurat</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');*{font-family:'Inter',sans-serif;} h1,.font-unbounded{font-family:'Space Grotesk',sans-serif!important;}</style>
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
 
@@ -28,11 +28,11 @@
         {{-- Alert info --}}
         <div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-3 mb-8 text-sm">
             <span class="text-amber-500 mt-0.5">ⓘ</span>
-            <p class="text-amber-800">Untuk darurat jiwa: hubungi 112 (darurat nasional) atau 118 (ambulans). SuraRa bekerja paralel untuk menyimpan bukti & menghubungkan ke LBH/psikolog.</p>
+            <p class="text-amber-800">Untuk darurat jiwa: hubungi 112 (darurat nasional) atau 118 (ambulans). Savora bekerja paralel untuk menyimpan bukti & menghubungkan ke LBH/psikolog.</p>
         </div>
 
         <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">QUICK EMERGENCY</p>
-        <h1 class="font-unbounded text-4xl font-black text-gray-900 mb-2">Tarik nafas. Kami di sini.</h1>
+<h1 class="font-unbounded text-4xl font-bold text-gray-900 mb-2">Tarik nafas. Kami di sini.</h1>
         <p class="text-gray-500 mb-10">Tekan tombol di bawah. Kategori & lokasi akan diatur otomatis.</p>
 
         {{-- PHASE 1: PANIC BUTTON --}}
@@ -40,7 +40,7 @@
             <button onclick="startCountdown()"
                 class="w-full bg-red-700 hover:bg-red-800 text-white py-6 rounded-2xl font-black text-xl tracking-wide transition flex items-center justify-center gap-3 mb-8">
                 <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-                TEKAN UNTUK BANTUAN
+                <p class="font-unbounded">TEKAN UNTUK BANTUAN</p>
             </button>
 
             {{-- Other options --}}
@@ -82,7 +82,7 @@
                     <div class="w-2 h-2 bg-red-700 rounded-full animate-pulse"></div>
                     <p class="text-red-700 text-xs font-semibold uppercase tracking-widest">Laporan Aktif</p>
                 </div>
-                <h2 class="font-black text-xl text-gray-900 mb-1">Apa yang terjadi?</h2>
+<h2 class="font-semibold text-xl text-gray-900 mb-1">Apa yang terjadi?</h2>
                 <p class="text-gray-400 text-sm mb-5">Pilih kategori. Lokasi sudah terekam otomatis.</p>
                 <form id="emergencyForm" action="/emergency" method="POST">
                     @csrf
@@ -317,7 +317,7 @@ form.addEventListener('submit', async function(e) {
     if (!navigator.onLine) {
 
         localStorage.setItem(
-            'surara_pending_report',
+            'savora_pending_report',
             JSON.stringify(formData)
         );
 
@@ -363,7 +363,7 @@ form.addEventListener('submit', async function(e) {
     } catch (err) {
 
         localStorage.setItem(
-            'surara_pending_report',
+            'savora_pending_report',
             JSON.stringify(formData)
         );
 
@@ -397,7 +397,7 @@ window.addEventListener('online', async () => {
         return;
     }
 
-    const pending = localStorage.getItem('surara_pending_report');
+    const pending = localStorage.getItem('savora_pending_report');
 
     if (!pending) return;
 
@@ -421,7 +421,7 @@ window.addEventListener('online', async () => {
 
         if (response.ok) {
 
-            localStorage.removeItem('surara_pending_report');
+            localStorage.removeItem('savora_pending_report');
 
             // sembunyikan badge
             document.getElementById('offline-badge')
@@ -464,7 +464,7 @@ async function isInternetReachable() {
 }
 
 // CHECK PENDING REPORT SAAT PAGE LOAD
-if (localStorage.getItem('surara_pending_report')) {
+if (localStorage.getItem('savora_pending_report')) {
 
     document.getElementById('offline-badge')
         .classList.remove('hidden');
@@ -474,3 +474,4 @@ if (localStorage.getItem('surara_pending_report')) {
 </script>
 </body>
 </html>
+

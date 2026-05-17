@@ -1,5 +1,5 @@
 <x-guest-layout>
-    <h1 class="font-unbounded text-xl font-black text-gray-900 mb-1">Masuk ke SuraRa</h1>
+    <h1 class="font-unbounded text-xl font-black text-gray-900 mb-1">Masuk ke Savora</h1>
     <p class="text-gray-400 text-sm mb-6">Akses dashboard dan laporanmu.</p>
 
     <x-auth-session-status class="mb-4 bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded-lg text-sm" :status="session('status')" />

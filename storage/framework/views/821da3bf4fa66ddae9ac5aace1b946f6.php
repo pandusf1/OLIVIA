@@ -45,22 +45,14 @@
                 a.style.top = `${yPct}%`;
 
                 a.innerHTML = `
-                    <div class="relative">
-                        <div class="w-3.5 h-3.5 rounded-full border-2 border-white shadow-md shadow-red-200 ${c.dot} ${c.ring}"></div>
-                        <div class="absolute -top-2 left-1/2 -translate-x-1/2 hidden group-hover:block">
-                            <div class="text-[11px] bg-white/95 border border-gray-100 rounded-lg px-2 py-1 shadow text-gray-700 whitespace-nowrap">
-                                <div class="font-semibold mb-1">${m.category}</div>
-                                ${m.partner ? `
-                                  <div class="text-[11px] text-gray-700 mb-1">${String(m.partner.partner_name||'').replace(/</g,'<')}</div>
-                                  <div class="text-[11px] text-gray-600">📞 ${m.partner.phone || '-'}</div>
-                                  <div class="mt-2">
-                                    <img src="${m.partner.image_url || ''}" alt="${String(m.partner.partner_name||'') }" class="w-12 h-12 rounded border border-gray-100 object-cover"/>
-                                  </div>
-                                  <div class="mt-2 text-[11px] text-gray-500">${m.partner.address || '-'}</div>
-                                ` : ''}
-                                <div class="text-gray-500">${m.status}</div>
-                                <div class="text-gray-400">${Number(m.distance_km).toFixed(2)} km</div>
-
+                    <div class="relative cursor-pointer">
+                        <div class="w-4 h-4 rounded-full border-2 border-white shadow-lg animate-pulse ${c.dot} ${c.ring}"></div>
+                        <div class="absolute -top-3 left-1/2 -translate-x-1/2 hidden group-hover:block z-[9999]">
+                            <div class="text-[11px] bg-red-900 border border-red-700 rounded-lg px-3 py-2 shadow-2xl text-white whitespace-nowrap">
+                                <div class="font-bold text-red-100 flex items-center gap-1.5 mb-1"><span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> DARURAT</div>
+                                <div class="font-semibold text-sm">${m.victim_name || 'Anonim'}</div>
+                                <div class="text-red-200 mt-0.5">${m.category}</div>
+                                <div class="text-red-300/80 mt-1">${Number(m.distance_km).toFixed(2)} km dari kamu</div>
                             </div>
                         </div>
                     </div>
@@ -81,3 +73,4 @@
 })();
 </script>
 
+<?php /**PATH D:\CODING\olivia_final\resources\views/partials/emergency-markers-js.blade.php ENDPATH**/ ?>

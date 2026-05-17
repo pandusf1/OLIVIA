@@ -78,8 +78,28 @@ class MapSearchController extends Controller
         ->sortBy('distance_km')
         ->values();
 
+        // Get active emergency reports with locations
+        $activeReports = \App\Models\Report::with('user')
+            ->where('status', '!=', 'Resolved')
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->get()
+            ->map(function ($report) use ($lat, $lng) {
+                return [
+                    'id' => $report->id,
+                    'category' => $report->category,
+                    'latitude' => $report->latitude,
+                    'longitude' => $report->longitude,
+                    'victim_name' => $report->anonymous ? 'Anonim' : ($report->user->name ?? 'Anonim'),
+                    'distance_km' => round($this->haversineKm($lat, $lng, (float) $report->latitude, (float) $report->longitude), 2),
+                ];
+            })
+            ->sortBy('distance_km')
+            ->values();
+
         return response()->json([
             'data' => $partnersWithDistance,
+            'emergencies' => $activeReports,
         ]);
     }
 

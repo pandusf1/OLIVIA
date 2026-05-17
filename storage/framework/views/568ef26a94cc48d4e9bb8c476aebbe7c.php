@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuraRa — Dashboard</title>
-    <?php echo app('Illuminate\Foundation\Vite')('resources/css/app.css'); ?>
+    <title>Savora — Dashboard</title>
+    <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -36,87 +36,60 @@
         </div>
         <?php endif; ?>
 
+
         
-        <div class="mb-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-            <div>
-                <p class="text-xs font-semibold uppercase tracking-widest text-red-600 mb-2">
-                    Selamat datang kembali
-                </p>
-                <h1 class="font-unbounded text-3xl font-black text-gray-900 leading-tight">
-                    <?php echo e(auth()->user()->name); ?>
+        <div class="flex justify-center mb-10 mt-6 fade-in">
+            <div class="relative flex flex-col items-center">
+                
+                <div class="absolute inset-0 bg-red-100 rounded-full scale-[1.3] opacity-60 panic-pulse pointer-events-none"></div>
+                <div class="absolute inset-0 bg-red-200 rounded-full scale-[1.15] opacity-80 pointer-events-none"></div>
 
-                </h1>
-                <p class="text-gray-500 text-sm mt-1">
-                    <?php echo e(now()->isoFormat('dddd, D MMMM Y')); ?>
+                <button onclick="startPanic()" id="panic-btn" class="relative z-10 w-52 h-52 sm:w-64 sm:h-64 bg-red-700 hover:bg-red-800 text-white rounded-full flex flex-col items-center justify-center shadow-[0_0_50px_rgba(185,28,28,0.4)] transition-transform active:scale-95">
+                    <svg class="w-16 h-16 sm:w-20 sm:h-20 mb-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                    <span class="font-unbounded text-sm sm:text-base text-red-100 font-bold mt-2 tracking-widest">DARURAT</span>
+                </button>
 
-                </p>
+                
+                <div id="countdown-area" class="hidden relative z-20 w-52 h-52 sm:w-64 sm:h-64 bg-white rounded-full flex flex-col items-center justify-center shadow-2xl border-[6px] border-red-700">
+                    <p class="text-[10px] sm:text-xs text-gray-500 font-bold uppercase tracking-widest mb-1">MENGIRIM DALAM</p>
+                    <p id="cd-num" class="text-7xl sm:text-8xl font-black text-red-700 font-unbounded leading-none mb-1">5</p>
+                    <div class="w-2/3 bg-gray-100 rounded-full h-2 mb-4 overflow-hidden">
+                        <div id="cd-bar" class="bg-red-700 h-2 rounded-full transition-all duration-1000" style="width:100%"></div>
+                    </div>
+                    <button onclick="cancelPanic()" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-2 rounded-full font-bold text-xs uppercase transition shadow-sm border border-gray-200">BATAL</button>
+                    <div id="cd-category" class="hidden"></div>
+                </div>
             </div>
-            
-            <a href="/emergency" class="inline-flex items-center gap-2 bg-red-700 hover:bg-red-800 text-white px-5 py-2.5 rounded-full font-semibold text-sm transition shadow-md shadow-red-200 self-start sm:self-auto">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-                Laporan Darurat
-            </a>
         </div>
 
-        
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <?php
-            $stats = [
-                ['label'=>'Total Laporan',  'value'=>$totalReports,    'color'=>'bg-[#f0ede8] border border-[#e2ddd6]', 'text'=>'text-gray-800', 'sub'=>'semua waktu'],
-                ['label'=>'Aktif',          'value'=>$activeReports,   'color'=>'bg-[#fef3ec] border border-[#fddec4]', 'text'=>'text-orange-800','sub'=>'sedang diproses'],
-                ['label'=>'Selesai',        'value'=>$resolvedReports, 'color'=>'bg-[#edf7f0] border border-[#c6e8d0]', 'text'=>'text-green-800', 'sub'=>'sudah resolved'],
-                ['label'=>'Barang Bukti',   'value'=>$totalEvidences,  'color'=>'bg-[#eef3fd] border border-[#c9d9f8]', 'text'=>'text-blue-800',  'sub'=>'file terupload'],
-            ];
-            ?>
-            <?php $__currentLoopData = $stats; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $s): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-            <div class="rounded-2xl p-5 <?php echo e($s['color']); ?> <?php echo e($s['text']); ?>">
-                <p class="text-4xl font-unbounded font-black leading-none mb-2"><?php echo e($s['value']); ?></p>
-                <p class="font-semibold text-sm opacity-90"><?php echo e($s['label']); ?></p>
-                <p class="text-xs opacity-50 mt-0.5"><?php echo e($s['sub']); ?></p>
-            </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 fade-in">
+            <?php $__currentLoopData = [
+                [route('trusted-contact.index'), '👤', 'Kontak Darurat', 'Orang terpercaya', 'bg-blue-50'],
+                ['/evidence',                   '🗂️', 'Galeri Bukti',  'Aman tersimpan', 'bg-purple-50'],
+                ['/emergency',                  '📄', 'Arsip Laporan', 'Status & Riwayat', 'bg-orange-50'],
+                ['/witness',                    '🛡️', 'Mode Saksi',    'Bantu korban', 'bg-green-50'],
+            ]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as [$url, $icon, $title, $sub, $bg]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <a href="<?php echo e($url); ?>" class="bg-white border border-gray-100 hover:border-gray-200 rounded-2xl p-4 flex flex-col items-center text-center transition group shadow-sm active:scale-95">
+                <div class="w-12 h-12 <?php echo e($bg); ?> rounded-full flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition-transform">
+                    <?php echo e($icon); ?>
+
+                </div>
+                <p class="font-bold text-gray-900 text-sm mb-0.5"><?php echo e($title); ?></p>
+                <p class="text-[11px] text-gray-500"><?php echo e($sub); ?></p>
+            </a>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </div>
 
-        <div class="grid lg:grid-cols-3 gap-6">
+        <div class="grid lg:grid-cols-2 gap-6 fade-in">
 
             
-            <div class="lg:col-span-2 space-y-6">
-                                
-                <div class="bg-white border border-gray-200 rounded-2xl p-6 relative overflow-hidden">
-                    
-                    <div class="absolute right-0 top-0 w-40 h-40 bg-red-50 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-
-                    <div class="flex items-center gap-2 mb-1">
-                        <div class="w-2 h-2 rounded-full bg-red-600 animate-pulse"></div>
-                        <p class="text-xs font-semibold uppercase tracking-widest text-red-600">Tombol Darurat</p>
-                    </div>
-                    <p class="text-gray-400 text-xs mb-4">Tekan untuk mengirim sinyal bantuan dan lokasi kamu.</p>
-
-                    <button onclick="startPanic()"
-                        id="panic-btn"
-                        class="panicdashboard:574 Reload lokasi gagal: Cannot read properties of null (reading 'getAttribute')
-(anonymous)	@	dashboard:574-pulse w-full bg-red-700 hover:bg-red-800 text-white py-5 rounded-xl font-bold text-base tracking-wide transition flex items-center justify-center gap-3 relative z-10">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-                        TEKAN UNTUK BANTUAN
-                    </button>
-
-                    
-                    <div id="countdown-area" class="hidden mt-4">
-                        <p class="text-xs text-gray-400 text-center uppercase tracking-wider mb-2">MENGIRIM DALAM</p>
-                        <p id="cd-num" class="text-6xl font-black text-red-700 text-center font-unbounded">5</p>
-                        <div class="w-full bg-gray-100 rounded-full h-1.5 my-3 overflow-hidden">
-                            <div id="cd-bar" class="bg-red-700 h-1.5 rounded-full transition-all duration-1000" style="width:100%"></div>
-                        </div>
-                        <div id="cd-category" class="text-center text-gray-400 text-xs mb-3"></div>
-                        <button onclick="cancelPanic()" class="w-full border border-gray-300 hover:border-gray-400 text-gray-700 py-3 rounded-xl font-semibold text-sm transition">BATAL</button>
-                    </div>
-                </div>
+            <div class="space-y-6">
 
                 
                 <div class="bg-white border border-gray-200 rounded-2xl p-6">
                         <div class="flex items-center justify-between mb-4">
                         <div>
-                            <h2 class="font-bold text-gray-900">Partner Terdekat</h2>
+<h2 class="font-semibold text-gray-900">Partner Terdekat</h2>
                             <p class="text-gray-400 text-xs mt-0.5">Urut berdasarkan jarak dari lokasi kamu.</p>
                         </div>
                         <div class="flex items-center gap-2">
@@ -194,16 +167,23 @@
                                 <div class="text-sm text-gray-400">Memuat partner terdekat...</div>
                             </div>
 
+                            <button type="button" onclick="openAllPartnersModal()" class="w-full mt-3 sm:hidden text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 py-2.5 rounded-xl transition border border-gray-100 text-center block">
+                                Lihat Semua Partner
+                            </button>
+
                         </div>
                     </div>
 
                 </div>
+            </div>
 
+            
+            <div class="space-y-6">
                 
                 <div class="bg-white border border-gray-200 rounded-2xl p-6">
                     <div class="flex items-center justify-between mb-5">
                         <div>
-                            <h2 class="font-bold text-gray-900">Riwayat Laporan</h2>
+<h2 class="font-semibold text-gray-900">Riwayat Laporan</h2>
                             <p class="text-gray-400 text-xs mt-0.5"><?php echo e($totalReports); ?> laporan tercatat</p>
                         </div>
                         <a href="<?php echo e(route('report.create')); ?>" class="text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition">+ Buat Laporan</a>
@@ -234,20 +214,20 @@
                                     <?php endif; ?>
                                 </div>
                                 <p class="text-gray-400 text-xs mt-0.5"><?php echo e($report->created_at->format('d M Y, H:i')); ?></p>
-                                <?php if($report->assignedPartner): ?>
+                                <?php if($report->partner): ?>
                                 <div class="mt-2 bg-white border border-gray-100 rounded-lg p-2.5 shadow-sm">
                                     <p class="text-xs font-semibold text-gray-800 flex items-center gap-1">
                                         <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                                        <?php echo e($report->assignedPartner->partner_name); ?>
+                                        <?php echo e($report->partner->partner_name); ?>
 
                                     </p>
                                     <div class="mt-1 space-y-0.5">
                                         <p class="text-[11px] text-gray-500 flex items-center gap-1.5">
-                                            <span class="w-3.5 flex justify-center">📞</span> <?php echo e($report->assignedPartner->phone ?? '-'); ?>
+                                            <span class="w-3.5 flex justify-center">📞</span> <?php echo e($report->partner->phone ?? '-'); ?>
 
                                         </p>
-                                        <p class="text-[11px] text-gray-500 flex items-center gap-1.5 line-clamp-1" title="<?php echo e($report->assignedPartner->address); ?>">
-                                            <span class="w-3.5 flex justify-center">📍</span> <?php echo e($report->assignedPartner->address ?? '-'); ?>
+                                        <p class="text-[11px] text-gray-500 flex items-center gap-1.5 line-clamp-1" title="<?php echo e($report->partner->address); ?>">
+                                            <span class="w-3.5 flex justify-center">📍</span> <?php echo e($report->partner->address ?? '-'); ?>
 
                                         </p>
                                     </div>
@@ -277,80 +257,6 @@
                         </div>
                         <p class="text-gray-400 text-sm font-medium">Belum ada laporan</p>
                         <p class="text-gray-300 text-xs mt-1">Laporan kamu akan muncul di sini</p>
-                    </div>
-                    <?php endif; ?>
-                </div>
-
-            </div>
-
-            
-            <div class="space-y-4">
-
-                
-                <div class="bg-white border border-gray-200 rounded-2xl p-5">
-                    <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Menu Cepat</p>
-                    <div class="space-y-1">
-                        <?php $__currentLoopData = [
-                            [route('trusted-contact.index'), '👤', 'Trusted Contact',   'Kelola kontak terpercaya'],
-                            ['/evidence',                   '🗂️', 'Evidence Locker',    'Galeri bukti kamu'],
-                            ['/emergency',                  '📄', 'Laporan Detail',     'Arsip / kejadian lama'],
-                            ['/witness',                    '🛡️', 'Mode Saksi',         'Bantu laporan orang lain'],
-                        ]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as [$url, $icon, $title, $sub]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        <a href="<?php echo e($url); ?>" class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-50 transition group">
-                            <div class="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center text-base group-hover:bg-gray-200 transition shrink-0"><?php echo e($icon); ?></div>
-                            <div class="min-w-0">
-                                <p class="font-semibold text-gray-900 text-sm"><?php echo e($title); ?></p>
-                                <p class="text-gray-400 text-xs"><?php echo e($sub); ?></p>
-                            </div>
-                            <svg class="w-4 h-4 text-gray-200 group-hover:text-gray-400 transition ml-auto shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-                        </a>
-                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                    </div>
-                </div>
-
-                
-                <div class="bg-white border border-gray-200 rounded-2xl p-5">
-                    <div class="flex items-center gap-2 mb-4">
-                        <div class="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center text-sm">📞</div>
-                        <div>
-                            <p class="font-bold text-gray-900 text-sm">Kontak Terpercaya</p>
-                            <p class="text-gray-400 text-xs">Dihubungi saat darurat</p>
-                        </div>
-                    </div>
-
-                    <form action="/trusted-contact" method="POST" class="space-y-2 mb-4">
-                        <?php echo csrf_field(); ?>
-                        <input type="text" name="contact_name" placeholder="Nama..." class="w-full border border-gray-200 focus:border-gray-400 rounded-lg px-3 py-2 text-sm focus:outline-none transition bg-gray-50 focus:bg-white" required>
-                        <input type="text" name="contact_phone" placeholder="628xxxxxxxxx" class="w-full border border-gray-200 focus:border-gray-400 rounded-lg px-3 py-2 text-sm focus:outline-none transition bg-gray-50 focus:bg-white" required>
-                        <button class="w-full bg-gray-900 hover:bg-gray-700 text-white py-2.5 rounded-lg font-semibold text-sm transition">+ Tambah Kontak</button>
-                    </form>
-
-                    <?php if(auth()->user()->trustedContacts->count() > 0): ?>
-                    <div class="space-y-1.5 border-t border-gray-100 pt-3">
-                        <?php $__currentLoopData = auth()->user()->trustedContacts; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $c): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        <div class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2.5">
-                            <div class="flex items-center gap-2.5 min-w-0">
-                                <div class="w-7 h-7 bg-green-600 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
-                                    <?php echo e(strtoupper(substr($c->contact_name, 0, 1))); ?>
-
-                                </div>
-                                <div class="min-w-0">
-                                    <p class="text-sm font-medium text-gray-900 truncate"><?php echo e($c->contact_name); ?></p>
-                                    <p class="text-xs text-gray-400"><?php echo e($c->contact_phone); ?></p>
-                                </div>
-                            </div>
-                            <form action="/trusted-contact/<?php echo e($c->id); ?>" method="POST">
-                                <?php echo csrf_field(); ?> <?php echo method_field('DELETE'); ?>
-                                <button class="text-gray-300 hover:text-red-500 transition p-1 ml-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                </button>
-                            </form>
-                        </div>
-                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                    </div>
-                    <?php else: ?>
-                    <div class="text-center py-4">
-                        <p class="text-gray-300 text-xs">Belum ada kontak terpercaya.</p>
                     </div>
                     <?php endif; ?>
                 </div>
@@ -407,13 +313,14 @@
             </div>
             <h2 class="font-black text-xl text-gray-900 mb-1 font-unbounded">Apa yang terjadi?</h2>
             <p class="text-gray-400 text-sm mb-5">Pilih kategori. Lokasi sudah terekam otomatis.</p>
-            <form action="/emergency" method="POST">
+            <form id="emergency-form" action="/emergency" method="POST">
                 <?php echo csrf_field(); ?>
                 <input type="hidden" name="latitude" id="f-lat">
                 <input type="hidden" name="longitude" id="f-lng">
+                <input type="hidden" name="category" id="fallback-category" value="Darurat" disabled>
                 <div class="grid grid-cols-2 gap-2 mb-4">
                     <?php $__currentLoopData = [['Salah Tangkap','⚖️'],['Pelecehan','🛡️'],['Kekerasan','👊'],['Kecelakaan','🚑']]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as [$val,$icon]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                    <label class="cursor-pointer">
+                    <label class="cursor-pointer" onclick="document.getElementById('fallback-category').disabled=true;">
                         <input type="radio" name="category" value="<?php echo e($val); ?>" class="peer hidden" required>
                         <div class="peer-checked:bg-red-50 peer-checked:border-red-400 border-2 border-gray-100 rounded-xl p-3 text-center hover:border-gray-200 transition">
                             <p class="text-2xl mb-1"><?php echo e($icon); ?></p>
@@ -434,6 +341,7 @@
                     <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
                     Mengambil lokasi GPS...
                 </div>
+                <p id="auto-submit-info" class="text-xs text-red-600 font-bold text-center mb-3 hidden">Laporan akan otomatis terkirim dalam <span id="auto-submit-cd">30</span> detik.</p>
                 <button type="submit" class="w-full bg-red-700 hover:bg-red-800 text-white py-4 rounded-xl font-black text-base transition">🚨 KIRIM LAPORAN DARURAT</button>
             </form>
             <button onclick="closeCatModal()" class="w-full mt-2 text-gray-400 hover:text-gray-600 text-sm py-2 transition">Batalkan</button>
@@ -780,17 +688,9 @@
                     throw new Error('HTTP ' + res.status + ' body=' + JSON.stringify(reloadJson));
                 }
 
-                // Pastikan lokasi benar-benar tersimpan dengan cara mencoba load partner.
-                // Jika map-search mengeluh lokasi belum tersedia, berarti relasi userLocation yang dipakai MapSearch belum terbentuk.
-                const quickCheckRes = await fetch(`/map-search?type=&query=`, { headers: { 'Accept':'application/json' } });
-                let quickCheckJson = null;
-                try { quickCheckJson = await quickCheckRes.json(); } catch(e) { quickCheckJson = { parse_error: String(e) }; }
-                console.log('quickCheck map-search after reload', { ok: quickCheckRes.ok, json: quickCheckJson });
+                // Setelah lokasi tersimpan di backend, langsung reload partner & marker.
+                // Menghapus quickCheck `/map-search` supaya 1 klik tidak melakukan request tambahan.
 
-                if(!quickCheckRes.ok || (quickCheckJson && quickCheckJson.error)){
-                    const msg = quickCheckJson && quickCheckJson.error ? quickCheckJson.error : 'Lokasi tidak tersimpan / belum terbaca oleh map-search.';
-                    throw new Error(msg);
-                }
 
 
 
@@ -851,6 +751,8 @@
 
 
 
+    let autoSubmitInterval = null;
+
     function startPanic(){
         document.getElementById('panic-btn').classList.add('hidden');
         document.getElementById('countdown-area').classList.remove('hidden');
@@ -862,10 +764,44 @@
         },1000);
     }
     function cancelPanic(){clearInterval(cdInterval);document.getElementById('countdown-area').classList.add('hidden');document.getElementById('panic-btn').classList.remove('hidden');}
-    function openCatModal(){document.getElementById('cat-modal').classList.remove('hidden');document.body.style.overflow='hidden';}
-    function closeCatModal(){document.getElementById('cat-modal').classList.add('hidden');document.body.style.overflow='';}
+    function openCatModal(){
+        document.getElementById('cat-modal').classList.remove('hidden');
+        document.body.style.overflow='hidden';
+        
+        let cd = 30;
+        document.getElementById('auto-submit-info').classList.remove('hidden');
+        document.getElementById('auto-submit-cd').textContent = cd;
+        autoSubmitInterval = setInterval(() => {
+            cd--;
+            document.getElementById('auto-submit-cd').textContent = cd;
+            if (cd <= 0) {
+                clearInterval(autoSubmitInterval);
+                const form = document.getElementById('emergency-form');
+                const radios = form.querySelectorAll('input[name="category"]');
+                let checked = false;
+                radios.forEach(r => { 
+                    if(r.checked) checked = true; 
+                    r.required = false; // Remove required to avoid HTML5 validation blocking
+                });
+                if (!checked) {
+                    document.getElementById('fallback-category').disabled = false;
+                    document.getElementById('fallback-category').value = 'Darurat';
+                }
+                // Use standard HTMLFormElement submit to bypass any lingering event listeners
+                HTMLFormElement.prototype.submit.call(form);
+            }
+        }, 1000);
+    }
+    function closeCatModal(){
+        document.getElementById('cat-modal').classList.add('hidden');
+        document.body.style.overflow='';
+        if (autoSubmitInterval) clearInterval(autoSubmitInterval);
+    }
     document.getElementById('cat-modal').addEventListener('click',function(e){if(e.target===this)closeCatModal();});
     </script>
+    
+    <?php echo $__env->make('partials.emergency-markers-js', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 </body>
 </html>
+
 <?php /**PATH D:\CODING\olivia_final\resources\views/dashboard.blade.php ENDPATH**/ ?>

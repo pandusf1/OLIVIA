@@ -5,7 +5,7 @@
                 <svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944z" clip-rule="evenodd"/></svg>
             </div>
             <div>
-                <span class="font-bold text-gray-900 text-sm">SuraRa</span>
+                <span class="font-bold text-gray-900 text-sm">Savora</span>
                 <span class="text-gray-400 text-xs ml-1">SUARA & PERLINDUNGAN</span>
             </div>
         </div>
@@ -14,13 +14,33 @@
             <a href="/witness" class="text-gray-500 hover:text-gray-900 text-sm transition hidden md:block">Saksi</a>
             <a href="/emergency" class="text-gray-500 hover:text-gray-900 text-sm transition hidden md:block">Darurat</a>
             @auth
-            <span class="text-gray-900 text-sm font-medium">{{ auth()->user()->name }}</span>
-            <form method="POST" action="{{ route('logout') }}">@csrf
-                <button class="text-gray-400 hover:text-gray-700 text-sm transition flex items-center gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                    Keluar
-                </button>
-            </form>
+            <div class="flex items-center">
+                <x-dropdown align="right" width="48">
+                    <x-slot name="trigger">
+                        <button class="flex items-center text-gray-900 text-sm font-medium hover:text-red-700 transition gap-1 focus:outline-none">
+                            {{ auth()->user()->name }}
+                            <svg class="fill-current h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </x-slot>
+
+                    <x-slot name="content">
+                        <x-dropdown-link href="/settings">
+                            Pengaturan
+                        </x-dropdown-link>
+
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <x-dropdown-link :href="route('logout')"
+                                    onclick="event.preventDefault();
+                                                this.closest('form').submit();">
+                                Keluar
+                            </x-dropdown-link>
+                        </form>
+                    </x-slot>
+                </x-dropdown>
+            </div>
             @else
             <a href="{{ route('login') }}" class="text-gray-600 hover:text-gray-900 text-sm transition">Masuk</a>
             <a href="{{ route('register') }}" class="bg-gray-900 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded-lg font-semibold transition">Daftar</a>

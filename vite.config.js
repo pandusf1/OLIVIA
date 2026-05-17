@@ -29,8 +29,8 @@ export default defineConfig({
 
             manifest: {
 
-                name: 'SuraRa',
-                short_name: 'SuraRa',
+                name: 'Savora',
+                short_name: 'Savora',
 
                 description:
                     'Platform bantuan darurat hukum & keselamatan',

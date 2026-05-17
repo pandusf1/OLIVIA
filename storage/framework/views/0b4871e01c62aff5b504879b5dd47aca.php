@@ -8,7 +8,7 @@
 <?php $attributes = $attributes->except(\App\View\Components\GuestLayout::ignoredParameterNames()); ?>
 <?php endif; ?>
 <?php $component->withAttributes([]); ?>
-    <h1 class="font-unbounded text-xl font-black text-gray-900 mb-1">Masuk ke SuraRa</h1>
+    <h1 class="font-unbounded text-xl font-black text-gray-900 mb-1">Masuk ke Savora</h1>
     <p class="text-gray-400 text-sm mb-6">Akses dashboard dan laporanmu.</p>
 
     <?php if (isset($component)) { $__componentOriginal7c1bf3a9346f208f66ee83b06b607fb5 = $component; } ?>

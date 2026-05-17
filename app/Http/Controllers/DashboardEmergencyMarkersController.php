@@ -21,26 +21,25 @@ class DashboardEmergencyMarkersController extends Controller
         // Laporan emergency yang active dan ditujukan ke user login
         $activeStatuses = ['Submitted', 'Routed', 'Viewed', 'In Progress'];
 
-        $markers = \App\Models\ReportUserRouting::query()
-            ->where('target_user_id', $user->id)
-            ->whereHas('report', function ($q) use ($activeStatuses) {
-                $q->whereIn('status', $activeStatuses)
-                    ->whereNotNull('latitude')
-                    ->whereNotNull('longitude');
-            })
-            ->with(['report'])
+        $markers = \App\Models\Report::query()
+            ->whereIn('status', $activeStatuses)
+            ->where('user_id', '!=', $user->id)
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->with(['user'])
             ->get()
-            ->map(function ($routing) use ($lat, $lng) {
-                $r = $routing->report;
-                $distanceKm = 0;
+            ->map(function ($r) use ($lat, $lng) {
+                $distanceKm = $this->haversineKm($lat, $lng, (float) $r->latitude, (float) $r->longitude);
 
-                if ($r && $r->latitude !== null && $r->longitude !== null) {
-                    $distanceKm = $this->haversineKm($lat, $lng, (float) $r->latitude, (float) $r->longitude);
+                $victimName = 'Anonim';
+                if ($r->user && !$r->anonymous) {
+                    $victimName = $r->user->name;
                 }
 
                 return [
                     'id' => $r->id,
                     'category' => $r->category,
+                    'victim_name' => $victimName,
                     'latitude' => (float) $r->latitude,
                     'longitude' => (float) $r->longitude,
                     'status' => $r->status,

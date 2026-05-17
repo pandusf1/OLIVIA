@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuraRa — Cek Laporan</title>
-    @vite('resources/css/app.css')
+    <title>Savora — Cek Laporan</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');*{font-family:'Inter',sans-serif;} h1,.font-unbounded{font-family:\'Unbounded\',sans-serif!important;}</style>
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
@@ -16,7 +16,7 @@
     <div class="max-w-md mx-auto px-6 py-20">
         <div class="text-center mb-8">
             <p class="text-4xl mb-4">🔍</p>
-            <h1 class="font-unbounded text-2xl font-black text-gray-900 mb-2">Cek Status Laporan</h1>
+<h1 class="font-unbounded text-2xl font-semibold text-gray-900 mb-2">Cek Status Laporan</h1>
             <p class="text-gray-400 text-sm">Masukkan ID laporan untuk melihat perkembangan.</p>
         </div>
         @if(session('error'))<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-sm text-center">{{ session('error') }}</div>@endif
@@ -31,3 +31,4 @@
     </div>
 </body>
 </html>
+

@@ -11,9 +11,8 @@ class EvidenceController extends Controller
     public function index()
     {
         $reports = Report::where('user_id', auth()->id())
+            ->whereHas('evidences')
             ->with('evidences')
-            ->withCount('evidences')
-            ->having('evidences_count', '>', 0)
             ->latest()
             ->get();
 
@@ -23,24 +22,28 @@ class EvidenceController extends Controller
     public function store(Request $request, $reportId)
     {
         $request->validate([
-            'evidence' => 'required|file|max:20480',
+            'evidence' => 'required|array',
+            'evidence.*' => 'file|max:20480',
         ]);
 
-        $file = $request->file('evidence');
-        $path = $file->store('evidences', 'public');
-        $hash = hash_file('sha256', $file->getRealPath());
+        $files = $request->file('evidence');
+        
+        foreach ($files as $file) {
+            $path = $file->store('evidences', 'public');
+            $hash = hash_file('sha256', $file->getRealPath());
 
-        Evidence::create([
-            'report_id'   => $reportId,
-            'file_url'    => $path,
-            'file_type'   => $file->getClientMimeType(),
-            'file_hash'   => $hash,
-            'uploaded_by' => auth()->id(),
-            'uploaded_at' => now(),
-            'uploaded_ip' => $request->ip(),
-            'device_info' => $request->userAgent(),
-        ]);
+            Evidence::create([
+                'report_id'   => $reportId,
+                'file_url'    => $path,
+                'file_type'   => $file->getClientMimeType(),
+                'file_hash'   => $hash,
+                'uploaded_by' => auth()->id(),
+                'uploaded_at' => now(),
+                'uploaded_ip' => $request->ip(),
+                'device_info' => $request->userAgent(),
+            ]);
+        }
 
-        return back()->with('success', 'Bukti berhasil diupload dan diamankan dengan SHA-256.');
+        return back()->with('success', count($files) . ' Bukti berhasil diupload dan diamankan dengan SHA-256.');
     }
 }

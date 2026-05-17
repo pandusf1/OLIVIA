@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuraRa — Dashboard Admin</title>
+    <title>Savora — Dashboard Admin</title>
 
-    @vite('resources/css/app.css')
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
@@ -39,7 +39,7 @@
                 </h1>
 
                 <p class="text-gray-400 text-sm mt-1">
-                    Monitoring platform, partner, dan aktivitas laporan SuraRa.
+                    Monitoring platform, partner, dan aktivitas laporan Savora.
                 </p>
 
             </div>

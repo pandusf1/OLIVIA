@@ -3,9 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuraRa — Laporan</title>
-    @vite('resources/css/app.css')
-    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');*{font-family:'Inter',sans-serif;} h1,.font-unbounded{font-family:\'Unbounded\',sans-serif!important;}</style>
+    <title>Savora — Laporan</title>
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+        * { font-family: 'Space Grotesk', sans-serif; };
+        h1 { font-family: 'Space Grotesk', sans-serif !important; };
+        .font-unbounded { font-family: 'Space Grotesk', sans-serif !important; };        
+    </style>
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
 
@@ -29,7 +33,7 @@
         {{-- Header --}}
         <div class="mb-6">
             <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">LAPORAN #{{ strtoupper(substr($report->id, 0, 8)) }}</p>
-                <h1 class="font-unbounded text-3xl font-black text-gray-900">
+                <h1 class="font-unbounded font-bold text-3xl text-gray-900">
                     {{ $report->category }}
                 </h1>
             <div class="flex items-center gap-4 mt-2 text-sm text-gray-400 flex-wrap">
@@ -114,7 +118,7 @@
                         <p class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($log->changed_at)->format('d/m/Y, H:i:s') }}</p>
                         @if($log->new_status === 'Routed')
                             @if($report->partner)
-                                <div class="mt-2 bg-white border border-gray-100 rounded-lg p-3 shadow-sm inline-block min-w-full">
+                                <div class="mt-2 bg-white border border-gray-100 rounded-lg shadow-sm inline-block min-w-full">
                                     <p class="text-xs text-gray-500 mb-1">Diteruskan ke:</p>
                                     <p class="text-sm font-semibold text-gray-800">{{ $report->partner->partner_name }}</p>
                                     <p class="text-[11px] text-gray-500 mt-1 flex items-center gap-1.5"><span class="w-3.5 flex justify-center">📞</span> {{ $report->partner->phone ?? '-' }}</p>
@@ -134,7 +138,7 @@
         {{-- Bukti --}}
         <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="font-bold text-gray-900">Bukti ({{ $report->evidences->count() }})</h2>
+                <h2 class="font-semibold text-gray-900">Bukti ({{ $report->evidences->count() }})</h2>
                 <button onclick="document.getElementById('upload-area').classList.toggle('hidden')" class="text-red-700 hover:text-red-800 text-sm font-semibold transition flex items-center gap-1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                     Tambah Bukti
@@ -147,12 +151,32 @@
                     <div class="text-center cursor-pointer mb-3" onclick="document.getElementById('ev-file').click()">
                         <p class="text-2xl mb-1">📁</p>
                         <p class="text-gray-500 text-sm">Klik untuk pilih file</p>
-                        <p id="ev-name" class="text-green-600 text-xs mt-1 hidden"></p>
+                        <p class="text-gray-400 text-xs mt-1">Bisa pilih lebih dari 1 (maks. 20MB/file)</p>
+                        <div id="ev-name" class="text-green-600 text-xs mt-2 hidden text-left flex flex-col items-center"></div>
                     </div>
-                    <input type="file" name="evidence" id="ev-file" class="hidden" onchange="document.getElementById('ev-name').textContent='✓ '+this.files[0].name;document.getElementById('ev-name').classList.remove('hidden')">
-                    <button type="submit" class="w-full bg-gray-900 hover:bg-gray-700 text-white py-2.5 rounded-xl text-sm font-semibold transition">Upload</button>
+                    <input type="file" name="evidence[]" id="ev-file" class="hidden" multiple>
+                    <button type="submit" class="w-full bg-gray-900 hover:bg-gray-700 text-white py-2.5 rounded-xl text-sm font-semibold transition mt-2">Upload</button>
                 </form>
             </div>
+            <script>
+                const dt = new DataTransfer();
+                document.getElementById('ev-file').addEventListener('change', function(e) {
+                    for (let file of this.files) {
+                        dt.items.add(file);
+                    }
+                    this.files = dt.files;
+                    const el = document.getElementById('ev-name');
+                    el.innerHTML = '';
+                    if (this.files.length > 0) {
+                        el.classList.remove('hidden');
+                        for(let i=0; i<this.files.length; i++) {
+                            el.innerHTML += '<div>✓ ' + this.files[i].name + '</div>';
+                        }
+                    } else {
+                        el.classList.add('hidden');
+                    }
+                });
+            </script>
 
             @if($report->evidences->count() > 0)
             <div class="space-y-2">
@@ -174,7 +198,7 @@
 
         {{-- Share ID --}}
         <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
-            <h2 class="font-bold text-gray-900 mb-2">Bagikan ke Saksi</h2>
+            <h2 class="font-semibold text-gray-900 mb-2">Bagikan ke Saksi</h2>
             <p class="text-gray-400 text-sm mb-3">Berikan ID ini ke saksi agar mereka bisa upload bukti tambahan.</p>
             <div class="flex gap-2">
                 <code class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-600 font-mono break-all">{{ $report->id }}</code>
@@ -215,11 +239,10 @@
     function copyId(id){navigator.clipboard.writeText(id).then(()=>{const b=document.getElementById('copy-btn');b.textContent='✓ Tersalin!';setTimeout(()=>b.textContent='Salin',2000);});}
     let sv='0',so=null,sp2=null,sn=true;
     function scp(k){const d=document.getElementById('scd');if(k==='AC'){sv='0';so=null;sp2=null;sn=true;}else if(k==='±'){sv=(parseFloat(sv)*-1).toString();}else if(k==='%'){sv=(parseFloat(sv)/100).toString();}else if(['÷','×','−','+'].includes(k)){sp2=parseFloat(sv);so=k;sn=true;}else if(k==='='){if(so&&sp2!==null){const c=parseFloat(sv);sv=so==='÷'?(sp2/c).toString():so==='×'?(sp2*c).toString():so==='−'?(sp2-c).toString():(sp2+c).toString();so=null;sp2=null;sn=true;}}else if(k==='.'){if(sn){sv='0.';sn=false;}else if(!sv.includes('.'))sv+='.';}else{if(sn||sv==='0'){sv=k;sn=false;}else sv+=k;}d.textContent=sv;}
-    setInterval(() => {
-
-    window.location.reload();
-
-}, 15000);
+    // Auto-refresh penuh dinonaktifkan agar navigasi/klik lebih cepat (tanpa reload server-side).
+    // Jika butuh update realtime, sebaiknya gunakan polling AJAX endpoint yang spesifik (bukan reload full page).
+    // setInterval(() => { window.location.reload(); }, 15000);
     </script>
 </body>
 </html>
+
