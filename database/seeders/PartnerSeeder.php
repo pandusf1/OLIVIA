@@ -20,6 +20,15 @@ class PartnerSeeder extends Seeder
         $password = 'savora2024';
 
         // Reset isi tabel (requested: reset users, partners, price_lists)
+        if (Schema::hasTable('user_partner_payments')) {
+            DB::table('user_partner_payments')->delete();
+        }
+        if (Schema::hasTable('chat_messages')) {
+            DB::table('chat_messages')->delete();
+        }
+        if (Schema::hasTable('chat_threads')) {
+            DB::table('chat_threads')->delete();
+        }
         DB::table('price_lists')->delete();
         DB::table('partners')->delete();
         DB::table('users')->delete();
@@ -262,4 +271,3 @@ class PartnerSeeder extends Seeder
         }
     }
 }
-

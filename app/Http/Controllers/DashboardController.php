@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Report;
+use App\Models\ChatThread;
 
 class DashboardController extends Controller
 {
@@ -24,6 +25,15 @@ class DashboardController extends Controller
         $resolvedReports = $reports->where('status', 'Resolved')->count();
         $totalEvidences  = $reports->sum('evidences_count');
 
-        return view('dashboard', compact('reports', 'totalReports', 'activeReports', 'resolvedReports', 'totalEvidences'));
+        $chatThreads = ChatThread::query()
+            ->where('user_id', auth()->id())
+            ->with('partner')
+            ->orderByDesc('last_message_at')
+            ->get();
+
+        return view('dashboard', compact(
+            'reports', 'totalReports', 'activeReports', 'resolvedReports', 'totalEvidences',
+            'chatThreads'
+        ));
     }
 }

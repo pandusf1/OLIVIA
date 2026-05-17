@@ -65,7 +65,7 @@
             @foreach([
                 [route('trusted-contact.index'), '👤', 'Kontak Darurat', 'Orang terpercaya', 'bg-blue-50'],
                 ['/evidence',                   '🗂️', 'Galeri Bukti',  'Aman tersimpan', 'bg-purple-50'],
-                ['/emergency',                  '📄', 'Arsip Laporan', 'Status & Riwayat', 'bg-orange-50'],
+                [route('chat.threads'),         '💬', 'Chat', 'Riwayat chat', 'bg-orange-50'],
                 ['/witness',                    '🛡️', 'Mode Saksi',    'Bantu korban', 'bg-green-50'],
             ] as [$url, $icon, $title, $sub, $bg])
             <a href="{{ $url }}" class="bg-white border border-gray-100 hover:border-gray-200 rounded-2xl p-4 flex flex-col items-center text-center transition group shadow-sm active:scale-95">
@@ -797,4 +797,3 @@
     @include('partials.emergency-markers-js')
 </body>
 </html>
-

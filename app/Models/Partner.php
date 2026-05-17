@@ -46,6 +46,11 @@ class Partner extends Model
         return $this->hasMany(PriceList::class);
     }
 
+    public function payments()
+    {
+        return $this->hasMany(UserPartnerPayment::class);
+    }
+
     public static function routeByCategory($category)
     {
         return match (strtolower($category)) {
@@ -73,4 +78,3 @@ class Partner extends Model
         };
     }
 }
-

@@ -70,7 +70,7 @@ Route::middleware('auth')->group(function () {
         ->name('dashboard.emergency.markers');
 
 
-    // Data Partner (pengganti pembanyaran demo)
+    // Data Partner (info + pricelist)
     Route::get('/data-partner/{partnerId}', [\App\Http\Controllers\PembayaranMockController::class, 'showDataPartner'])->name('partner.data');
 
     // Kompatibilitas: route lama redirect ke page baru
@@ -78,12 +78,16 @@ Route::middleware('auth')->group(function () {
         return redirect()->route('partner.data', ['partnerId' => $partnerId]);
     });
 
-    // (endpoint submit payment demo masih dibiarkan agar tidak error jika masih ada form lama)
+    // Halaman pembayaran untuk satu layanan
+    Route::get('/pembayaran/{priceListId}', [\App\Http\Controllers\PembayaranMockController::class, 'showPembayaran'])->name('pembayaran.show');
+
+    // Proses pembayaran demo (JSON response)
     Route::post('/pembayaran', [\App\Http\Controllers\PembayaranMockController::class, 'pay'])->name('pembayaran.pay');
 
 
     // Chat
     Route::get('/chat/threads', [\App\Http\Controllers\ChatController::class, 'indexThreads'])->name('chat.threads');
+    Route::get('/chat/messages/{partnerId}', [\App\Http\Controllers\ChatController::class, 'messages'])->name('chat.messages');
     Route::get('/chat/start/{partnerId}', [\App\Http\Controllers\ChatController::class, 'start'])->name('chat.start');
     Route::post('/chat/send/{partnerId}', [\App\Http\Controllers\ChatController::class, 'send'])->name('chat.send');
 

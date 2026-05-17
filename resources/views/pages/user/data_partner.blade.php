@@ -158,32 +158,258 @@
         {{-- Section 3: pricelist (khusus legal & counselor) --}}
         <div class="bg-white border border-gray-200 rounded-2xl p-6">
             <h2 class="font-semibold text-gray-900 mb-4">Daftar Pricelist</h2>
-            
+
+            {{-- Multi select state --}}
+            <div id="priceListSelectedState" class="hidden">0</div>
+
                 @if($priceLists->count() === 0)
                     <div class="text-sm text-gray-500 bg-[#faf9f7] border border-gray-100 rounded-xl p-4">
                         Belum ada price list untuk partner ini.
                     </div>
                 @else
-                
+
                     <div class="space-y-3">
                         @foreach($priceLists as $pl)
-                            <div class="flex items-start justify-between gap-4 bg-[#faf9f7] border border-gray-100 rounded-xl p-4">
+                            <div
+                                data-price-list-id="{{ $pl->id }}"
+                                data-selected="0"
+                                class="price-list-card flex items-start justify-between gap-4 bg-[#faf9f7] border border-gray-100 rounded-xl p-4 cursor-pointer transition"
+                            >
                                 <div>
                                     <p class="font-semibold text-gray-900">{{ $pl->service_name }}</p>
-                                    @if($pl->duration)
-                                        <p class="text-xs text-gray-500 mt-1">Durasi: {{ $pl->duration }}</p>
-                                    @endif
                                 </div>
                                 <div class="text-right shrink-0">
                                     <p class="font-black text-gray-900 font-semibold">Rp {{ number_format($pl->price, 0, ',', '.') }}</p>
-                                    <p class="text-xs text-gray-400 mt-1">{{ $pl->currency }}</p>
                                 </div>
                             </div>
                         @endforeach
                     </div>
+
+                    {{-- CTA Lanjut --}}
+                    <div id="selectedPriceListCtaWrap" class="mt-6 hidden">
+                        <button
+                            id="selectedPriceListCta"
+                            type="button"
+                            class="w-full bg-gray-900 hover:bg-black text-white font-bold py-2 rounded-2xl transition active:scale-[0.98] text-base"
+                        >
+                            Lanjut
+                        </button>
+                    </div>
+
                 @endif
             @endif
         </div>
+
+        {{-- Modal daftar layanan terpilih --}}
+        <div id="servicesModal" class="fixed inset-0 z-50 hidden">
+            <div class="absolute inset-0 bg-black/40"></div>
+            <div class="relative max-w-md mx-auto mt-20 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden">
+                <div class="p-5 border-b border-gray-100">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Layanan Terpilih</p>
+                            <h3 class="font-black text-lg text-gray-900">Ringkasan Pricelist</h3>
+                        </div>
+                        <button
+                            type="button"
+                            id="modalCloseX"
+                            class="text-gray-400 hover:text-gray-600 transition text-sm font-bold px-2 py-1 rounded-full"
+                            aria-label="Tutup"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-5">
+                    <div id="selectedServicesList" class="space-y-3">
+                        {{-- populated by JS --}}
+                    </div>
+
+                    <div id="selectedServicesEmpty" class="hidden text-sm text-gray-500 bg-[#faf9f7] border border-gray-100 rounded-xl p-4 mt-1">
+                        Tidak ada layanan dipilih.
+                    </div>
+                </div>
+
+                <div class="p-5 border-t border-gray-100 flex gap-3">
+                    <button
+                        type="button"
+                        id="modalBackBtn"
+                        class="flex-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-900 font-bold py-2 rounded-2xl transition"
+                    >
+                        Kembali
+                    </button>
+                    <button
+                        type="button"
+                        id="modalContinueBtn"
+                        class="flex-1 bg-gray-900 hover:bg-black text-white font-bold py-2 rounded-2xl transition active:scale-[0.98]"
+                    >
+                        Lanjut
+                    </button>
+                </div>
+            </div>
+        </div>
+
+</body>
+</html>
+
+<script>
+(function () {
+    const cards = Array.from(document.querySelectorAll('.price-list-card'));
+    const ctaWrap = document.getElementById('selectedPriceListCtaWrap');
+    const ctaBtn = document.getElementById('selectedPriceListCta');
+
+    const modal = document.getElementById('servicesModal');
+    const modalCloseX = document.getElementById('modalCloseX');
+    const modalBackBtn = document.getElementById('modalBackBtn');
+    const modalContinueBtn = document.getElementById('modalContinueBtn');
+
+    const selectedServicesList = document.getElementById('selectedServicesList');
+    const selectedServicesEmpty = document.getElementById('selectedServicesEmpty');
+
+    // selected ids
+    const selected = new Set();
+
+    function setCardSelected(card, isSelected) {
+        if (isSelected) {
+            card.dataset.selected = '1';
+            card.classList.add('bg-green-50', 'border-green-200');
+            card.classList.remove('bg-[#faf9f7]', 'border-gray-100');
+        } else {
+            card.dataset.selected = '0';
+            card.classList.remove('bg-green-50', 'border-green-200');
+            card.classList.add('bg-[#faf9f7]', 'border-gray-100');
+        }
+    }
+
+    function refreshCta() {
+        const count = selected.size;
+        ctaWrap.classList.toggle('hidden', count === 0);
+    }
+
+    function getSelectedServicesData() {
+        const items = [];
+        cards.forEach((card) => {
+            const id = String(card.dataset.priceListId);
+            if (!selected.has(id)) return;
+
+            const titleEl = card.querySelector('p.font-semibold.text-gray-900');
+            const durationEl = card.querySelector('p.text-xs.text-gray-500');
+            const priceEl = card.querySelector('p.font-black.text-gray-900');
+            const currencyEl = card.querySelector('p.text-xs.text-gray-400');
+
+            items.push({
+                id,
+                serviceName: titleEl ? titleEl.textContent.trim() : '',
+                durationText: durationEl ? durationEl.textContent.trim() : '',
+                priceText: priceEl ? priceEl.textContent.trim() : '',
+                currencyText: currencyEl ? currencyEl.textContent.trim() : '',
+            });
+        });
+        return items;
+    }
+
+    function renderModalList() {
+        const items = getSelectedServicesData();
+        selectedServicesList.innerHTML = '';
+
+        if (items.length === 0) {
+            selectedServicesEmpty.classList.remove('hidden');
+            return;
+        }
+        selectedServicesEmpty.classList.add('hidden');
+
+        items.forEach((item) => {
+            const row = document.createElement('div');
+            row.className = 'flex items-start justify-between gap-3 bg-[#faf9f7] border border-gray-100 rounded-xl p-4';
+
+            row.innerHTML = `
+                <div class="min-w-0">
+                    <p class="font-semibold text-gray-900 truncate">${escapeHtml(item.serviceName)}</p>
+                    ${item.durationText ? `<p class="text-xs text-gray-500 mt-1">${escapeHtml(item.durationText)}</p>` : ''}
+                    <p class="text-xs text-gray-400 mt-1">${escapeHtml(item.currencyText)}</p>
+                </div>
+                <div class="text-right shrink-0">
+                    <p class="font-black text-gray-900 font-semibold">${escapeHtml(item.priceText)}</p>
+                    <button
+                        type="button"
+                        class="mt-2 inline-flex bg-white border border-gray-200 hover:bg-gray-50 text-gray-900 text-xs font-bold px-3 py-2 rounded-xl transition"
+                        data-remove-id="${escapeHtml(item.id)}"
+                    >
+                        Hapus
+                    </button>
+                </div>
+            `;
+
+            selectedServicesList.appendChild(row);
+        });
+
+        selectedServicesList.querySelectorAll('[data-remove-id]').forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+                const removeId = String(e.currentTarget.dataset.removeId);
+                selected.delete(removeId);
+
+                const card = cards.find(c => String(c.dataset.priceListId) === removeId);
+                if (card) setCardSelected(card, false);
+
+                refreshCta();
+                renderModalList();
+            });
+        });
+    }
+
+    function openModal() {
+        renderModalList();
+        modal.classList.remove('hidden');
+    }
+
+    function closeModal() {
+        modal.classList.add('hidden');
+    }
+
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '<')
+            .replace(/>/g, '>')
+            .replace(/"/g, '"')
+            .replace(/'/g, '&#039;');
+    }
+
+    cards.forEach((card) => {
+        card.addEventListener('click', () => {
+            const id = String(card.dataset.priceListId);
+            const isSelected = selected.has(id);
+
+            if (isSelected) {
+                selected.delete(id);
+                setCardSelected(card, false);
+            } else {
+                selected.add(id);
+                setCardSelected(card, true);
+            }
+            refreshCta();
+        });
+    });
+
+    if (ctaBtn) {
+        ctaBtn.addEventListener('click', () => {
+            openModal();
+        });
+    }
+
+    modalCloseX && modalCloseX.addEventListener('click', closeModal);
+    modalBackBtn && modalBackBtn.addEventListener('click', closeModal);
+
+    modalContinueBtn && modalContinueBtn.addEventListener('click', () => {
+        const firstId = Array.from(selected)[0];
+        if (!firstId) return;
+        const url = `{{ url('/pembayaran') }}/${firstId}`;
+        window.location.href = url;
+    });
+})();
+</script>
+
 
 </body>
 </html>

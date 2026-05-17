@@ -1,15 +1,8 @@
 # TODO
+- [ ] Update `resources/views/pages/user/data_partner.blade.php`: ganti tombol “Pilih” jadi toggle klik untuk multi-select pricelist.
+- [ ] Warna container terpilih: hijau muda; klik lagi batal (toggle).
+- [ ] Saat minimal 1 pricelist dipilih, munculkan tombol “Lanjut”.
+- [ ] Implement popup: daftar layanan yang dipilih + bisa hapus item; tombol Kembali dan Lanjut.
+- [ ] Saat tombol Lanjut di popup diklik: redirect ke page pembayaran `pembayaran.show` memakai priceListId pertama yang dipilih (backend masih 1 layanan).
+- [ ] Pastikan tidak mengubah style yang sudah ada (hanya tambah class minimal untuk seleksi).
 
-- [ ] Get repo context: locate all page heading styles used for user pages (dashboard tiles + pages: evidence, emergency (arsip), witness (mode saksi), trusted-contacts (kontak darurat/terpercaya), etc.).
-- [ ] Identify common mismatch: some pages use `font-black` / different font family (`Inter`, `Space Grotesk`, `Unbounded`) or different font-weight.
-- [ ] Create consistent heading style classes (font family = same as dashboard, weight not too bold).
-- [x] Update headings for targeted pages:
-
-  - [ ] Kontak Terpercaya / Kontak Darurat page headings (h1/h2).
-  - [ ] Bukti tersimpan aman (evidence) heading.
-  - [ ] Arsip Laporan / Status & Riwayat (emergency) headings.
-  - [ ] Mode Saksi (witness) heading.
-  - [ ] Riwayat Laporan / Partner Terdekat tiles in dashboard (h2).
-- [ ] Replace overly bold classes on headings (`font-black`, `font-bold`, etc.) with lighter ones (`font-semibold` or `font-medium`) while preserving sizes.
-- [ ] Run quick grep/search after edits to confirm no remaining mismatched classes for the specified headings.
-- [ ] Run `npm run build` or `php artisan` lint/build if available to ensure no syntax errors.

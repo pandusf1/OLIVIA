@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Savora — Chat</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap');
         * { font-family: 'Space Grotesk', sans-serif; }
@@ -20,47 +20,48 @@
     </style>
 </head>
 <body class="bg-[#faf9f7] text-gray-900 min-h-screen">
-@php
+<?php
     $showBrand = false;
     $backUrl = $backUrl ?? route('dashboard');
     $backLabel = $backLabel ?? 'Dashboard';
     $hasSelectedChat = filled($partnerId);
-@endphp
-@include('partials.nav-auth')
+?>
+<?php echo $__env->make('partials.nav-auth', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
 <div id="chat-page"
-     class="chat-layout {{ $hasSelectedChat ? 'chat-open max-w-6xl' : 'chat-closed max-w-4xl' }} mx-auto w-full px-4 sm:px-6 py-6">
-    <div id="chat-grid" class="{{ $hasSelectedChat ? 'lg:grid lg:grid-cols-[30%_70%] lg:gap-4' : '' }} transition-all duration-300">
+     class="chat-layout <?php echo e($hasSelectedChat ? 'chat-open max-w-6xl' : 'chat-closed max-w-4xl'); ?> mx-auto w-full px-4 sm:px-6 py-6">
+    <div id="chat-grid" class="<?php echo e($hasSelectedChat ? 'lg:grid lg:grid-cols-[30%_70%] lg:gap-4' : ''); ?> transition-all duration-300">
         <aside id="thread-list" class="thread-list">
-            @if($threads->count() > 0)
+            <?php if($threads->count() > 0): ?>
                 <div class="space-y-3">
-                    @foreach($threads as $t)
-                        @php $active = (string) $partnerId === (string) $t->partner_id; @endphp
-                        <a href="{{ route('chat.start', ['partnerId' => $t->partner_id]) }}"
+                    <?php $__currentLoopData = $threads; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $t): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <?php $active = (string) $partnerId === (string) $t->partner_id; ?>
+                        <a href="<?php echo e(route('chat.start', ['partnerId' => $t->partner_id])); ?>"
                            data-chat-link
-                           data-partner-id="{{ $t->partner_id }}"
-                           data-partner-name="{{ $t->partner?->partner_name ?? 'Partner' }}"
-                           data-partner-type="{{ $t->partner?->partner_type ?? '' }}"
-                           data-partner-image="{{ $t->partner?->image_url ?? '' }}"
-                           class="block bg-white border {{ $active ? 'border-gray-900' : 'border-gray-200' }} rounded-2xl p-4 hover:bg-gray-50 transition">
+                           data-partner-id="<?php echo e($t->partner_id); ?>"
+                           data-partner-name="<?php echo e($t->partner?->partner_name ?? 'Partner'); ?>"
+                           data-partner-type="<?php echo e($t->partner?->partner_type ?? ''); ?>"
+                           data-partner-image="<?php echo e($t->partner?->image_url ?? ''); ?>"
+                           class="block bg-white border <?php echo e($active ? 'border-gray-900' : 'border-gray-200'); ?> rounded-2xl p-4 hover:bg-gray-50 transition">
                             <div class="flex items-center gap-3">
-                                @if(!empty($t->partner?->image_url))
-                                    <img src="{{ $t->partner->image_url }}" class="w-10 h-10 rounded-xl object-cover border border-gray-100" alt="">
-                                @else
+                                <?php if(!empty($t->partner?->image_url)): ?>
+                                    <img src="<?php echo e($t->partner->image_url); ?>" class="w-10 h-10 rounded-xl object-cover border border-gray-100" alt="">
+                                <?php else: ?>
                                     <div class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-sm">💬</div>
-                                @endif
+                                <?php endif; ?>
 
                                 <div class="min-w-0 flex-1">
-                                    <p class="font-bold text-gray-900 text-sm truncate">{{ $t->partner?->partner_name ?? 'Partner' }}</p>
+                                    <p class="font-bold text-gray-900 text-sm truncate"><?php echo e($t->partner?->partner_name ?? 'Partner'); ?></p>
                                     <p class="text-xs text-gray-400 mt-1 truncate">
-                                        {{ $t->partner?->partner_type ?? '' }} • {{ $t->last_message_at?->format('d M Y, H:i') ?? 'Belum ada pesan' }}
+                                        <?php echo e($t->partner?->partner_type ?? ''); ?> • <?php echo e($t->last_message_at?->format('d M Y, H:i') ?? 'Belum ada pesan'); ?>
+
                                     </p>
                                 </div>
                             </div>
                         </a>
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </div>
-            @else
+            <?php else: ?>
                 <div class="text-center py-12">
                     <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                         <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>
@@ -68,23 +69,23 @@
                     <p class="text-gray-400 text-sm font-medium">Belum ada chat yang terbuka</p>
                     <p class="text-gray-300 text-xs mt-1">Pilih pricelist partner dan selesaikan pembayaran dulu.</p>
                 </div>
-            @endif
+            <?php endif; ?>
         </aside>
 
         <main id="chat-panel" class="chat-panel flex flex-col w-full h-[calc(100vh-96px)] lg:h-[calc(100vh-132px)]">
             <section class="bg-white border border-gray-200 rounded-2xl flex flex-col overflow-hidden h-full">
                 <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-3">
                     <div id="partner-avatar-wrap">
-                        @if(!empty($partner->image_url ?? null))
-                            <img id="partner-avatar" src="{{ $partner->image_url }}" class="w-9 h-9 rounded-xl object-cover border border-gray-100" alt="">
-                        @else
+                        <?php if(!empty($partner->image_url ?? null)): ?>
+                            <img id="partner-avatar" src="<?php echo e($partner->image_url); ?>" class="w-9 h-9 rounded-xl object-cover border border-gray-100" alt="">
+                        <?php else: ?>
                             <div id="partner-avatar" class="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-sm">💬</div>
-                        @endif
+                        <?php endif; ?>
                     </div>
 
                     <div class="flex-1 min-w-0">
-                        <p id="partner-name" class="font-bold text-gray-900 text-sm truncate">{{ $partner->partner_name ?? 'Pilih partner' }}</p>
-                        <p id="partner-type" class="text-xs text-gray-400">{{ $partner->partner_type ?? '' }}</p>
+                        <p id="partner-name" class="font-bold text-gray-900 text-sm truncate"><?php echo e($partner->partner_name ?? 'Pilih partner'); ?></p>
+                        <p id="partner-type" class="text-xs text-gray-400"><?php echo e($partner->partner_type ?? ''); ?></p>
                     </div>
 
                     <button type="button" id="btn-back-list" class="lg:hidden text-xs text-gray-400 hover:text-gray-600 transition border border-gray-200 px-3 py-1.5 rounded-full">
@@ -93,33 +94,33 @@
                 </div>
 
                 <div id="msg-container" class="flex-1 overflow-y-auto space-y-3 px-4 py-4 bg-[#faf9f7]">
-                    @forelse($messages as $m)
-                        @php $isMe = $m->sender_type === 'user'; @endphp
-                        <div class="flex {{ $isMe ? 'justify-end' : 'justify-start' }}">
-                            <div class="max-w-[78%] rounded-2xl px-4 py-3 {{ $isMe ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-900' }}">
-                                <p class="text-sm break-words leading-relaxed whitespace-pre-wrap">{{ $m->message }}</p>
+                    <?php $__empty_1 = true; $__currentLoopData = $messages; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $m): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                        <?php $isMe = $m->sender_type === 'user'; ?>
+                        <div class="flex <?php echo e($isMe ? 'justify-end' : 'justify-start'); ?>">
+                            <div class="max-w-[78%] rounded-2xl px-4 py-3 <?php echo e($isMe ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-900'); ?>">
+                                <p class="text-sm break-words leading-relaxed whitespace-pre-wrap"><?php echo e($m->message); ?></p>
                                 <div class="flex items-center justify-end gap-2 mt-1.5">
-                                    <p class="text-[11px] {{ $isMe ? 'text-gray-300' : 'text-gray-400' }}">{{ $m->created_at->format('H:i') }}</p>
-                                    @if($isMe)
+                                    <p class="text-[11px] <?php echo e($isMe ? 'text-gray-300' : 'text-gray-400'); ?>"><?php echo e($m->created_at->format('H:i')); ?></p>
+                                    <?php if($isMe): ?>
                                         <span class="text-[10px] text-gray-400 ml-2 tracking-[-2px]" title="Terkirim">✓✓</span>
-                                    @endif
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <div class="flex flex-col items-center justify-center h-full py-16 text-center">
                             <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3 text-xl">💬</div>
                             <p class="font-semibold text-gray-600 text-sm">Mulai percakapan</p>
                             <p class="text-gray-400 text-xs mt-1">Kirim pesan pertamamu ke partner.</p>
                         </div>
-                    @endforelse
+                    <?php endif; ?>
                 </div>
 
                 <form method="POST"
                       action="javascript:void(0);"
                       id="chat-send-form"
                       class="border-t border-gray-100 p-3 flex gap-2 items-end">
-                    @csrf
+                    <?php echo csrf_field(); ?>
                     <textarea name="message" id="msg-input" rows="1" required
                         placeholder="Tulis pesan..."
                         oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"
@@ -137,7 +138,7 @@
 </div>
 
 <script>
-    let currentPartnerId = {{ json_encode($partnerId) }};
+    let currentPartnerId = <?php echo e(json_encode($partnerId)); ?>;
     let pollTimer = null;
     let serverMessages = [];
     let pendingMessages = [];
@@ -293,7 +294,7 @@
 
     document.getElementById('btn-back-list')?.addEventListener('click', () => {
         closeMobileChat();
-        history.pushState({}, '', '{{ route('chat.threads') }}');
+        history.pushState({}, '', '<?php echo e(route('chat.threads')); ?>');
     });
 
     input?.addEventListener('keydown', (event) => {
@@ -373,3 +374,4 @@
 </script>
 </body>
 </html>
+<?php /**PATH D:\CODING\olivia_final\resources\views/pages/user/chat.blade.php ENDPATH**/ ?>

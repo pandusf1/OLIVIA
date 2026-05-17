@@ -66,7 +66,7 @@
             <?php $__currentLoopData = [
                 [route('trusted-contact.index'), '👤', 'Kontak Darurat', 'Orang terpercaya', 'bg-blue-50'],
                 ['/evidence',                   '🗂️', 'Galeri Bukti',  'Aman tersimpan', 'bg-purple-50'],
-                ['/emergency',                  '📄', 'Arsip Laporan', 'Status & Riwayat', 'bg-orange-50'],
+                [route('chat.threads'),         '💬', 'Chat', 'Riwayat chat', 'bg-orange-50'],
                 ['/witness',                    '🛡️', 'Mode Saksi',    'Bantu korban', 'bg-green-50'],
             ]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as [$url, $icon, $title, $sub, $bg]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
             <a href="<?php echo e($url); ?>" class="bg-white border border-gray-100 hover:border-gray-200 rounded-2xl p-4 flex flex-col items-center text-center transition group shadow-sm active:scale-95">
@@ -803,5 +803,4 @@
     <?php echo $__env->make('partials.emergency-markers-js', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 </body>
 </html>
-
 <?php /**PATH D:\CODING\olivia_final\resources\views/dashboard.blade.php ENDPATH**/ ?>

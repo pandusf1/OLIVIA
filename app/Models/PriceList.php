@@ -22,5 +22,9 @@ class PriceList extends Model
         return $this->belongsTo(Partner::class);
     }
 
-}
+    public function payments()
+    {
+        return $this->hasMany(UserPartnerPayment::class);
+    }
 
+}
