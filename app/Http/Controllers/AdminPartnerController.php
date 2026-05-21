@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Partner;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -41,6 +42,7 @@ class AdminPartnerController extends Controller
             'phone' => $request->phone,
             'email' => $request->email,
             'verified' => true,
+            'is_active' => true,
         ]);
 
         User::create([
@@ -68,6 +70,23 @@ class AdminPartnerController extends Controller
             $partner->verified
                 ? 'Partner berhasil diverifikasi.'
                 : 'Verifikasi partner dicabut.'
+        );
+    }
+
+    public function toggleActive($id)
+    {
+        $partner = Partner::findOrFail($id);
+
+        $partner->is_active = !$partner->is_active;
+        $partner->save();
+
+        AuditLog::log('toggle_partner_active', 'partner', $partner->id);
+
+        return back()->with(
+            'success',
+            $partner->is_active
+                ? 'Partner berhasil diaktifkan.'
+                : 'Partner berhasil dinonaktifkan.'
         );
     }
 }

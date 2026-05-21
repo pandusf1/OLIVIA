@@ -25,22 +25,36 @@
     $backUrl = $backUrl ?? route('dashboard');
     $backLabel = $backLabel ?? 'Dashboard';
     $hasSelectedChat = filled($partnerId);
+    $viewerType = $viewerType ?? 'user';
+    $reportContext = $reportContext ?? null;
 ?>
 <?php echo $__env->make('partials.nav-auth', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
 <div id="chat-page"
      class="chat-layout <?php echo e($hasSelectedChat ? 'chat-open max-w-6xl' : 'chat-closed max-w-4xl'); ?> mx-auto w-full px-4 sm:px-6 py-6">
-    <div id="chat-grid" class="<?php echo e($hasSelectedChat ? 'lg:grid lg:grid-cols-[30%_70%] lg:gap-4' : ''); ?> transition-all duration-300">
+    <div id="chat-grid" class="<?php echo e($hasSelectedChat ? ($reportContext ? 'lg:grid lg:grid-cols-[24%_52%_24%] lg:gap-4' : 'lg:grid lg:grid-cols-[30%_70%] lg:gap-4') : ''); ?> transition-all duration-300">
         <aside id="thread-list" class="thread-list">
             <?php if($threads->count() > 0): ?>
                 <div class="space-y-3">
                     <?php $__currentLoopData = $threads; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $t): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        <?php $active = (string) $partnerId === (string) $t->partner_id; ?>
-                        <a href="<?php echo e(route('chat.start', ['partnerId' => $t->partner_id])); ?>"
+                        <?php
+                            $active = (string) $partnerId === (string) $t->partner_id;
+                            $threadHref = $viewerType === 'partner'
+                                ? route('chat.messages', ['partnerId' => $t->partner_id]) . ($t->report_context_id ? '?report_id=' . $t->report_context_id : '')
+                                : route('chat.start', ['partnerId' => $t->partner_id]);
+                            $threadName = $viewerType === 'partner'
+                                ? ($t->user?->name ?? 'Pelapor')
+                                : ($t->partner?->partner_name ?? 'Partner');
+                            $threadType = $viewerType === 'partner'
+                                ? 'Pelapor'
+                                : ($t->partner?->partner_type ?? '');
+                        ?>
+                        <a href="<?php echo e($threadHref); ?>"
                            data-chat-link
                            data-partner-id="<?php echo e($t->partner_id); ?>"
-                           data-partner-name="<?php echo e($t->partner?->partner_name ?? 'Partner'); ?>"
-                           data-partner-type="<?php echo e($t->partner?->partner_type ?? ''); ?>"
+                           data-report-id="<?php echo e($t->report_context_id ?? ''); ?>"
+                           data-partner-name="<?php echo e($threadName); ?>"
+                           data-partner-type="<?php echo e($threadType); ?>"
                            data-partner-image="<?php echo e($t->partner?->image_url ?? ''); ?>"
                            class="block bg-white border <?php echo e($active ? 'border-gray-900' : 'border-gray-200'); ?> rounded-2xl p-4 hover:bg-gray-50 transition">
                             <div class="flex items-center gap-3">
@@ -51,9 +65,9 @@
                                 <?php endif; ?>
 
                                 <div class="min-w-0 flex-1">
-                                    <p class="font-bold text-gray-900 text-sm truncate"><?php echo e($t->partner?->partner_name ?? 'Partner'); ?></p>
+                                    <p class="font-bold text-gray-900 text-sm truncate"><?php echo e($threadName); ?></p>
                                     <p class="text-xs text-gray-400 mt-1 truncate">
-                                        <?php echo e($t->partner?->partner_type ?? ''); ?> • <?php echo e($t->last_message_at?->format('d M Y, H:i') ?? 'Belum ada pesan'); ?>
+                                        <?php echo e($threadType); ?> • <?php echo e($t->last_message_at?->format('d M Y, H:i') ?? 'Belum ada pesan'); ?>
 
                                     </p>
                                 </div>
@@ -84,8 +98,8 @@
                     </div>
 
                     <div class="flex-1 min-w-0">
-                        <p id="partner-name" class="font-bold text-gray-900 text-sm truncate"><?php echo e($partner->partner_name ?? 'Pilih partner'); ?></p>
-                        <p id="partner-type" class="text-xs text-gray-400"><?php echo e($partner->partner_type ?? ''); ?></p>
+                        <p id="partner-name" class="font-bold text-gray-900 text-sm truncate"><?php echo e($viewerType === 'partner' ? (($reportContext?->anonymous ?? false) ? 'Anonim' : ($reportContext?->user?->name ?? 'Pelapor')) : ($partner->partner_name ?? 'Pilih partner')); ?></p>
+                        <p id="partner-type" class="text-xs text-gray-400"><?php echo e($viewerType === 'partner' ? 'Pelapor laporan' : ($partner->partner_type ?? '')); ?></p>
                     </div>
 
                     <button type="button" id="btn-back-list" class="lg:hidden text-xs text-gray-400 hover:text-gray-600 transition border border-gray-200 px-3 py-1.5 rounded-full">
@@ -95,7 +109,7 @@
 
                 <div id="msg-container" class="flex-1 overflow-y-auto space-y-3 px-4 py-4 bg-[#faf9f7]">
                     <?php $__empty_1 = true; $__currentLoopData = $messages; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $m): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
-                        <?php $isMe = $m->sender_type === 'user'; ?>
+                        <?php $isMe = $m->sender_type === $viewerType; ?>
                         <div class="flex <?php echo e($isMe ? 'justify-end' : 'justify-start'); ?>">
                             <div class="max-w-[78%] rounded-2xl px-4 py-3 <?php echo e($isMe ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-900'); ?>">
                                 <p class="text-sm break-words leading-relaxed whitespace-pre-wrap"><?php echo e($m->message); ?></p>
@@ -134,11 +148,42 @@
                 </form>
             </section>
         </main>
+
+        <?php if($reportContext): ?>
+            <aside class="mt-4 lg:mt-0">
+                <section class="rounded-2xl border border-gray-200 bg-white p-4">
+                    <p class="text-xs font-bold uppercase tracking-wider text-gray-400">Konteks Laporan</p>
+                    <h2 class="mt-2 text-lg font-black text-gray-900"><?php echo e($reportContext->category); ?></h2>
+                    <p class="mt-2 text-sm leading-6 text-gray-600"><?php echo e(\Illuminate\Support\Str::limit($reportContext->description ?: 'Tidak ada deskripsi tambahan.', 140)); ?></p>
+                    <dl class="mt-4 space-y-3 text-sm">
+                        <div>
+                            <dt class="font-bold text-gray-900">Status</dt>
+                            <dd class="text-gray-500"><?php echo e($reportContext->status); ?></dd>
+                        </div>
+                        <div>
+                            <dt class="font-bold text-gray-900">Pelapor</dt>
+                            <dd class="text-gray-500"><?php echo e($reportContext->anonymous ? 'Anonim' : ($reportContext->user?->name ?? 'Tanpa user')); ?></dd>
+                        </div>
+                        <div>
+                            <dt class="font-bold text-gray-900">Lokasi</dt>
+                            <dd class="text-gray-500"><?php echo e($reportContext->location_text ?: ($reportContext->latitude ? $reportContext->latitude . ', ' . $reportContext->longitude : 'Tidak tersedia')); ?></dd>
+                        </div>
+                        <div>
+                            <dt class="font-bold text-gray-900">Bukti</dt>
+                            <dd class="text-gray-500"><?php echo e($reportContext->evidences->count()); ?> file</dd>
+                        </div>
+                    </dl>
+                    <a href="<?php echo e(route('tracking.show', $reportContext->id)); ?>" class="mt-4 block rounded-xl border border-gray-200 px-4 py-2 text-center text-sm font-bold text-gray-800 transition hover:border-gray-400">Lihat Tracking</a>
+                </section>
+            </aside>
+        <?php endif; ?>
     </div>
 </div>
 
 <script>
     let currentPartnerId = <?php echo e(json_encode($partnerId)); ?>;
+    let currentReportId = <?php echo e(json_encode($reportContext?->id)); ?>;
+    const viewerType = <?php echo e(json_encode($viewerType)); ?>;
     let pollTimer = null;
     let serverMessages = [];
     let pendingMessages = [];
@@ -173,7 +218,7 @@
     }
 
     function messageHtml(message) {
-        const isMe = message.sender_type === 'user';
+        const isMe = message.sender_type === viewerType;
         const isPending = message.status === 'pending';
 
         const tickHtml = isMe
@@ -198,7 +243,9 @@
     function openLayout() {
         page.classList.remove('chat-closed', 'max-w-4xl');
         page.classList.add('chat-open', 'max-w-6xl');
-        grid.classList.add('lg:grid', 'lg:grid-cols-[30%_70%]', 'lg:gap-4');
+        grid.classList.remove('lg:grid-cols-[30%_70%]', 'lg:grid-cols-[24%_52%_24%]');
+        grid.classList.add('lg:grid', 'lg:gap-4');
+        grid.classList.add(currentReportId ? 'lg:grid-cols-[24%_52%_24%]' : 'lg:grid-cols-[30%_70%]');
     }
 
     function closeMobileChat() {
@@ -249,7 +296,8 @@
         if (!currentPartnerId) return;
 
         try {
-            const response = await fetch(`/chat/messages/${currentPartnerId}`, {
+            const suffix = currentReportId ? `?report_id=${encodeURIComponent(currentReportId)}` : '';
+            const response = await fetch(`/chat/messages/${currentPartnerId}${suffix}`, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
             });
 
@@ -281,6 +329,7 @@
             event.preventDefault();
 
             currentPartnerId = link.dataset.partnerId;
+            currentReportId = link.dataset.reportId || null;
             serverMessages = [];
             pendingMessages = [];
             
@@ -320,7 +369,7 @@
         
         const pendingMsg = {
             id: Date.now(),
-            sender_type: 'user',
+            sender_type: viewerType,
             message: message,
             time: `${hh}:${mm}`,
             status: 'pending'
@@ -332,7 +381,8 @@
 
         const csrf = document.querySelector('input[name="_token"]')?.value;
         try {
-            const response = await fetch(`/chat/send/${currentPartnerId}`, {
+            const suffix = currentReportId ? `?report_id=${encodeURIComponent(currentReportId)}` : '';
+            const response = await fetch(`/chat/send/${currentPartnerId}${suffix}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

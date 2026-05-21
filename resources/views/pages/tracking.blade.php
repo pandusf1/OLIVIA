@@ -3,246 +3,220 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safora — Laporan</title>
+    <title>Safora - Tracking Darurat</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
-        * { font-family: 'Space Grotesk', sans-serif; };
-        h1 { font-family: 'Space Grotesk', sans-serif !important; };
-        .font-unbounded { font-family: 'Space Grotesk', sans-serif !important; };        
-    </style>
 </head>
-<body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
+<body class="min-h-screen bg-gray-50 text-gray-950 antialiased">
+@php
+    $backUrl = request()->headers->get('referer') ?: (auth()->check() ? route('dashboard') : '/');
+    $backLabel = 'Kembali';
+    $showBrand = false;
+@endphp
+@include('partials.nav-auth')
 
-    @php
-        $backUrl = request()->headers->get('referer') ?: (auth()->check() ? route('dashboard') : '/');
-        $backLabel = 'Kembali';
-        $showBrand = false;
-    @endphp
-    @include('partials.nav-auth')
-
-    <div class="fixed top-16 right-4 z-50">
-        <button onclick="document.getElementById('stealth').classList.remove('hidden')" class="bg-white border border-gray-200 text-gray-400 px-3 py-1.5 rounded-lg text-xs font-mono transition shadow-sm">🔢</button>
-    </div>
-
-    <div class="max-w-3xl mx-auto px-6 py-10">
-
-        @if(session('success'))
-        <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl mb-6 text-sm">✓ {{ session('success') }}</div>
-        @endif
-
-        {{-- Header --}}
-        <div class="mb-6">
-            <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">LAPORAN #{{ strtoupper(substr($report->id, 0, 8)) }}</p>
-                <h1 class="font-unbounded font-bold text-3xl text-gray-900">
-                    {{ $report->category }}
-                </h1>
-            <div class="flex items-center gap-4 mt-2 text-sm text-gray-400 flex-wrap">
-                <span>{{ $report->category }}</span>
-                @if($report->created_at)
-                <span class="flex items-center gap-1">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    {{ $report->created_at->format('d/m/Y, H:i:s') }}
-                </span>
-                @endif
-@if($report->latitude)
-<div class="flex items-center gap-2 flex-wrap">
-
-    <span class="flex items-center gap-1">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-        </svg>
-
-        {{ number_format($report->latitude,4) }},
-        {{ number_format($report->longitude,4) }}
-    </span>
-
-    <a
-        href="https://www.google.com/maps?q={{ $report->latitude }},{{ $report->longitude }}"
-        target="_blank"
-        class="inline-flex items-center gap-1 font-unbounded bg-red-700 hover:bg-red-800 text-white text-xs px-3 py-1.5 rounded-lg transition"
-    >
-        Buka Map
-    </a>
-
-</div>
-@endif
+<main class="mx-auto max-w-5xl px-4 pb-10 pt-5 sm:px-6">
+    <section class="rounded-lg border border-red-100 bg-white p-5 shadow-sm">
+        <div class="flex items-start justify-between gap-4">
+            <div>
+                <p class="text-xs font-bold uppercase tracking-widest text-red-700">Laporan #<span data-field="short_id">{{ $livePayload['report']['short_id'] }}</span></p>
+                <h1 class="mt-2 text-2xl font-black sm:text-3xl" data-field="current_status">{{ $livePayload['current_status'] }}</h1>
+                <p class="mt-3 max-w-2xl text-base leading-7 text-gray-700" data-field="human_message">{{ $livePayload['human_message'] }}</p>
             </div>
+            <div class="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-black uppercase text-red-700" data-field="urgency">{{ $livePayload['report']['urgency_level'] }}</div>
         </div>
 
-        {{-- Status Card --}}
-        <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
-            <h2 class="font-bold text-gray-900 mb-5">Status</h2>
+        <div class="mt-5 grid gap-3 sm:grid-cols-3">
+            <div class="rounded-lg bg-gray-50 p-4">
+                <p class="text-xs font-bold uppercase text-gray-500">Kategori</p>
+                <p class="mt-1 font-black" data-field="category">{{ $livePayload['report']['category'] }}</p>
+            </div>
+            <div class="rounded-lg bg-gray-50 p-4">
+                <p class="text-xs font-bold uppercase text-gray-500">Estimasi Respons</p>
+                <p class="mt-1 font-black" data-field="eta">{{ $livePayload['eta'] }}</p>
+            </div>
+            <div class="rounded-lg bg-gray-50 p-4">
+                <p class="text-xs font-bold uppercase text-gray-500">Lokasi</p>
+                <a data-field="maps_url" href="{{ $livePayload['report']['location']['maps_url'] ?? '#' }}" target="_blank" class="mt-1 inline-block font-black text-red-700 underline">
+                    {{ $livePayload['report']['location']['verified'] ? 'GPS diterima' : 'GPS belum tersedia' }}
+                </a>
+            </div>
+        </div>
+    </section>
 
-            @php
-            $stages = [
-                ['Submitted','Terkirim'],['Routed','Diteruskan'],['Viewed','Dilihat'],['In Progress','Ditangani'],['Resolved','Selesai']
-            ];
-            $currentIdx = array_search($report->status, array_column($stages, 0));
-            @endphp
+    <section class="mt-4 rounded-lg border border-orange-200 bg-orange-50 p-4">
+        <p class="text-sm font-black text-orange-950">Langkah berikutnya</p>
+        <p class="mt-1 text-sm leading-6 text-orange-900" data-field="next_instruction">{{ $livePayload['next_instruction'] }}</p>
+        <p class="mt-2 text-xs leading-5 text-orange-800" data-field="escalation_message">{{ $livePayload['escalation_message'] }}</p>
+    </section>
 
-            {{-- Step indicator --}}
-            <div class="flex items-center gap-0 mb-6">
-                @foreach($stages as $i => [$key, $label])
-                <div class="flex flex-col items-center flex-1">
-                    <div class="flex items-center w-full">
-                        @if($i > 0)
-                        <div class="flex-1 h-0.5 {{ $i <= $currentIdx ? 'bg-green-500' : 'bg-gray-200' }} transition-all"></div>
-                        @endif
-                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 transition-all
-                            {{ $i < $currentIdx ? 'bg-green-500 text-white' : ($i == $currentIdx ? 'bg-green-500 text-white ring-4 ring-green-100' : 'bg-gray-100 text-gray-400') }}">
-                            @if($i < $currentIdx)
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-                            @elseif($i == $currentIdx)
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" stroke-width="3"/></svg>
-                            @else
-                            {{ $i+1 }}
-                            @endif
+    <div class="mt-5 grid gap-5 lg:grid-cols-[1.1fr_.9fr]">
+        <div class="space-y-5">
+            <section id="assigned-card" class="hidden rounded-lg border border-green-200 bg-green-50 p-5">
+                <p class="text-xs font-bold uppercase tracking-widest text-green-700">Sedang Menangani</p>
+                <h2 class="mt-2 text-xl font-black text-green-950" data-field="assigned_name"></h2>
+                <p class="mt-1 text-sm text-green-800" data-field="assigned_detail"></p>
+                <a id="chat-link" href="#" class="mt-4 inline-flex w-full justify-center rounded-lg bg-green-800 px-4 py-3 text-sm font-black text-white sm:w-auto">Buka Chat Krisis</a>
+            </section>
+
+            <section class="rounded-lg border border-gray-200 bg-white p-5">
+                <div class="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-lg font-black">Diteruskan ke Partner</h2>
+                        <p class="text-sm text-gray-500">Status ini diperbarui otomatis setiap beberapa detik.</p>
+                    </div>
+                    <span id="live-dot" class="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">Live</span>
+                </div>
+                <div id="routed-partners" class="space-y-3"></div>
+            </section>
+
+            <section class="rounded-lg border border-gray-200 bg-white p-5">
+                <h2 class="text-lg font-black">Update Terbaru</h2>
+                <div id="timeline" class="mt-4 space-y-4"></div>
+            </section>
+        </div>
+
+        <aside class="space-y-5">
+            <section class="rounded-lg border border-red-200 bg-white p-5">
+                <h2 class="text-lg font-black text-red-800">Nomor Darurat</h2>
+                <p class="mt-1 text-sm text-gray-600">Jika kondisi memburuk, hubungi bantuan resmi sekarang. Safora berjalan paralel.</p>
+                <div id="hotlines" class="mt-4 grid gap-2"></div>
+            </section>
+
+            <section class="rounded-lg border border-gray-200 bg-white p-5">
+                <h2 class="text-lg font-black">Pesan Partner</h2>
+                <div id="latest-messages" class="mt-4 space-y-3"></div>
+            </section>
+
+            <section class="rounded-lg border border-gray-200 bg-white p-5">
+                <h2 class="text-lg font-black">Bukti & Saksi</h2>
+                <p class="mt-1 text-sm text-gray-600">Tambah bukti jika aman dilakukan. Saksi bisa memakai ID laporan ini.</p>
+                <button type="button" onclick="document.getElementById('upload-area').classList.toggle('hidden')" class="mt-4 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-black">Tambah Bukti</button>
+                <div id="upload-area" class="hidden mt-4 rounded-lg border border-dashed border-gray-200 p-4">
+                    <form action="/tracking/{{ $report->id }}/evidence" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <input type="file" name="evidence[]" multiple class="w-full text-sm">
+                        <button class="mt-3 w-full rounded-lg bg-gray-950 px-4 py-3 text-sm font-black text-white">Upload</button>
+                    </form>
+                </div>
+                <code class="mt-4 block break-all rounded-lg bg-gray-50 p-3 text-xs text-gray-600">{{ $report->id }}</code>
+            </section>
+        </aside>
+    </div>
+</main>
+
+<script>
+    const initialPayload = @json($livePayload);
+    const reportId = @json($report->id);
+    let lastPayload = null;
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function setText(selector, value) {
+        const node = document.querySelector(selector);
+        if (node) node.textContent = value || '-';
+    }
+
+    function statusLabel(status) {
+        return {
+            waiting: ['Menunggu', 'bg-gray-100 text-gray-700'],
+            reviewing: ['Meninjau', 'bg-yellow-100 text-yellow-900'],
+            unavailable: ['Tidak tersedia', 'bg-orange-100 text-orange-800'],
+            accepted: ['Menerima', 'bg-green-100 text-green-800'],
+        }[status] || ['Menunggu', 'bg-gray-100 text-gray-700'];
+    }
+
+    function render(payload) {
+        lastPayload = payload;
+        setText('[data-field="current_status"]', payload.current_status);
+        setText('[data-field="human_message"]', payload.human_message);
+        setText('[data-field="eta"]', payload.eta);
+        setText('[data-field="next_instruction"]', payload.next_instruction);
+        setText('[data-field="escalation_message"]', payload.escalation_message);
+        setText('[data-field="urgency"]', payload.report.urgency_level);
+        setText('[data-field="category"]', payload.report.category);
+
+        const maps = document.querySelector('[data-field="maps_url"]');
+        if (maps && payload.report.location.maps_url) {
+            maps.href = payload.report.location.maps_url;
+            maps.textContent = payload.report.location.verified ? 'GPS diterima' : 'Buka peta';
+        }
+
+        const assigned = document.getElementById('assigned-card');
+        if (payload.assigned_partner) {
+            assigned.classList.remove('hidden');
+            setText('[data-field="assigned_name"]', payload.assigned_partner.name);
+            setText('[data-field="assigned_detail"]', `${payload.assigned_partner.handler_name || 'Tim partner'} - ${payload.assigned_partner.specialization}`);
+            const chatLink = document.getElementById('chat-link');
+            chatLink.href = `/chat/messages/${payload.assigned_partner.id}?report_id=${reportId}`;
+        } else {
+            assigned.classList.add('hidden');
+        }
+
+        document.getElementById('routed-partners').innerHTML = (payload.routed_partners || []).map((partner) => {
+            const [label, klass] = statusLabel(partner.status);
+            return `
+                <div class="rounded-lg border border-gray-200 p-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <p class="font-black">${escapeHtml(partner.name)}</p>
+                            <p class="mt-1 text-sm text-gray-500">${escapeHtml(partner.specialization)}${partner.city ? ' - ' + escapeHtml(partner.city) : ''}</p>
+                            <p class="mt-1 text-xs text-gray-500">${escapeHtml(partner.distance || 'Jarak belum tersedia')} - estimasi ${escapeHtml(partner.estimated_response)}</p>
                         </div>
-                        @if($i < count($stages)-1)
-                        <div class="flex-1 h-0.5 {{ $i < $currentIdx ? 'bg-green-500' : 'bg-gray-200' }} transition-all"></div>
-                        @endif
-                    </div>
-                    <p class="text-xs mt-1.5 {{ $i <= $currentIdx ? 'text-gray-700 font-semibold' : 'text-gray-400' }} text-center">{{ $label }}</p>
-                </div>
-                @endforeach
-            </div>
-
-            {{-- Timeline log --}}
-            <div class="space-y-3 border-t border-gray-100 pt-4">
-                @foreach($report->statusLogs as $log)
-                <div class="flex items-start gap-3">
-                    <div class="w-2 h-2 bg-red-500 rounded-full mt-1.5 flex-shrink-0"></div>
-                    <div>
-                        <p class="text-sm font-semibold text-gray-900">{{ $log->new_status }}</p>
-                        <p class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($log->changed_at)->format('d/m/Y, H:i:s') }}</p>
-                        @if($log->new_status === 'Routed')
-                            @if($report->partner)
-                                <div class="mt-2 bg-white border border-gray-100 rounded-lg shadow-sm inline-block min-w-full">
-                                    <p class="text-xs text-gray-500 mb-1">Diteruskan ke:</p>
-                                    <p class="text-sm font-semibold text-gray-800">{{ $report->partner->partner_name }}</p>
-                                    <p class="text-[11px] text-gray-500 mt-1 flex items-center gap-1.5"><span class="w-3.5 flex justify-center">📞</span> {{ $report->partner->phone ?? '-' }}</p>
-                                    <p class="text-[11px] text-gray-500 mt-0.5 flex items-start gap-1.5"><span class="w-3.5 flex justify-center mt-0.5">📍</span> <span class="flex-1">{{ $report->partner->address ?? '-' }}</span></p>
-                                </div>
-                            @else
-                                <p class="text-xs text-gray-500">Diteruskan ke partner</p>
-                            @endif
-                        @endif
-                        @if($log->new_status === 'Submitted')<p class="text-xs text-gray-500">Laporan dikirim</p>@endif
+                        <span class="rounded-full px-3 py-1 text-xs font-bold ${klass}">${label}</span>
                     </div>
                 </div>
-                @endforeach
-            </div>
-        </div>
+            `;
+        }).join('') || '<p class="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">Kami sedang mencari partner yang relevan.</p>';
 
-        {{-- Bukti --}}
-        <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="font-semibold text-gray-900">Bukti ({{ $report->evidences->count() }})</h2>
-                <button onclick="document.getElementById('upload-area').classList.toggle('hidden')" class="text-red-700 hover:text-red-800 text-sm font-semibold transition flex items-center gap-1">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                    Tambah Bukti
-                </button>
-            </div>
-
-            <div id="upload-area" class="hidden mb-4 p-4 border border-dashed border-gray-200 rounded-xl">
-                <form action="/tracking/{{ $report->id }}/evidence" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <div class="text-center cursor-pointer mb-3" onclick="document.getElementById('ev-file').click()">
-                        <p class="text-2xl mb-1">📁</p>
-                        <p class="text-gray-500 text-sm">Klik untuk pilih file</p>
-                        <p class="text-gray-400 text-xs mt-1">Bisa pilih lebih dari 1 (maks. 20MB/file)</p>
-                        <div id="ev-name" class="text-green-600 text-xs mt-2 hidden text-left flex flex-col items-center"></div>
-                    </div>
-                    <input type="file" name="evidence[]" id="ev-file" class="hidden" multiple>
-                    <button type="submit" class="w-full bg-gray-900 hover:bg-gray-700 text-white py-2.5 rounded-xl text-sm font-semibold transition mt-2">Upload</button>
-                </form>
-            </div>
-            <script>
-                const dt = new DataTransfer();
-                document.getElementById('ev-file').addEventListener('change', function(e) {
-                    for (let file of this.files) {
-                        dt.items.add(file);
-                    }
-                    this.files = dt.files;
-                    const el = document.getElementById('ev-name');
-                    el.innerHTML = '';
-                    if (this.files.length > 0) {
-                        el.classList.remove('hidden');
-                        for(let i=0; i<this.files.length; i++) {
-                            el.innerHTML += '<div>✓ ' + this.files[i].name + '</div>';
-                        }
-                    } else {
-                        el.classList.add('hidden');
-                    }
-                });
-            </script>
-
-            @if($report->evidences->count() > 0)
-            <div class="space-y-2">
-                @foreach($report->evidences as $ev)
-                <div class="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
-                    <div>
-                        <p class="text-sm text-gray-700">{{ $ev->file_type }}</p>
-                        <p class="text-xs text-gray-400 font-mono">{{ substr($ev->file_hash,0,20) }}...</p>
-                        <p class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($ev->uploaded_at)->format('d M Y, H:i') }}</p>
-                    </div>
-                    <a href="{{ asset('storage/'.$ev->file_url) }}" target="_blank" class="text-red-700 hover:text-red-800 text-sm font-semibold transition">Lihat →</a>
+        document.getElementById('timeline').innerHTML = (payload.timeline || []).map((event) => `
+            <div class="flex gap-3">
+                <div class="mt-1 h-2.5 w-2.5 rounded-full bg-red-700"></div>
+                <div>
+                    <p class="text-sm font-bold text-gray-900">${escapeHtml(event.message)}</p>
+                    <p class="mt-1 text-xs text-gray-400">${escapeHtml(event.time)}</p>
                 </div>
-                @endforeach
             </div>
-            @else
-            <p class="text-gray-400 text-sm text-center py-2">Belum ada bukti. Tambah dari tombol di atas.</p>
-            @endif
-        </div>
+        `).join('');
 
-        {{-- Share ID --}}
-        <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
-            <h2 class="font-semibold text-gray-900 mb-2">Bagikan ke Saksi</h2>
-            <p class="text-gray-400 text-sm mb-3">Berikan ID ini ke saksi agar mereka bisa upload bukti tambahan.</p>
-            <div class="flex gap-2">
-                <code class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-600 font-mono break-all">{{ $report->id }}</code>
-                <button id="copy-btn" onclick="copyId('{{ $report->id }}')" class="bg-gray-900 hover:bg-gray-700 text-white px-4 py-3 rounded-xl text-xs font-semibold transition whitespace-nowrap">Salin</button>
+        document.getElementById('hotlines').innerHTML = (payload.hotlines || []).map((hotline) => `
+            <a href="tel:${escapeHtml(hotline.phone)}" class="flex items-center justify-between rounded-lg border border-red-100 bg-red-50 px-4 py-3">
+                <span class="text-sm font-bold text-red-950">${escapeHtml(hotline.label)}</span>
+                <span class="text-lg font-black text-red-800">${escapeHtml(hotline.phone)}</span>
+            </a>
+        `).join('');
+
+        document.getElementById('latest-messages').innerHTML = (payload.latest_messages || []).map((message) => `
+            <div class="rounded-lg bg-gray-50 p-3">
+                <p class="text-sm text-gray-800">${escapeHtml(message.message)}</p>
+                <p class="mt-1 text-xs text-gray-400">${escapeHtml(message.time)}</p>
             </div>
-        </div>
+        `).join('') || '<p class="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">Belum ada pesan partner. Tetap pantau halaman ini.</p>';
+    }
 
-        {{-- Witness evidences --}}
-        @if($report->witnessReports && $report->witnessReports->sum(fn($w)=>$w->evidences->count()) > 0)
-        <div class="bg-white border border-gray-200 rounded-2xl p-6">
-            <h2 class="font-bold text-gray-900 mb-4">👥 Bukti dari Saksi</h2>
-            @foreach($report->witnessReports as $w)
-                @foreach($w->evidences as $we)
-                <div class="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3 mb-2">
-                    <div><p class="text-sm text-gray-700">Saksi: {{ $w->witness_name ?: 'Anonim' }}</p><p class="text-xs text-gray-400">{{ $we->file_type }}</p></div>
-                    <a href="{{ asset('storage/'.$we->file_url) }}" target="_blank" class="text-green-700 hover:text-green-800 text-sm font-semibold transition">Lihat →</a>
-                </div>
-                @endforeach
-            @endforeach
-        </div>
-        @endif
+    async function pollLive() {
+        try {
+            const response = await fetch(`/tracking/${reportId}/live`, {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            });
 
-    </div>
+            if (response.ok) {
+                render(await response.json());
+                document.getElementById('live-dot').textContent = 'Live';
+            }
+        } catch (error) {
+            document.getElementById('live-dot').textContent = 'Mencoba ulang';
+        }
+    }
 
-    {{-- STEALTH --}}
-    <div id="stealth" class="hidden fixed inset-0 bg-gray-100 z-[100] flex items-center justify-center">
-        <div class="bg-white rounded-3xl shadow-xl w-80 overflow-hidden border border-gray-200">
-            <div class="bg-gray-900 px-6 py-4 text-right"><div id="scd" class="text-white text-3xl font-light">0</div></div>
-            <div class="grid grid-cols-4">
-                @foreach(['AC','±','%','÷','7','8','9','×','4','5','6','−','1','2','3','+','0','0','.','='] as $k)
-                <button onclick="scp('{{ $k }}')" class="py-5 text-xl font-medium border border-gray-100 {{ in_array($k,['÷','×','−','+','='])?'bg-orange-400 text-white':(in_array($k,['AC','±','%'])?'bg-gray-100 text-black':'bg-white text-black') }}">{{ $k }}</button>
-                @endforeach
-            </div>
-        </div>
-        <button onclick="document.getElementById('stealth').classList.add('hidden')" class="fixed bottom-8 text-xs text-gray-400 underline">Kembali</button>
-    </div>
-    <script>
-    function copyId(id){navigator.clipboard.writeText(id).then(()=>{const b=document.getElementById('copy-btn');b.textContent='✓ Tersalin!';setTimeout(()=>b.textContent='Salin',2000);});}
-    let sv='0',so=null,sp2=null,sn=true;
-    function scp(k){const d=document.getElementById('scd');if(k==='AC'){sv='0';so=null;sp2=null;sn=true;}else if(k==='±'){sv=(parseFloat(sv)*-1).toString();}else if(k==='%'){sv=(parseFloat(sv)/100).toString();}else if(['÷','×','−','+'].includes(k)){sp2=parseFloat(sv);so=k;sn=true;}else if(k==='='){if(so&&sp2!==null){const c=parseFloat(sv);sv=so==='÷'?(sp2/c).toString():so==='×'?(sp2*c).toString():so==='−'?(sp2-c).toString():(sp2+c).toString();so=null;sp2=null;sn=true;}}else if(k==='.'){if(sn){sv='0.';sn=false;}else if(!sv.includes('.'))sv+='.';}else{if(sn||sv==='0'){sv=k;sn=false;}else sv+=k;}d.textContent=sv;}
-    // Auto-refresh penuh dinonaktifkan agar navigasi/klik lebih cepat (tanpa reload server-side).
-    // Jika butuh update realtime, sebaiknya gunakan polling AJAX endpoint yang spesifik (bukan reload full page).
-    // setInterval(() => { window.location.reload(); }, 15000);
-    </script>
+    render(initialPayload);
+    setInterval(pollLive, 4000);
+</script>
 </body>
 </html>
-

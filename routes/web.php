@@ -21,6 +21,7 @@ Route::get('/emergency', [EmergencyController::class, 'index'])->name('emergency
 Route::post('/emergency', [EmergencyController::class, 'store']);
 
 Route::get('/tracking-search', [TrackingController::class, 'search'])->name('tracking.search');
+Route::get('/tracking/{id}/live', [TrackingController::class, 'live'])->name('tracking.live');
 Route::get('/tracking/{id}', [TrackingController::class, 'show'])->name('tracking.show');
 Route::post('/tracking/{reportId}/evidence', [EvidenceController::class, 'store'])->name('evidence.store');
 
@@ -99,12 +100,15 @@ Route::middleware('auth')->group(function () {
     Route::middleware('partner')->prefix('partner')->group(function () {
         Route::get('/', [PartnerController::class, 'index'])->name('partner.index');
         Route::get('/report/{id}', [PartnerController::class, 'show'])->name('partner.show');
+        Route::post('/report/{id}/accept', [PartnerController::class, 'accept'])->name('partner.report.accept');
         Route::post('/report/{id}/status', [PartnerController::class, 'updateStatus'])->name('partner.status');
     });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 
     Route::get('/', [AdminController::class, 'index'])->name('admin.index');
+    Route::post('/reports/{id}/reroute', [AdminController::class, 'rerouteReport'])->name('admin.reports.reroute');
+    Route::post('/reports/{id}/resolve', [AdminController::class, 'resolveReport'])->name('admin.reports.resolve');
 
     Route::get('/partners', [AdminPartnerController::class, 'index'])->name('admin.partners');
 
@@ -113,6 +117,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/partners', [AdminPartnerController::class, 'store'])->name('admin.partners.store');
 
     Route::patch('/partners/{id}/verify', [AdminPartnerController::class, 'toggleVerify'])->name('admin.partners.verify');
+    Route::patch('/partners/{id}/active', [AdminPartnerController::class, 'toggleActive'])->name('admin.partners.active');
 
     // Export CSV untuk semua user
     Route::get('/users/export-csv', [\App\Http\Controllers\AdminUsersExportController::class, 'exportCsv'])

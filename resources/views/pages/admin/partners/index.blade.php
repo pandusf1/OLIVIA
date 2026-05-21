@@ -67,6 +67,16 @@
                             Unverified
                         </span>
                     @endif
+
+                    @if($partner->is_active ?? true)
+                        <span class="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-700">
+                            Aktif
+                        </span>
+                    @else
+                        <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                            Nonaktif
+                        </span>
+                    @endif
                 </div>
 
                 <p class="text-sm text-gray-400 mt-1">
@@ -78,18 +88,31 @@
                 </p>
             </div>
 
-            <form method="POST"
-                  action="{{ route('admin.partners.verify', $partner->id) }}">
-                @csrf
-                @method('PATCH')
+            <div class="flex flex-wrap justify-end gap-2">
+                <form method="POST"
+                      action="{{ route('admin.partners.verify', $partner->id) }}">
+                    @csrf
+                    @method('PATCH')
 
-                <button
-                    class="px-4 py-2 rounded-xl text-sm font-semibold border border-gray-200 hover:border-gray-400 transition">
+                    <button
+                        class="px-4 py-2 rounded-xl text-sm font-semibold border border-gray-200 hover:border-gray-400 transition">
 
-                    {{ $partner->verified ? 'Cabut Verifikasi' : 'Verifikasi' }}
+                        {{ $partner->verified ? 'Cabut Verifikasi' : 'Verifikasi' }}
 
-                </button>
-            </form>
+                    </button>
+                </form>
+
+                <form method="POST"
+                      action="{{ route('admin.partners.active', $partner->id) }}">
+                    @csrf
+                    @method('PATCH')
+
+                    <button
+                        class="px-4 py-2 rounded-xl text-sm font-semibold border border-gray-200 hover:border-gray-400 transition">
+                        {{ ($partner->is_active ?? true) ? 'Nonaktifkan' : 'Aktifkan' }}
+                    </button>
+                </form>
+            </div>
 
         </div>
 

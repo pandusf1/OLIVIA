@@ -3,281 +3,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safora — Dashboard Admin</title>
-
+    <title>Safora - Dashboard Admin</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-
-        *{
-            font-family:'Inter',sans-serif;
-        }
-    </style>
 </head>
+<body class="min-h-screen bg-gray-50 text-gray-900 antialiased">
+@php
+    $backUrl = null;
+    $showBrand = true;
+    $statusClass = [
+        'Submitted' => 'bg-gray-100 text-gray-700',
+        'Routed' => 'bg-blue-100 text-blue-800',
+        'Viewed' => 'bg-yellow-100 text-yellow-900',
+        'In Progress' => 'bg-orange-100 text-orange-800',
+        'Resolved' => 'bg-green-100 text-green-800',
+    ];
+@endphp
+@include('partials.nav-auth')
 
-<body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
+<main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    @if(session('success'))
+        <div class="mb-5 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800">{{ session('success') }}</div>
+    @endif
 
-@php $backUrl = null; @endphp
+    <header class="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+            <p class="text-xs font-bold uppercase tracking-widest text-gray-500">Pusat Monitoring</p>
+            <h1 class="mt-1 text-3xl font-black text-gray-950">Dashboard Admin</h1>
+            <p class="mt-1 text-sm text-gray-500">Pantau laporan, respons partner, dan aktivitas platform Safora.</p>
+        </div>
+        <a href="{{ route('admin.partners') }}" class="rounded-lg bg-gray-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-gray-800">Manajemen Partner</a>
+    </header>
 
-    @php $showBrand = true; @endphp
-    @include('partials.nav-auth')
+    <section class="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-6">
+        @foreach([
+            ['Total Laporan', $stats['reports'], 'text-gray-950'],
+            ['Laporan Hari Ini', $stats['today'], 'text-blue-700'],
+            ['Laporan Darurat', $stats['emergency'], 'text-red-700'],
+            ['Belum Ditangani', $stats['unhandled'], 'text-orange-700'],
+            ['Selesai', $stats['resolved'], 'text-green-700'],
+            ['Partner Aktif', $stats['active_partners'], 'text-indigo-700'],
+        ] as [$label, $value, $color])
+            <div class="rounded-lg border border-gray-200 bg-white p-4">
+                <p class="text-xs font-bold uppercase text-gray-500">{{ $label }}</p>
+                <p class="mt-2 text-3xl font-black {{ $color }}">{{ $value }}</p>
+            </div>
+        @endforeach
+    </section>
 
-    <div class="max-w-6xl mx-auto px-6 py-10">
-
-        {{-- HEADER --}}
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-
+    <section class="mb-8 rounded-lg border border-orange-200 bg-orange-50 p-5">
+        <div class="mb-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
             <div>
-
-                <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">
-                    CONTROL CENTER
-                </p>
-
-                <h1 class="font-unbounded text-3xl font-black text-gray-900">
-                    Dashboard Admin
-                </h1>
-
-                <p class="text-gray-400 text-sm mt-1">
-                    Monitoring platform, partner, dan aktivitas laporan Safora.
-                </p>
-
+                <h2 class="text-xl font-black text-orange-950">Laporan Tidak Tertangani</h2>
+                <p class="text-sm text-orange-800">Tidak ada partner yang accept dan tidak ada routing pending yang masih valid.</p>
             </div>
-
-            <div class="bg-white border border-gray-200 rounded-2xl px-5 py-3">
-
-                <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">
-                    Total Laporan
-                </p>
-
-                <p class="text-2xl font-black text-gray-900">
-                    {{ $stats['reports'] }}
-                </p>
-
-            </div>
-
+            <span class="rounded-full bg-white px-3 py-1 text-sm font-bold text-orange-800">{{ $unhandledReports->count() }} laporan</span>
         </div>
 
-        {{-- STATS --}}
-        <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-
-            <div class="bg-white border border-gray-200 rounded-2xl p-5">
-
-                <p class="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">
-                    Emergency
-                </p>
-
-                <p class="text-3xl font-black text-red-700">
-                    {{ $stats['emergency'] }}
-                </p>
-
-            </div>
-
-            <div class="bg-white border border-gray-200 rounded-2xl p-5">
-
-                <p class="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">
-                    Resolved
-                </p>
-
-                <p class="text-3xl font-black text-green-700">
-                    {{ $stats['resolved'] }}
-                </p>
-
-            </div>
-
-            <div class="bg-white border border-gray-200 rounded-2xl p-5">
-
-                <p class="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">
-                    Partner
-                </p>
-
-                <p class="text-3xl font-black text-blue-700">
-                    {{ $stats['partners'] }}
-                </p>
-
-            </div>
-
-            <div class="bg-white border border-gray-200 rounded-2xl p-5">
-
-                <p class="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">
-                    User
-                </p>
-
-                <p class="text-3xl font-black text-gray-900">
-                    {{ $stats['users'] }}
-                </p>
-
-            </div>
-
-            <div class="bg-white border border-gray-200 rounded-2xl p-5">
-
-                <p class="text-xs uppercase tracking-wider text-gray-400 font-semibold mb-2">
-                    Active Cases
-                </p>
-
-                <p class="text-3xl font-black text-orange-600">
-                    {{ $stats['reports'] - $stats['resolved'] }}
-                </p>
-
-            </div>
-
+        <div class="overflow-x-auto rounded-lg border border-orange-200 bg-white">
+            <table class="min-w-full divide-y divide-orange-100 text-sm">
+                <thead class="bg-orange-100 text-left text-xs font-bold uppercase text-orange-900">
+                    <tr>
+                        <th class="px-4 py-3">ID</th>
+                        <th class="px-4 py-3">Kategori</th>
+                        <th class="px-4 py-3">Waktu Masuk</th>
+                        <th class="px-4 py-3">Durasi Tidak Tertangani</th>
+                        <th class="px-4 py-3">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @forelse($unhandledReports as $report)
+                        <tr>
+                            <td class="px-4 py-3 font-mono text-xs">{{ strtoupper(substr($report->id, 0, 8)) }}</td>
+                            <td class="px-4 py-3 font-semibold">{{ $report->category }}</td>
+                            <td class="px-4 py-3 text-gray-600">{{ $report->created_at->format('d M Y, H:i') }}</td>
+                            <td class="px-4 py-3 text-gray-600">{{ $report->created_at->diffForHumans(null, true) }}</td>
+                            <td class="px-4 py-3">
+                                <form method="POST" action="{{ route('admin.reports.reroute', $report->id) }}">
+                                    @csrf
+                                    <button class="rounded-lg bg-orange-700 px-3 py-2 text-xs font-bold text-white transition hover:bg-orange-800">Re-route Manual</button>
+                                </form>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="5" class="px-4 py-8 text-center text-gray-500">Tidak ada laporan tidak tertangani.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
+    </section>
 
-        {{-- QUICK MENU --}}
-        <div class="grid md:grid-cols-2 gap-4 mb-8">
-
-            {{-- PARTNER MANAGEMENT --}}
-            <a href="{{ route('admin.partners') }}"
-               class="bg-white border border-gray-200 hover:border-gray-300 rounded-3xl p-6 transition">
-
-                <div class="flex items-center justify-between mb-5">
-
-                    <div class="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-2xl">
-                        🏢
-                    </div>
-
-                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                        Management
-                    </span>
-
-                </div>
-
-                <h2 class="text-xl font-black text-gray-900">
-                    Partner Management
-                </h2>
-
-                <p class="text-sm text-gray-400 mt-2">
-                    Kelola akun partner, verifikasi, dan akses mitra.
-                </p>
-
-            </a>
-
-            {{-- MONITORING --}}
-            <div class="bg-white border border-gray-200 rounded-3xl p-6">
-
-                <div class="flex items-center justify-between mb-5">
-
-                    <div class="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center text-2xl">
-                        🚨
-                    </div>
-
-                    <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                        Live
-                    </span>
-
-                </div>
-
-                <h2 class="text-xl font-black text-gray-900">
-                    Monitoring System
-                </h2>
-
-                <p class="text-sm text-gray-400 mt-2">
-                    Pantau seluruh aktivitas laporan dan status kasus aktif.
-                </p>
-
-            </div>
-
-        </div>
-
-        {{-- RECENT REPORTS --}}
-        <div class="bg-white border border-gray-200 rounded-3xl p-6">
-
-            <div class="flex items-center justify-between mb-6">
-
-                <div>
-
-                    <h2 class="font-black text-xl text-gray-900">
-                        Laporan Terbaru
-                    </h2>
-
-                    <p class="text-sm text-gray-400 mt-1">
-                        Aktivitas laporan terbaru di platform.
-                    </p>
-
-                </div>
-
-                <div class="text-sm text-gray-400">
-                    {{ $reports->count() }} laporan
-                </div>
-
-            </div>
-
-            @php
-                $sc = [
-                    'Submitted' => 'bg-gray-100 text-gray-600',
-                    'Routed' => 'bg-blue-50 text-blue-700',
-                    'Viewed' => 'bg-yellow-50 text-yellow-700',
-                    'In Progress' => 'bg-orange-50 text-orange-700',
-                    'Resolved' => 'bg-green-50 text-green-700',
-                ];
-            @endphp
-
-            @if($reports->count() > 0)
-
-                <div class="space-y-3">
-
-                    @foreach($reports as $report)
-
-                    <a href="/partner/report/{{ $report->id }}"
-                       class="flex items-center justify-between border border-gray-200 hover:border-gray-300 rounded-2xl px-5 py-4 transition">
-
-                        <div class="flex-1 min-w-0">
-
-                            <div class="flex items-center gap-2 flex-wrap mb-1">
-
-                                <p class="font-bold text-gray-900">
-                                    {{ $report->category }}
-                                </p>
-
-                                @if($report->anonymous)
-                                    <span class="bg-purple-50 text-purple-700 text-xs px-2 py-0.5 rounded-full">
-                                        Anonim
-                                    </span>
-                                @endif
-
-                            </div>
-
-                            @if($report->description)
-                                <p class="text-sm text-gray-400 truncate">
-                                    {{ $report->description }}
-                                </p>
-                            @endif
-
-                            <p class="text-xs text-gray-400 mt-1">
-                                {{ $report->created_at->format('d M Y, H:i') }}
-                            </p>
-
-                        </div>
-
-                        <span class="text-xs font-semibold px-3 py-1.5 rounded-full ml-4 {{ $sc[$report->status] ?? 'bg-gray-100 text-gray-600' }}">
-                            {{ $report->status }}
-                        </span>
-
-                    </a>
-
+    <section class="mb-8 rounded-lg border border-gray-200 bg-white p-5">
+        <h2 class="mb-4 text-xl font-black text-gray-950">Monitoring Partner</h2>
+        <div class="overflow-x-auto">
+            <table class="sortable min-w-full divide-y divide-gray-100 text-sm">
+                <thead class="bg-gray-50 text-left text-xs font-bold uppercase text-gray-500">
+                    <tr>
+                        <th class="cursor-pointer px-4 py-3">Partner Name</th>
+                        <th class="cursor-pointer px-4 py-3">Tipe</th>
+                        <th class="cursor-pointer px-4 py-3">Kota</th>
+                        <th class="cursor-pointer px-4 py-3">Verified</th>
+                        <th class="cursor-pointer px-4 py-3">Laporan Diterima</th>
+                        <th class="cursor-pointer px-4 py-3">Rata-rata Respons</th>
+                        <th class="cursor-pointer px-4 py-3">Aktif Sekarang</th>
+                        <th class="cursor-pointer px-4 py-3">Status Keaktifan</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @foreach($partners as $partner)
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-4 py-3 font-bold">{{ $partner->partner_name }}</td>
+                            <td class="px-4 py-3">{{ $partner->partner_type }}</td>
+                            <td class="px-4 py-3">{{ $partner->city }}</td>
+                            <td class="px-4 py-3">{{ $partner->verified ? 'Ya' : 'Tidak' }}</td>
+                            <td class="px-4 py-3">{{ $partner->accepted_count }}</td>
+                            <td class="px-4 py-3">{{ $partner->average_response_minutes !== null ? $partner->average_response_minutes . ' menit' : '-' }}</td>
+                            <td class="px-4 py-3">{{ $partner->active_reports_count }}</td>
+                            <td class="px-4 py-3">
+                                <span class="rounded-full px-3 py-1 text-xs font-bold {{ $partner->activity_status === 'Aktif' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700' }}">{{ $partner->activity_status }}</span>
+                            </td>
+                        </tr>
                     @endforeach
+                </tbody>
+            </table>
+        </div>
+    </section>
 
-                </div>
-
-            @else
-
-                <div class="text-center py-16">
-
-                    <p class="text-5xl mb-4">
-                        📭
-                    </p>
-
-                    <p class="text-gray-400">
-                        Belum ada laporan masuk.
-                    </p>
-
-                </div>
-
-            @endif
-
+    <section class="mb-8 rounded-lg border border-gray-200 bg-white p-5">
+        <div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+                <h2 class="text-xl font-black text-gray-950">Semua Laporan</h2>
+                <p class="text-sm text-gray-500">Gunakan filter untuk audit operasional harian.</p>
+            </div>
+            <form method="GET" action="{{ route('admin.index') }}" class="grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
+                <select name="status" class="rounded-lg border border-gray-200 px-3 py-2 text-sm">
+                    <option value="">Semua Status</option>
+                    @foreach(['Submitted','Routed','Viewed','In Progress','Resolved'] as $status)
+                        <option value="{{ $status }}" @selected(request('status') === $status)>{{ $status }}</option>
+                    @endforeach
+                </select>
+                <select name="category" class="rounded-lg border border-gray-200 px-3 py-2 text-sm">
+                    <option value="">Semua Kategori</option>
+                    @foreach($categories as $category)
+                        <option value="{{ $category }}" @selected(request('category') === $category)>{{ $category }}</option>
+                    @endforeach
+                </select>
+                <select name="report_type" class="rounded-lg border border-gray-200 px-3 py-2 text-sm">
+                    <option value="">Semua Tipe</option>
+                    <option value="Emergency" @selected(request('report_type') === 'Emergency')>Emergency</option>
+                    <option value="quick_emergency" @selected(request('report_type') === 'quick_emergency')>Quick Emergency</option>
+                </select>
+                <input type="date" name="date_from" value="{{ request('date_from') }}" class="rounded-lg border border-gray-200 px-3 py-2 text-sm">
+                <input type="date" name="date_to" value="{{ request('date_to') }}" class="rounded-lg border border-gray-200 px-3 py-2 text-sm">
+                <select name="partner_id" class="rounded-lg border border-gray-200 px-3 py-2 text-sm">
+                    <option value="">Semua Partner</option>
+                    @foreach($partners as $partner)
+                        <option value="{{ $partner->id }}" @selected(request('partner_id') === $partner->id)>{{ $partner->partner_name }}</option>
+                    @endforeach
+                </select>
+                <button class="rounded-lg bg-gray-950 px-4 py-2 text-sm font-bold text-white lg:col-span-6">Terapkan Filter</button>
+            </form>
         </div>
 
-    </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-100 text-sm">
+                <thead class="bg-gray-50 text-left text-xs font-bold uppercase text-gray-500">
+                    <tr>
+                        <th class="px-4 py-3">ID</th>
+                        <th class="px-4 py-3">Tipe</th>
+                        <th class="px-4 py-3">Kategori</th>
+                        <th class="px-4 py-3">Status</th>
+                        <th class="px-4 py-3">User</th>
+                        <th class="px-4 py-3">Partner Handle</th>
+                        <th class="px-4 py-3">Waktu</th>
+                        <th class="px-4 py-3">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @foreach($reports as $report)
+                        @php $handler = $report->partnerRoutings->firstWhere('status', 'accepted')?->partner; @endphp
+                        <tr>
+                            <td class="px-4 py-3 font-mono text-xs">{{ strtoupper(substr($report->id, 0, 8)) }}</td>
+                            <td class="px-4 py-3">{{ $report->report_type }}</td>
+                            <td class="px-4 py-3 font-semibold">{{ $report->category }}</td>
+                            <td class="px-4 py-3"><span class="rounded-full px-3 py-1 text-xs font-bold {{ $statusClass[$report->status] ?? 'bg-gray-100 text-gray-700' }}">{{ $report->status }}</span></td>
+                            <td class="px-4 py-3">{{ $report->anonymous ? 'Anonim' : ($report->user?->name ?? 'Tanpa user') }}</td>
+                            <td class="px-4 py-3">{{ $handler?->partner_name ?? '-' }}</td>
+                            <td class="px-4 py-3">{{ $report->created_at->format('d M Y, H:i') }}</td>
+                            <td class="px-4 py-3">
+                                <div class="flex flex-wrap gap-2">
+                                    <a href="{{ route('tracking.show', $report->id) }}" class="rounded-lg border border-gray-200 px-3 py-2 text-xs font-bold text-gray-700">Lihat Detail</a>
+                                    @if(!$handler)
+                                        <form method="POST" action="{{ route('admin.reports.reroute', $report->id) }}">@csrf<button class="rounded-lg border border-orange-200 px-3 py-2 text-xs font-bold text-orange-800">Re-route</button></form>
+                                    @endif
+                                    @if($report->status !== 'Resolved')
+                                        <form method="POST" action="{{ route('admin.reports.resolve', $report->id) }}">@csrf<button class="rounded-lg border border-green-200 px-3 py-2 text-xs font-bold text-green-800">Resolve Manual</button></form>
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </section>
 
+    <section class="mb-8 rounded-lg border border-gray-200 bg-white p-5">
+        <h2 class="mb-4 text-xl font-black text-gray-950">Aktivitas Terbaru</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-100 text-sm">
+                <thead class="bg-gray-50 text-left text-xs font-bold uppercase text-gray-500">
+                    <tr>
+                        <th class="px-4 py-3">Waktu</th>
+                        <th class="px-4 py-3">Aksi</th>
+                        <th class="px-4 py-3">Entitas</th>
+                        <th class="px-4 py-3">Dilakukan Oleh</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @forelse($auditLogs as $log)
+                        <tr>
+                            <td class="px-4 py-3">{{ optional($log->created_at)->format('d M Y, H:i') }}</td>
+                            <td class="px-4 py-3 font-semibold">{{ $log->action }}</td>
+                            <td class="px-4 py-3">{{ $log->target_type ?? '-' }} {{ $log->target_id ? strtoupper(substr($log->target_id, 0, 8)) : '' }}</td>
+                            <td class="px-4 py-3">{{ $log->user_id ? 'User ' . strtoupper(substr($log->user_id, 0, 8)) : 'system' }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="4" class="px-4 py-8 text-center text-gray-500">Belum ada aktivitas.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+
+<script>
+    document.querySelectorAll('table.sortable').forEach(function (table) {
+        table.querySelectorAll('th').forEach(function (header, index) {
+            header.addEventListener('click', function () {
+                const tbody = table.querySelector('tbody');
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                const asc = header.dataset.asc !== 'true';
+                header.dataset.asc = asc ? 'true' : 'false';
+
+                rows.sort(function (a, b) {
+                    const left = a.children[index]?.textContent.trim() || '';
+                    const right = b.children[index]?.textContent.trim() || '';
+                    return asc
+                        ? left.localeCompare(right, 'id', { numeric: true })
+                        : right.localeCompare(left, 'id', { numeric: true });
+                });
+
+                rows.forEach(function (row) {
+                    tbody.appendChild(row);
+                });
+            });
+        });
+    });
+</script>
 </body>
 </html>

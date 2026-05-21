@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use App\Models\ReportStatusLog;
 use App\Models\Partner;
+use App\Models\ReportPartnerRouting;
+use App\Models\ReportTimelineEvent;
 class Report extends Model
 {
     use HasUuids;
@@ -22,11 +24,26 @@ class Report extends Model
         'location_text',
         'anonymous',
         'status',
+        'urgency_level',
         'routed_partner_id',
+        'handler_partner_id',
+        'handler_user_id',
+        'assigned_at',
+        'location_verified_at',
+        'escalated_at',
+        'last_activity_at',
     ];
 
     public $incrementing = false;
     protected $keyType = 'string';
+
+    protected $casts = [
+        'anonymous' => 'boolean',
+        'assigned_at' => 'datetime',
+        'location_verified_at' => 'datetime',
+        'escalated_at' => 'datetime',
+        'last_activity_at' => 'datetime',
+    ];
 
     public function evidences()
     {
@@ -54,8 +71,30 @@ public function partner()
     return $this->belongsTo(Partner::class, 'routed_partner_id');
 }
 
+public function partnerRoutings()
+{
+    return $this->hasMany(ReportPartnerRouting::class);
+}
+
+public function timelineEvents()
+{
+    return $this->hasMany(ReportTimelineEvent::class)->latest();
+}
+
+public function routingPartners()
+{
+    return $this->belongsToMany(Partner::class, 'report_partner_routings')
+        ->withPivot(['status', 'routed_at', 'responded_at', 'expires_at'])
+        ->withTimestamps();
+}
+
 public function assignedPartner()
 {
-    return $this->belongsTo(Partner::class, 'partner_id');
+    return $this->belongsTo(Partner::class, 'handler_partner_id');
+}
+
+public function handlerUser()
+{
+    return $this->belongsTo(User::class, 'handler_user_id');
 }
 }

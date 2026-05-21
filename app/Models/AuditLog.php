@@ -16,6 +16,7 @@ class AuditLog extends Model
         'action',
         'target_type',
         'target_id',
+        'created_at',
     ];
 
     public $incrementing = false;
@@ -23,6 +24,10 @@ class AuditLog extends Model
     public $timestamps = false;
 
     const CREATED_AT = 'created_at';
+
+    protected $casts = [
+        'created_at' => 'datetime',
+    ];
 
     /**
      * Shorthand helper to log any action.

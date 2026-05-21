@@ -25,22 +25,37 @@
     $backUrl = $backUrl ?? route('dashboard');
     $backLabel = $backLabel ?? 'Dashboard';
     $hasSelectedChat = filled($partnerId);
+    $viewerType = $viewerType ?? 'user';
+    $reportContext = $reportContext ?? null;
 @endphp
 @include('partials.nav-auth')
 
 <div id="chat-page"
      class="chat-layout {{ $hasSelectedChat ? 'chat-open max-w-6xl' : 'chat-closed max-w-4xl' }} mx-auto w-full px-4 sm:px-6 py-6">
-    <div id="chat-grid" class="{{ $hasSelectedChat ? 'lg:grid lg:grid-cols-[30%_70%] lg:gap-4' : '' }} transition-all duration-300">
+    <div id="chat-grid" class="{{ $hasSelectedChat ? ($reportContext ? 'lg:grid lg:grid-cols-[24%_52%_24%] lg:gap-4' : 'lg:grid lg:grid-cols-[30%_70%] lg:gap-4') : '' }} transition-all duration-300">
         <aside id="thread-list" class="thread-list">
             @if($threads->count() > 0)
                 <div class="space-y-3">
                     @foreach($threads as $t)
-                        @php $active = (string) $partnerId === (string) $t->partner_id; @endphp
-                        <a href="{{ route('chat.start', ['partnerId' => $t->partner_id]) }}"
+                        @php
+                            $active = (string) $partnerId === (string) $t->partner_id;
+                            $threadHref = $viewerType === 'partner'
+                                ? route('chat.messages', ['partnerId' => $t->partner_id]) . ($t->report_context_id ? '?report_id=' . $t->report_context_id : '')
+                                : route('chat.start', ['partnerId' => $t->partner_id]);
+                            $threadName = $viewerType === 'partner'
+                                ? ($t->user?->name ?? 'Pelapor')
+                                : ($t->partner?->partner_name ?? 'Partner');
+                            $threadType = $viewerType === 'partner'
+                                ? 'Pelapor'
+                                : ($t->partner?->partner_type ?? '');
+                        @endphp
+                        <a href="{{ $threadHref }}"
                            data-chat-link
                            data-partner-id="{{ $t->partner_id }}"
-                           data-partner-name="{{ $t->partner?->partner_name ?? 'Partner' }}"
-                           data-partner-type="{{ $t->partner?->partner_type ?? '' }}"
+                           data-report-id="{{ $t->report_context_id ?? '' }}"
+                           data-user-id="{{ $t->user_id }}"
+                           data-partner-name="{{ $threadName }}"
+                           data-partner-type="{{ $threadType }}"
                            data-partner-image="{{ $t->partner?->image_url ?? '' }}"
                            class="block bg-white border {{ $active ? 'border-gray-900' : 'border-gray-200' }} rounded-2xl p-4 hover:bg-gray-50 transition">
                             <div class="flex items-center gap-3">
@@ -51,9 +66,9 @@
                                 @endif
 
                                 <div class="min-w-0 flex-1">
-                                    <p class="font-bold text-gray-900 text-sm truncate">{{ $t->partner?->partner_name ?? 'Partner' }}</p>
+                                    <p class="font-bold text-gray-900 text-sm truncate">{{ $threadName }}</p>
                                     <p class="text-xs text-gray-400 mt-1 truncate">
-                                        {{ $t->partner?->partner_type ?? '' }} • {{ $t->last_message_at?->format('d M Y, H:i') ?? 'Belum ada pesan' }}
+                                        {{ $threadType }} • {{ $t->last_message_at?->format('d M Y, H:i') ?? 'Belum ada pesan' }}
                                     </p>
                                 </div>
                             </div>
@@ -83,8 +98,8 @@
                     </div>
 
                     <div class="flex-1 min-w-0">
-                        <p id="partner-name" class="font-bold text-gray-900 text-sm truncate">{{ $partner->partner_name ?? 'Pilih partner' }}</p>
-                        <p id="partner-type" class="text-xs text-gray-400">{{ $partner->partner_type ?? '' }}</p>
+                        <p id="partner-name" class="font-bold text-gray-900 text-sm truncate">{{ $viewerType === 'partner' ? (($reportContext?->anonymous ?? false) ? 'Anonim' : ($reportContext?->user?->name ?? 'Pelapor')) : ($partner->partner_name ?? 'Pilih partner') }}</p>
+                        <p id="partner-type" class="text-xs text-gray-400">{{ $viewerType === 'partner' ? 'Pelapor laporan' : ($partner->partner_type ?? '') }}</p>
                     </div>
 
                     <button type="button" id="btn-back-list" class="lg:hidden text-xs text-gray-400 hover:text-gray-600 transition border border-gray-200 px-3 py-1.5 rounded-full">
@@ -94,7 +109,7 @@
 
                 <div id="msg-container" class="flex-1 overflow-y-auto space-y-3 px-4 py-4 bg-[#faf9f7]">
                     @forelse($messages as $m)
-                        @php $isMe = $m->sender_type === 'user'; @endphp
+                        @php $isMe = $m->sender_type === $viewerType; @endphp
                         <div class="flex {{ $isMe ? 'justify-end' : 'justify-start' }}">
                             <div class="max-w-[78%] rounded-2xl px-4 py-3 {{ $isMe ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-900' }}">
                                 <p class="text-sm break-words leading-relaxed whitespace-pre-wrap">{{ $m->message }}</p>
@@ -133,14 +148,47 @@
                 </form>
             </section>
         </main>
+
+        @if($reportContext)
+            <aside class="mt-4 lg:mt-0">
+                <section class="rounded-2xl border border-gray-200 bg-white p-4">
+                    <p class="text-xs font-bold uppercase tracking-wider text-gray-400">Konteks Laporan</p>
+                    <h2 class="mt-2 text-lg font-black text-gray-900">{{ $reportContext->category }}</h2>
+                    <p class="mt-2 text-sm leading-6 text-gray-600">{{ \Illuminate\Support\Str::limit($reportContext->description ?: 'Tidak ada deskripsi tambahan.', 140) }}</p>
+                    <dl class="mt-4 space-y-3 text-sm">
+                        <div>
+                            <dt class="font-bold text-gray-900">Status</dt>
+                            <dd class="text-gray-500">{{ $reportContext->status }}</dd>
+                        </div>
+                        <div>
+                            <dt class="font-bold text-gray-900">Pelapor</dt>
+                            <dd class="text-gray-500">{{ $reportContext->anonymous ? 'Anonim' : ($reportContext->user?->name ?? 'Tanpa user') }}</dd>
+                        </div>
+                        <div>
+                            <dt class="font-bold text-gray-900">Lokasi</dt>
+                            <dd class="text-gray-500">{{ $reportContext->location_text ?: ($reportContext->latitude ? $reportContext->latitude . ', ' . $reportContext->longitude : 'Tidak tersedia') }}</dd>
+                        </div>
+                        <div>
+                            <dt class="font-bold text-gray-900">Bukti</dt>
+                            <dd class="text-gray-500">{{ $reportContext->evidences->count() }} file</dd>
+                        </div>
+                    </dl>
+                    <a href="{{ route('tracking.show', $reportContext->id) }}" class="mt-4 block rounded-xl border border-gray-200 px-4 py-2 text-center text-sm font-bold text-gray-800 transition hover:border-gray-400">Lihat Tracking</a>
+                </section>
+            </aside>
+        @endif
     </div>
 </div>
 
 <script>
     let currentPartnerId = {{ json_encode($partnerId) }};
+    let currentReportId = {{ json_encode($reportContext?->id) }};
+    let currentUserId = null;
+    const viewerType = {{ json_encode($viewerType) }};
     let pollTimer = null;
+    let syncTimer = null;
     let serverMessages = [];
-    let pendingMessages = [];
+    let pendingMessages = []; // Messages waiting to be sent (offline queue)
 
     const page = document.getElementById('chat-page');
     const grid = document.getElementById('chat-grid');
@@ -172,8 +220,8 @@
     }
 
     function messageHtml(message) {
-        const isMe = message.sender_type === 'user';
-        const isPending = message.status === 'pending';
+        const isMe = message.sender_type === viewerType;
+        const isPending = message.status === 'pending' || message.status === 'sending';
 
         const tickHtml = isMe
             ? (isPending
@@ -197,7 +245,9 @@
     function openLayout() {
         page.classList.remove('chat-closed', 'max-w-4xl');
         page.classList.add('chat-open', 'max-w-6xl');
-        grid.classList.add('lg:grid', 'lg:grid-cols-[30%_70%]', 'lg:gap-4');
+        grid.classList.remove('lg:grid-cols-[30%_70%]', 'lg:grid-cols-[24%_52%_24%]');
+        grid.classList.add('lg:grid', 'lg:gap-4');
+        grid.classList.add(currentReportId ? 'lg:grid-cols-[24%_52%_24%]' : 'lg:grid-cols-[30%_70%]');
     }
 
     function closeMobileChat() {
@@ -224,8 +274,6 @@
     }
 
     function updateUI() {
-        // Gabungkan server messages dengan pending messages
-        // Filter pending messages yang sudah ada di serverMessages berdasarkan isi pesan (sederhana)
         const serverMessagesText = serverMessages.map(m => m.message.trim());
         const visiblePending = pendingMessages.filter(pm => !serverMessagesText.includes(pm.message.trim()));
         
@@ -244,11 +292,59 @@
         }
     }
 
+    async function processPendingMessages() {
+        if (!currentPartnerId || pendingMessages.length === 0) return;
+        
+        for (let i = 0; i < pendingMessages.length; i++) {
+            let msg = pendingMessages[i];
+            if (msg.status === 'pending') {
+                msg.status = 'sending';
+                updateUI();
+                try {
+                    const params = new URLSearchParams();
+                    if (currentReportId) params.append('report_id', currentReportId);
+                    if (currentUserId) params.append('user_id', currentUserId);
+                    
+                    const suffix = params.toString() ? `?${params.toString()}` : '';
+                    
+                    const csrf = document.querySelector('input[name="_token"]')?.value;
+                    const response = await fetch(`/chat/send/${currentPartnerId}${suffix}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrf,
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ message: msg.message }),
+                    });
+
+                    if (response.ok) {
+                        msg.status = 'sent';
+                        pendingMessages.splice(i, 1);
+                        i--; // adjust index since we removed an item
+                        fetchMessages(); // refresh from server immediately
+                    } else {
+                        msg.status = 'pending'; // revert to pending to retry later
+                    }
+                } catch (e) {
+                    msg.status = 'pending'; // network error, keep as pending to retry later
+                }
+            }
+        }
+        updateUI();
+    }
+
     async function fetchMessages() {
         if (!currentPartnerId) return;
 
         try {
-            const response = await fetch(`/chat/messages/${currentPartnerId}`, {
+            const params = new URLSearchParams();
+            if (currentReportId) params.append('report_id', currentReportId);
+            if (currentUserId) params.append('user_id', currentUserId);
+            
+            const suffix = params.toString() ? `?${params.toString()}` : '';
+            const response = await fetch(`/chat/messages/${currentPartnerId}${suffix}`, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
             });
 
@@ -256,7 +352,6 @@
                 const data = await response.json();
                 const newServerMessages = data.messages || [];
                 
-                // Cek apakah ada perubahan (bisa di-optimasi lebih lanjut)
                 if (JSON.stringify(serverMessages) !== JSON.stringify(newServerMessages)) {
                     serverMessages = newServerMessages;
                     updateUI();
@@ -269,10 +364,13 @@
 
     function startPolling() {
         if (pollTimer) clearInterval(pollTimer);
+        if (syncTimer) clearInterval(syncTimer);
+        
         if (!currentPartnerId) return;
 
         fetchMessages();
         pollTimer = setInterval(fetchMessages, 2000);
+        syncTimer = setInterval(processPendingMessages, 3000);
     }
 
     document.querySelectorAll('[data-chat-link]').forEach((link) => {
@@ -280,6 +378,8 @@
             event.preventDefault();
 
             currentPartnerId = link.dataset.partnerId;
+            currentReportId = link.dataset.reportId || null;
+            currentUserId = link.dataset.userId || null;
             serverMessages = [];
             pendingMessages = [];
             
@@ -303,13 +403,12 @@
         }
     });
 
-    form?.addEventListener('submit', async (event) => {
+    form?.addEventListener('submit', (event) => {
         event.preventDefault();
 
         const message = input.value.trim();
         if (!currentPartnerId || !message) return;
 
-        // Kosongkan input
         input.value = '';
         input.style.height = 'auto';
 
@@ -319,55 +418,28 @@
         
         const pendingMsg = {
             id: Date.now(),
-            sender_type: 'user',
+            sender_type: viewerType,
             message: message,
             time: `${hh}:${mm}`,
             status: 'pending'
         };
 
-        // Tambahkan ke pending dan render
         pendingMessages.push(pendingMsg);
         updateUI();
-
-        const csrf = document.querySelector('input[name="_token"]')?.value;
-        try {
-            const response = await fetch(`/chat/send/${currentPartnerId}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrf,
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ message }),
-            });
-
-            if (!response.ok) {
-                // Hapus dari pending jika gagal
-                pendingMessages = pendingMessages.filter(m => m.id !== pendingMsg.id);
-                updateUI();
-                alert('Gagal mengirim pesan');
-            } else {
-                // Berhasil terkirim ke server, ubah status jadi terkirim atau fetch ulang
-                pendingMsg.status = 'sent';
-                updateUI();
-                
-                // Segera fetch dari server agar pesan masuk ke serverMessages
-                fetchMessages();
-            }
-        } catch (error) {
-            pendingMessages = pendingMessages.filter(m => m.id !== pendingMsg.id);
-            updateUI();
-            alert('Terjadi kesalahan jaringan');
-        }
+        processPendingMessages(); // try sending immediately
     });
 
     window.addEventListener('popstate', () => window.location.reload());
 
     if (currentPartnerId) {
+        // Find the active link to get user_id if any
+        const activeLink = document.querySelector(`[data-chat-link][data-partner-id="${currentPartnerId}"]`);
+        if (activeLink) {
+            currentUserId = activeLink.dataset.userId || null;
+        }
+        
         openLayout();
         setActiveLink(currentPartnerId);
-        // Tarik data awal, karena di blade sudah ada, kita replace via fetch
         startPolling();
     }
 </script>

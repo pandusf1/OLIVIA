@@ -12,7 +12,12 @@ use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AdminController;
 
+use App\Http\Controllers\Auth\SocialAuthController;
+
 Route::middleware('guest')->group(function () {
+    Route::get('auth/google', [SocialAuthController::class, 'redirect'])->name('google.login');
+    Route::get('auth/google/callback', [SocialAuthController::class, 'callback'])->name('google.callback');
+
     Route::get('register', [RegisteredUserController::class, 'create'])
         ->name('register');
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Report;
+use App\Models\ChatThread;
 use Illuminate\Http\Request;
 
 class TrackingController extends Controller
@@ -13,10 +14,30 @@ class TrackingController extends Controller
             'evidences',
             'statusLogs',
             'partner',
+            'assignedPartner',
+            'handlerUser',
+            'partnerRoutings.partner',
+            'timelineEvents',
             'witnessReports.evidences',
         ])->findOrFail($id);
 
-        return view('pages.tracking', compact('report'));
+        return view('pages.tracking', [
+            'report' => $report,
+            'livePayload' => $this->buildLivePayload($report),
+        ]);
+    }
+
+    public function live($id)
+    {
+        $report = Report::with([
+            'evidences',
+            'assignedPartner',
+            'handlerUser',
+            'partnerRoutings.partner',
+            'timelineEvents',
+        ])->findOrFail($id);
+
+        return response()->json($this->buildLivePayload($report));
     }
 
     public function search(Request $request)
@@ -29,5 +50,177 @@ class TrackingController extends Controller
             return back()->with('error', 'Laporan dengan ID tersebut tidak ditemukan.');
         }
         return view('pages.tracking_search');
+    }
+
+    private function buildLivePayload(Report $report): array
+    {
+        $assignedPartner = $report->assignedPartner;
+        $acceptedRouting = $report->partnerRoutings->firstWhere('status', 'accepted');
+        $pendingCount = $report->partnerRoutings->where('status', 'pending')->count();
+        $reviewingCount = $report->partnerRoutings
+            ->where('status', 'pending')
+            ->filter(fn ($routing) => filled($routing->reviewed_at))
+            ->count();
+
+        $humanMessage = $this->humanStatusMessage($report, $pendingCount, $reviewingCount);
+        $eta = $assignedPartner
+            ? 'Partner sudah terhubung'
+            : ($report->partnerRoutings->where('status', 'pending')->min('estimated_response_minutes')
+                ? $report->partnerRoutings->where('status', 'pending')->min('estimated_response_minutes') . '-' . ($report->partnerRoutings->where('status', 'pending')->min('estimated_response_minutes') + 3) . ' menit'
+                : '3-5 menit');
+
+        $latestMessages = collect();
+        if ($assignedPartner && $report->user_id) {
+            $thread = ChatThread::query()
+                ->where('user_id', $report->user_id)
+                ->where('partner_id', $assignedPartner->id)
+                ->first();
+
+            $latestMessages = $thread
+                ? $thread->messages()->latest()->limit(3)->get()->reverse()->values()
+                : collect();
+        }
+
+        return [
+            'report' => [
+                'id' => $report->id,
+                'short_id' => strtoupper(substr($report->id, 0, 8)),
+                'category' => $report->category,
+                'status' => $report->status,
+                'urgency_level' => $report->urgency_level ?? 'high',
+                'created_at' => optional($report->created_at)->format('d M Y, H:i'),
+                'anonymous' => (bool) $report->anonymous,
+                'location' => [
+                    'latitude' => $report->latitude,
+                    'longitude' => $report->longitude,
+                    'text' => $report->location_text,
+                    'verified' => filled($report->location_verified_at),
+                    'maps_url' => $report->latitude && $report->longitude
+                        ? 'https://www.google.com/maps?q=' . $report->latitude . ',' . $report->longitude
+                        : null,
+                ],
+            ],
+            'current_status' => $this->humanStatusTitle($report),
+            'human_message' => $humanMessage,
+            'eta' => $eta,
+            'next_instruction' => $this->nextInstruction($report),
+            'escalation_message' => $report->escalated_at
+                ? 'Admin Safora sudah diberi peringatan karena belum ada partner yang menerima dalam batas awal.'
+                : 'Jika belum ada partner menerima dalam 3 menit, sistem akan mencoba ulang dan memberi peringatan ke admin.',
+            'assigned_partner' => $assignedPartner ? [
+                'id' => $assignedPartner->id,
+                'name' => $assignedPartner->partner_name,
+                'specialization' => $this->partnerTypeLabel($assignedPartner->partner_type),
+                'city' => $assignedPartner->city,
+                'verified' => (bool) $assignedPartner->verified,
+                'handler_name' => $report->handlerUser?->name,
+                'assigned_at' => optional($report->assigned_at)->format('d M Y, H:i'),
+            ] : null,
+            'routed_partners' => $report->partnerRoutings
+                ->sortByDesc(fn ($routing) => $routing->status === 'accepted')
+                ->values()
+                ->map(fn ($routing) => [
+                    'name' => $routing->partner?->partner_name ?? 'Partner Safora',
+                    'specialization' => $this->partnerTypeLabel($routing->partner?->partner_type),
+                    'city' => $routing->partner?->city,
+                    'estimated_response' => $routing->estimated_response_minutes
+                        ? $routing->estimated_response_minutes . '-' . ($routing->estimated_response_minutes + 3) . ' menit'
+                        : '3-5 menit',
+                    'distance' => $routing->distance_km !== null ? number_format($routing->distance_km, 1) . ' km' : null,
+                    'status' => $this->routingDisplayStatus($routing),
+                ]),
+            'timeline' => $report->timelineEvents
+                ->sortByDesc('created_at')
+                ->values()
+                ->map(fn ($event) => [
+                    'type' => $event->event_type,
+                    'message' => $event->event_message,
+                    'time' => optional($event->created_at)->format('H:i'),
+                ]),
+            'latest_messages' => $latestMessages->map(fn ($message) => [
+                'sender_type' => $message->sender_type,
+                'message' => $message->message,
+                'time' => optional($message->created_at)->format('H:i'),
+            ]),
+            'hotlines' => $this->hotlines(),
+        ];
+    }
+
+    private function humanStatusTitle(Report $report): string
+    {
+        return match ($report->status) {
+            'Submitted' => 'Laporan diterima',
+            'Routed' => 'Mencari partner terdekat',
+            'Viewed' => 'Partner sedang meninjau',
+            'Assigned' => 'Partner sudah menerima kasus',
+            'In Progress' => 'Kasus sedang ditangani',
+            'Resolved' => 'Kasus selesai',
+            default => 'Safora sedang memproses laporan',
+        };
+    }
+
+    private function humanStatusMessage(Report $report, int $pendingCount, int $reviewingCount): string
+    {
+        if ($report->handler_partner_id && $report->assignedPartner) {
+            return 'Laporan Anda sekarang ditangani oleh ' . $report->assignedPartner->partner_name . '. Chat krisis sudah terbuka untuk koordinasi.';
+        }
+
+        if ($reviewingCount > 0) {
+            return $reviewingCount . ' institusi sedang meninjau laporan Anda. Kami akan langsung memberi kabar saat ada yang menerima.';
+        }
+
+        if ($pendingCount > 0) {
+            return 'Laporan Anda sudah diteruskan ke ' . $report->partnerRoutings->count() . ' institusi terdekat. Kami sedang menunggu partner tersedia menerima kasus ini.';
+        }
+
+        return 'Kami masih mencoba menghubungkan Anda dengan responder. Jika kondisi memburuk, hubungi 112 sekarang.';
+    }
+
+    private function nextInstruction(Report $report): string
+    {
+        if ($report->status === 'Resolved') {
+            return 'Simpan kode laporan ini jika Anda perlu menambah bukti atau tindak lanjut.';
+        }
+
+        if ($report->handler_partner_id) {
+            return 'Buka chat dan kirim pesan sesingkat mungkin: lokasi detail, kondisi Anda, atau bantuan yang dibutuhkan.';
+        }
+
+        return 'Tetap di tempat aman jika memungkinkan. Jangan menunggu Safora jika nyawa terancam, hubungi 112 segera.';
+    }
+
+    private function routingDisplayStatus($routing): string
+    {
+        if ($routing->status === 'accepted') {
+            return 'accepted';
+        }
+
+        if ($routing->status === 'expired') {
+            return 'unavailable';
+        }
+
+        return filled($routing->reviewed_at) ? 'reviewing' : 'waiting';
+    }
+
+    private function partnerTypeLabel(?string $type): string
+    {
+        return match ($type) {
+            'ambulance' => 'Medis Darurat',
+            'legal' => 'Bantuan Hukum',
+            'counselor' => 'Psikososial',
+            'pemadam' => 'Pemadam / Rescue',
+            default => 'Partner Krisis',
+        };
+    }
+
+    private function hotlines(): array
+    {
+        return [
+            ['label' => 'Darurat Nasional', 'phone' => '112'],
+            ['label' => 'Ambulans / Kesehatan', 'phone' => '119'],
+            ['label' => 'Polisi', 'phone' => '110'],
+            ['label' => 'SAPA / KDRT', 'phone' => '129'],
+            ['label' => 'KPAI', 'phone' => '02131901556'],
+        ];
     }
 }
