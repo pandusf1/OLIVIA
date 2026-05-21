@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Safora — Chat</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap');
         * { font-family: 'Space Grotesk', sans-serif; }
@@ -20,24 +20,24 @@
     </style>
 </head>
 <body class="bg-[#faf9f7] text-gray-900 min-h-screen">
-@php
+<?php
     $showBrand = false;
     $backUrl = $backUrl ?? route('dashboard');
     $backLabel = $backLabel ?? 'Dashboard';
     $hasSelectedChat = filled($partnerId);
     $viewerType = $viewerType ?? 'user';
     $reportContext = $reportContext ?? null;
-@endphp
-@include('partials.nav-auth')
+?>
+<?php echo $__env->make('partials.nav-auth', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
 <div id="chat-page"
-     class="chat-layout {{ $hasSelectedChat ? 'chat-open max-w-6xl' : 'chat-closed max-w-4xl' }} mx-auto w-full px-4 sm:px-6 py-6">
-    <div id="chat-grid" class="{{ $hasSelectedChat ? 'lg:grid lg:grid-cols-[30%_70%] lg:gap-4' : '' }} transition-all duration-300">
+     class="chat-layout <?php echo e($hasSelectedChat ? 'chat-open max-w-6xl' : 'chat-closed max-w-4xl'); ?> mx-auto w-full px-4 sm:px-6 py-6">
+    <div id="chat-grid" class="<?php echo e($hasSelectedChat ? 'lg:grid lg:grid-cols-[30%_70%] lg:gap-4' : ''); ?> transition-all duration-300">
         <aside id="thread-list" class="thread-list">
-            @if($threads->count() > 0)
+            <?php if($threads->count() > 0): ?>
                 <div class="space-y-3">
-                    @foreach($threads as $t)
-                        @php
+                    <?php $__currentLoopData = $threads; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $t): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <?php
                             $active = (string) $partnerId === (string) $t->partner_id;
                             $threadHref = $viewerType === 'partner'
                                 ? route('chat.messages', ['partnerId' => $t->partner_id]) . ($t->report_context_id ? '?report_id=' . $t->report_context_id : '')
@@ -48,34 +48,35 @@
                             $threadType = $viewerType === 'partner'
                                 ? 'Pelapor'
                                 : ($t->partner?->partner_type ?? '');
-                        @endphp
-                        <a href="{{ $threadHref }}"
+                        ?>
+                        <a href="<?php echo e($threadHref); ?>"
                            data-chat-link
-                           data-partner-id="{{ $t->partner_id }}"
-                           data-report-id="{{ $t->report_context_id ?? '' }}"
-                           data-user-id="{{ $t->user_id }}"
-                           data-partner-name="{{ $threadName }}"
-                           data-partner-type="{{ $threadType }}"
-                           data-partner-image="{{ $t->partner?->image_url ?? '' }}"
-                           class="block bg-white border {{ $active ? 'border-gray-900' : 'border-gray-200' }} rounded-2xl p-4 hover:bg-gray-50 transition">
+                           data-partner-id="<?php echo e($t->partner_id); ?>"
+                           data-report-id="<?php echo e($t->report_context_id ?? ''); ?>"
+                           data-user-id="<?php echo e($t->user_id); ?>"
+                           data-partner-name="<?php echo e($threadName); ?>"
+                           data-partner-type="<?php echo e($threadType); ?>"
+                           data-partner-image="<?php echo e($t->partner?->image_url ?? ''); ?>"
+                           class="block bg-white border <?php echo e($active ? 'border-gray-900' : 'border-gray-200'); ?> rounded-2xl p-4 hover:bg-gray-50 transition">
                             <div class="flex items-center gap-3">
-                                @if(!empty($t->partner?->image_url))
-                                    <img src="{{ $t->partner->image_url }}" class="w-10 h-10 rounded-xl object-cover border border-gray-100" alt="">
-                                @else
+                                <?php if(!empty($t->partner?->image_url)): ?>
+                                    <img src="<?php echo e($t->partner->image_url); ?>" class="w-10 h-10 rounded-xl object-cover border border-gray-100" alt="">
+                                <?php else: ?>
                                     <div class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-sm">💬</div>
-                                @endif
+                                <?php endif; ?>
 
                                 <div class="min-w-0 flex-1">
-                                    <p class="font-bold text-gray-900 text-sm truncate">{{ $threadName }}</p>
+                                    <p class="font-bold text-gray-900 text-sm truncate"><?php echo e($threadName); ?></p>
                                     <p class="text-xs text-gray-400 mt-1 truncate">
-                                        {{ $threadType }} • {{ $t->last_message_at?->format('d M Y, H:i') ?? 'Belum ada pesan' }}
+                                        <?php echo e($threadType); ?> • <?php echo e($t->last_message_at?->format('d M Y, H:i') ?? 'Belum ada pesan'); ?>
+
                                     </p>
                                 </div>
                             </div>
                         </a>
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </div>
-            @else
+            <?php else: ?>
                 <div class="text-center py-12">
                     <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                         <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>
@@ -83,7 +84,7 @@
                     <p class="text-gray-400 text-sm font-medium">Belum ada chat yang terbuka</p>
                     <p class="text-gray-300 text-xs mt-1">Pilih pricelist partner dan selesaikan pembayaran dulu.</p>
                 </div>
-            @endif
+            <?php endif; ?>
         </aside>
 
         <main id="chat-panel" class="chat-panel flex flex-col w-full h-[calc(100vh-96px)] lg:h-[calc(100vh-132px)]">
@@ -91,21 +92,21 @@
                 <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-3 justify-between">
                     <div class="flex items-center gap-3 flex-1 min-w-0">
                         <div id="partner-avatar-wrap">
-                            @if(!empty($partner->image_url ?? null))
-                                <img id="partner-avatar" src="{{ $partner->image_url }}" class="w-9 h-9 rounded-xl object-cover border border-gray-100" alt="">
-                            @else
+                            <?php if(!empty($partner->image_url ?? null)): ?>
+                                <img id="partner-avatar" src="<?php echo e($partner->image_url); ?>" class="w-9 h-9 rounded-xl object-cover border border-gray-100" alt="">
+                            <?php else: ?>
                                 <div id="partner-avatar" class="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-sm">💬</div>
-                            @endif
+                            <?php endif; ?>
                         </div>
 
                         <div class="flex-1 min-w-0">
-                            <p id="partner-name" class="font-bold text-gray-900 text-sm truncate">{{ $viewerType === 'partner' ? (($reportContext?->anonymous ?? false) ? 'Anonim' : ($reportContext?->user?->name ?? 'Pelapor')) : ($partner->partner_name ?? 'Pilih partner') }}</p>
-                            <p id="partner-type" class="text-xs text-gray-400">{{ $viewerType === 'partner' ? 'Pelapor laporan' : ($partner->partner_type ?? '') }}</p>
+                            <p id="partner-name" class="font-bold text-gray-900 text-sm truncate"><?php echo e($viewerType === 'partner' ? (($reportContext?->anonymous ?? false) ? 'Anonim' : ($reportContext?->user?->name ?? 'Pelapor')) : ($partner->partner_name ?? 'Pilih partner')); ?></p>
+                            <p id="partner-type" class="text-xs text-gray-400"><?php echo e($viewerType === 'partner' ? 'Pelapor laporan' : ($partner->partner_type ?? '')); ?></p>
                         </div>
                     </div>
 
                     <div class="flex items-center gap-2 shrink-0">
-                        <a id="btn-tracking" href="{{ $reportContext ? route('tracking.show', $reportContext->id) : '#' }}" class="{{ $reportContext ? 'block' : 'hidden' }} text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition border border-gray-200">
+                        <a id="btn-tracking" href="<?php echo e($reportContext ? route('tracking.show', $reportContext->id) : '#'); ?>" class="<?php echo e($reportContext ? 'block' : 'hidden'); ?> text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition border border-gray-200">
                             Konteks Laporan
                         </a>
                         <button type="button" id="btn-back-list" class="lg:hidden text-xs text-gray-400 hover:text-gray-600 transition border border-gray-200 px-3 py-1.5 rounded-full">
@@ -122,7 +123,7 @@
                       action="javascript:void(0);"
                       id="chat-send-form"
                       class="border-t border-gray-100 p-3 flex gap-2 items-end">
-                    @csrf
+                    <?php echo csrf_field(); ?>
                     <textarea name="message" id="msg-input" rows="1" required
                         placeholder="Tulis pesan..."
                         oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"
@@ -140,10 +141,10 @@
 </div>
 
 <script>
-    let currentPartnerId = {!! json_encode($partnerId) !!};
-    let currentReportId = {!! json_encode($reportContext ? $reportContext->id : null) !!};
+    let currentPartnerId = <?php echo json_encode($partnerId); ?>;
+    let currentReportId = <?php echo json_encode($reportContext ? $reportContext->id : null); ?>;
     let currentUserId = null;
-    const viewerType = {!! json_encode($viewerType) !!};
+    const viewerType = <?php echo json_encode($viewerType); ?>;
     
     let pollTimer = null;
     let syncTimer = null;
@@ -163,14 +164,14 @@
 
     // Load initial messages populated by PHP
     const initialMessages = [
-        @foreach($messages as $m)
+        <?php $__currentLoopData = $messages; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $m): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
         {
-            id: '{{ $m->id }}',
-            sender_type: '{{ $m->sender_type }}',
-            message: {!! json_encode($m->message) !!},
-            time: '{{ $m->created_at->format('H:i') }}'
+            id: '<?php echo e($m->id); ?>',
+            sender_type: '<?php echo e($m->sender_type); ?>',
+            message: <?php echo json_encode($m->message); ?>,
+            time: '<?php echo e($m->created_at->format('H:i')); ?>'
         },
-        @endforeach
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
     ];
 
     if (initialMessages && initialMessages.length > 0) {
@@ -378,7 +379,7 @@
 
     document.getElementById('btn-back-list')?.addEventListener('click', () => {
         closeMobileChat();
-        history.pushState({}, '', '{{ route('chat.threads') }}');
+        history.pushState({}, '', '<?php echo e(route('chat.threads')); ?>');
     });
 
     input?.addEventListener('keydown', (event) => {
@@ -434,3 +435,4 @@
 </script>
 </body>
 </html>
+<?php /**PATH D:\CODING\olivia_final\resources\views/pages/user/chat.blade.php ENDPATH**/ ?>
