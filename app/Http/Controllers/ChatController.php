@@ -42,47 +42,6 @@ class ChatController extends Controller
             ->get();
     }
 
-    private function hasPaidAccess(string $partnerId): bool
-    {
-        return UserPartnerPayment::query()
-            ->where('user_id', auth()->id())
-            ->where('partner_id', $partnerId)
-            ->where('status', 'paid')
-            ->exists();
-    }
-
-    private function reportContext(?string $reportId): ?Report
-    {
-        if (!$reportId) {
-            return null;
-        }
-
-        return Report::with(['user', 'evidences', 'partnerRoutings.partner'])->find($reportId);
-    }
-
-    private function hasEmergencyChatAccess(string $partnerId, ?Report $report): bool
-    {
-        if (!$report) {
-            return false;
-        }
-
-        $user = auth()->user();
-
-        if ($user->role === 'partner') {
-            return (string) $user->partner_id === (string) $partnerId
-                && $report->partnerRoutings()
-                    ->where('partner_id', $partnerId)
-                    ->where('status', 'accepted')
-                    ->exists();
-        }
-
-        return (string) $report->user_id === (string) $user->id
-            && $report->partnerRoutings()
-                ->where('partner_id', $partnerId)
-                ->where('status', 'accepted')
-                ->exists();
-    }
-
     private function canChat(string $partnerId, ?Report $report = null, ?string $userId = null): bool
     {
         if ($this->hasPaidAccess($partnerId, $userId)) {

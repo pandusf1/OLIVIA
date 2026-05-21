@@ -53,6 +53,7 @@
                            data-chat-link
                            data-partner-id="<?php echo e($t->partner_id); ?>"
                            data-report-id="<?php echo e($t->report_context_id ?? ''); ?>"
+                           data-user-id="<?php echo e($t->user_id); ?>"
                            data-partner-name="<?php echo e($threadName); ?>"
                            data-partner-type="<?php echo e($threadType); ?>"
                            data-partner-image="<?php echo e($t->partner?->image_url ?? ''); ?>"
@@ -183,10 +184,12 @@
 <script>
     let currentPartnerId = <?php echo e(json_encode($partnerId)); ?>;
     let currentReportId = <?php echo e(json_encode($reportContext?->id)); ?>;
+    let currentUserId = null;
     const viewerType = <?php echo e(json_encode($viewerType)); ?>;
     let pollTimer = null;
+    let syncTimer = null;
     let serverMessages = [];
-    let pendingMessages = [];
+    let pendingMessages = []; // Messages waiting to be sent (offline queue)
 
     const page = document.getElementById('chat-page');
     const grid = document.getElementById('chat-grid');
@@ -219,7 +222,7 @@
 
     function messageHtml(message) {
         const isMe = message.sender_type === viewerType;
-        const isPending = message.status === 'pending';
+        const isPending = message.status === 'pending' || message.status === 'sending';
 
         const tickHtml = isMe
             ? (isPending
@@ -272,8 +275,6 @@
     }
 
     function updateUI() {
-        // Gabungkan server messages dengan pending messages
-        // Filter pending messages yang sudah ada di serverMessages berdasarkan isi pesan (sederhana)
         const serverMessagesText = serverMessages.map(m => m.message.trim());
         const visiblePending = pendingMessages.filter(pm => !serverMessagesText.includes(pm.message.trim()));
         
@@ -292,11 +293,58 @@
         }
     }
 
+    async function processPendingMessages() {
+        if (!currentPartnerId || pendingMessages.length === 0) return;
+        
+        for (let i = 0; i < pendingMessages.length; i++) {
+            let msg = pendingMessages[i];
+            if (msg.status === 'pending') {
+                msg.status = 'sending';
+                updateUI();
+                try {
+                    const params = new URLSearchParams();
+                    if (currentReportId) params.append('report_id', currentReportId);
+                    if (currentUserId) params.append('user_id', currentUserId);
+                    
+                    const suffix = params.toString() ? `?${params.toString()}` : '';
+                    
+                    const csrf = document.querySelector('input[name="_token"]')?.value;
+                    const response = await fetch(`/chat/send/${currentPartnerId}${suffix}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': csrf,
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ message: msg.message }),
+                    });
+
+                    if (response.ok) {
+                        msg.status = 'sent';
+                        pendingMessages.splice(i, 1);
+                        i--; // adjust index since we removed an item
+                        fetchMessages(); // refresh from server immediately
+                    } else {
+                        msg.status = 'pending'; // revert to pending to retry later
+                    }
+                } catch (e) {
+                    msg.status = 'pending'; // network error, keep as pending to retry later
+                }
+            }
+        }
+        updateUI();
+    }
+
     async function fetchMessages() {
         if (!currentPartnerId) return;
 
         try {
-            const suffix = currentReportId ? `?report_id=${encodeURIComponent(currentReportId)}` : '';
+            const params = new URLSearchParams();
+            if (currentReportId) params.append('report_id', currentReportId);
+            if (currentUserId) params.append('user_id', currentUserId);
+            
+            const suffix = params.toString() ? `?${params.toString()}` : '';
             const response = await fetch(`/chat/messages/${currentPartnerId}${suffix}`, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
             });
@@ -305,7 +353,6 @@
                 const data = await response.json();
                 const newServerMessages = data.messages || [];
                 
-                // Cek apakah ada perubahan (bisa di-optimasi lebih lanjut)
                 if (JSON.stringify(serverMessages) !== JSON.stringify(newServerMessages)) {
                     serverMessages = newServerMessages;
                     updateUI();
@@ -318,10 +365,13 @@
 
     function startPolling() {
         if (pollTimer) clearInterval(pollTimer);
+        if (syncTimer) clearInterval(syncTimer);
+        
         if (!currentPartnerId) return;
 
         fetchMessages();
         pollTimer = setInterval(fetchMessages, 2000);
+        syncTimer = setInterval(processPendingMessages, 3000);
     }
 
     document.querySelectorAll('[data-chat-link]').forEach((link) => {
@@ -330,6 +380,7 @@
 
             currentPartnerId = link.dataset.partnerId;
             currentReportId = link.dataset.reportId || null;
+            currentUserId = link.dataset.userId || null;
             serverMessages = [];
             pendingMessages = [];
             
@@ -353,13 +404,12 @@
         }
     });
 
-    form?.addEventListener('submit', async (event) => {
+    form?.addEventListener('submit', (event) => {
         event.preventDefault();
 
         const message = input.value.trim();
         if (!currentPartnerId || !message) return;
 
-        // Kosongkan input
         input.value = '';
         input.style.height = 'auto';
 
@@ -375,50 +425,22 @@
             status: 'pending'
         };
 
-        // Tambahkan ke pending dan render
         pendingMessages.push(pendingMsg);
         updateUI();
-
-        const csrf = document.querySelector('input[name="_token"]')?.value;
-        try {
-            const suffix = currentReportId ? `?report_id=${encodeURIComponent(currentReportId)}` : '';
-            const response = await fetch(`/chat/send/${currentPartnerId}${suffix}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrf,
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({ message }),
-            });
-
-            if (!response.ok) {
-                // Hapus dari pending jika gagal
-                pendingMessages = pendingMessages.filter(m => m.id !== pendingMsg.id);
-                updateUI();
-                alert('Gagal mengirim pesan');
-            } else {
-                // Berhasil terkirim ke server, ubah status jadi terkirim atau fetch ulang
-                pendingMsg.status = 'sent';
-                updateUI();
-                
-                // Segera fetch dari server agar pesan masuk ke serverMessages
-                fetchMessages();
-            }
-        } catch (error) {
-            pendingMessages = pendingMessages.filter(m => m.id !== pendingMsg.id);
-            updateUI();
-            alert('Terjadi kesalahan jaringan');
-        }
+        processPendingMessages(); // try sending immediately
     });
 
     window.addEventListener('popstate', () => window.location.reload());
 
     if (currentPartnerId) {
+        // Find the active link to get user_id if any
+        const activeLink = document.querySelector(`[data-chat-link][data-partner-id="${currentPartnerId}"]`);
+        if (activeLink) {
+            currentUserId = activeLink.dataset.userId || null;
+        }
+        
         openLayout();
         setActiveLink(currentPartnerId);
-        // Tarik data awal, karena di blade sudah ada, kita replace via fetch
         startPolling();
     }
 </script>
