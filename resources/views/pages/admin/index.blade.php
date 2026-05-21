@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Savora — Dashboard Admin</title>
+    <title>Safora — Dashboard Admin</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -39,7 +39,7 @@
                 </h1>
 
                 <p class="text-gray-400 text-sm mt-1">
-                    Monitoring platform, partner, dan aktivitas laporan Savora.
+                    Monitoring platform, partner, dan aktivitas laporan Safora.
                 </p>
 
             </div>

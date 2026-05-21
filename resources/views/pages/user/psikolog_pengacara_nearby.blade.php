@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Savora — Psikolog & Pengacara Terdekat</title>
+    <title>Safora — Psikolog & Pengacara Terdekat</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-[#faf9f7] text-gray-900 min-h-screen">

@@ -17,7 +17,7 @@ class PartnerSeeder extends Seeder
     public function run(): void
     {
         $now = now();
-        $password = 'savora2024';
+        $password = 'Safora2024';
 
         // Reset isi tabel (requested: reset users, partners, price_lists)
         if (Schema::hasTable('user_partner_payments')) {
@@ -44,8 +44,8 @@ class PartnerSeeder extends Seeder
         User::insert([
             [
                 'id' => $adminId,
-                'email' => 'admin@savora.id',
-                'name' => 'Admin Savora',
+                'email' => 'admin@Safora.id',
+                'name' => 'Admin Safora',
                 'password' => Hash::make($password),
                 'role' => 'admin',
                 'partner_id' => null,
@@ -54,7 +54,7 @@ class PartnerSeeder extends Seeder
             ],
             [
                 'id' => $userDemoId,
-                'email' => 'user@savora.id',
+                'email' => 'user@Safora.id',
                 'name' => 'User Demo',
                 'password' => Hash::make($password),
                 'role' => 'user',
@@ -66,11 +66,11 @@ class PartnerSeeder extends Seeder
 
         // Seed user umum (korban/saksi) + lokasi
         $victims = [
-            ['email' => 'korban@savora.id', 'name' => 'Korban Demo', 'latitude' => -6.966900, 'longitude' => 110.413000],
-            ['email' => 'saksi1@savora.id', 'name' => 'Saksi Demo 1', 'latitude' => -6.970200, 'longitude' => 110.416000],
-            ['email' => 'saksi2@savora.id', 'name' => 'Saksi Demo 2', 'latitude' => -6.962800, 'longitude' => 110.419500],
-            ['email' => 'korban2@savora.id', 'name' => 'Korban Demo 2', 'latitude' => -6.975000, 'longitude' => 110.410800],
-            ['email' => 'korban3@savora.id', 'name' => 'Korban Demo 3', 'latitude' => -6.958500, 'longitude' => 110.421200],
+            ['email' => 'korban@Safora.id', 'name' => 'Korban Demo', 'latitude' => -6.966900, 'longitude' => 110.413000],
+            ['email' => 'saksi1@Safora.id', 'name' => 'Saksi Demo 1', 'latitude' => -6.970200, 'longitude' => 110.416000],
+            ['email' => 'saksi2@Safora.id', 'name' => 'Saksi Demo 2', 'latitude' => -6.962800, 'longitude' => 110.419500],
+            ['email' => 'korban2@Safora.id', 'name' => 'Korban Demo 2', 'latitude' => -6.975000, 'longitude' => 110.410800],
+            ['email' => 'korban3@Safora.id', 'name' => 'Korban Demo 3', 'latitude' => -6.958500, 'longitude' => 110.421200],
         ];
 
         $victimRows = [];
@@ -156,7 +156,7 @@ class PartnerSeeder extends Seeder
                     $partnerId = (string) Str::uuid();
                     $partnerName = $prefix . ' ' . $cityName . ' ' . ($i + 1);
 
-                    $email = strtolower(str_replace([' ', 'Kab.'], ['_', 'Kab'], $partnerName)) . '@savora.id';
+                    $email = strtolower(str_replace([' ', 'Kab.'], ['_', 'Kab'], $partnerName)) . '@Safora.id';
                     $phone = '62' . str_pad((string) (80000000 + ($cityIndex * 100 + $i * 19) % 99999999), 10, '0', STR_PAD_LEFT);
 
                     $lat = $cLat + ((($cityIndex + 1) % 11) - 5) * 0.03 + ($i % 3) * 0.008;

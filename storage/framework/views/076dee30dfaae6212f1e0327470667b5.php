@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
-    <title>Savora — Darurat</title>
+    <title>Safora — Darurat</title>
     <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
     <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');*{font-family:'Inter',sans-serif;} h1,.font-unbounded{font-family:'Space Grotesk',sans-serif!important;}</style>
 </head>
@@ -28,7 +28,7 @@
         
         <div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-3 mb-8 text-sm">
             <span class="text-amber-500 mt-0.5">ⓘ</span>
-            <p class="text-amber-800">Untuk darurat jiwa: hubungi 112 (darurat nasional) atau 118 (ambulans). Savora bekerja paralel untuk menyimpan bukti & menghubungkan ke LBH/psikolog.</p>
+            <p class="text-amber-800">Untuk darurat jiwa: hubungi 112 (darurat nasional) atau 118 (ambulans). Safora bekerja paralel untuk menyimpan bukti & menghubungkan ke LBH/psikolog.</p>
         </div>
 
         <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">QUICK EMERGENCY</p>
@@ -317,7 +317,7 @@ form.addEventListener('submit', async function(e) {
     if (!navigator.onLine) {
 
         localStorage.setItem(
-            'savora_pending_report',
+            'Safora_pending_report',
             JSON.stringify(formData)
         );
 
@@ -363,7 +363,7 @@ form.addEventListener('submit', async function(e) {
     } catch (err) {
 
         localStorage.setItem(
-            'savora_pending_report',
+            'Safora_pending_report',
             JSON.stringify(formData)
         );
 
@@ -397,7 +397,7 @@ window.addEventListener('online', async () => {
         return;
     }
 
-    const pending = localStorage.getItem('savora_pending_report');
+    const pending = localStorage.getItem('Safora_pending_report');
 
     if (!pending) return;
 
@@ -421,7 +421,7 @@ window.addEventListener('online', async () => {
 
         if (response.ok) {
 
-            localStorage.removeItem('savora_pending_report');
+            localStorage.removeItem('Safora_pending_report');
 
             // sembunyikan badge
             document.getElementById('offline-badge')
@@ -464,7 +464,7 @@ async function isInternetReachable() {
 }
 
 // CHECK PENDING REPORT SAAT PAGE LOAD
-if (localStorage.getItem('savora_pending_report')) {
+if (localStorage.getItem('Safora_pending_report')) {
 
     document.getElementById('offline-badge')
         .classList.remove('hidden');

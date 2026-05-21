@@ -12,10 +12,10 @@ class DatabaseSeeder extends Seeder
     {
         // Admin user
         User::firstOrCreate(
-            ['email' => 'admin@savora.id'],
+            ['email' => 'admin@Safora.id'],
             [
-                'name'     => 'Admin Savora',
-                'password' => Hash::make('savora2024'),
+                'name'     => 'Admin Safora',
+                'password' => Hash::make('Safora2024'),
                 'role'     => 'admin',
             ]
         );

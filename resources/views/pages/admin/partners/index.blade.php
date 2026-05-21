@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Savora — Partner Management</title>
+    <title>Safora — Partner Management</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -31,7 +31,7 @@
             </h1>
 
             <p class="text-gray-400 text-sm mt-1">
-                Kelola semua partner terverifikasi Savora.
+                Kelola semua partner terverifikasi Safora.
             </p>
         </div>
 

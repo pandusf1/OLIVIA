@@ -36,7 +36,7 @@
                     <div class="w-7 h-7 bg-red-700 rounded-lg flex items-center justify-center">
                         <svg class="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944z" clip-rule="evenodd"/></svg>
                     </div>
-                    <span class="font-bold text-gray-900 text-sm">Savora</span>
+                    <span class="font-bold text-gray-900 text-sm">Safora</span>
                 </a>
             <?php endif; ?>
         </div>

@@ -82,7 +82,7 @@ class EmergencyController extends Controller
 
         // Alert ke admin / nomor utama
         $adminMessage =
-            "🚨 *SAVORA EMERGENCY ALERT*\n\n" .
+            "🚨 *Safora EMERGENCY ALERT*\n\n" .
             "Kategori: *{$report->category}*\n" .
             "Status: Submitted\n" .
             "Anonim: " . ($report->anonymous ? 'Ya' : 'Tidak') . "\n\n" .
@@ -120,12 +120,12 @@ class EmergencyController extends Controller
 
         foreach ($contacts as $contact) {
             $message =
-                "🚨 *ALERT DARURAT — Savora*\n\n" .
+                "🚨 *ALERT DARURAT — Safora*\n\n" .
                 "{$user->name} memerlukan bantuan!\n\n" .
                 "Kategori: *{$report->category}*\n\n" .
                 "📍 Lokasi:\n{$mapsLink}\n\n" .
                 "🔗 Pantau status:\n{$trackingLink}\n\n" .
-                "_Pesan ini dikirim otomatis oleh Savora._";
+                "_Pesan ini dikirim otomatis oleh Safora._";
 
             FonnteService::send($contact->contact_phone, $message);
         }
@@ -143,12 +143,12 @@ class EmergencyController extends Controller
         }
 
         $message =
-            "🚨 *ALERT DARURAT — Savora*\n\n" .
+            "🚨 *ALERT DARURAT — Safora*\n\n" .
             "Ada korban meminta pertolongan!\n\n" .
             "Kategori: *{$report->category}*\n\n" .
             "📍 Lokasi:\n{$mapsLink}\n\n" .
             "🔗 Pantau status:\n{$trackingLink}\n\n" .
-            "_Pesan ini dikirim otomatis oleh Savora._";
+            "_Pesan ini dikirim otomatis oleh Safora._";
 
         // Ambil semua lokasi user dengan role='user'
         $targets = UserLocation::query()
