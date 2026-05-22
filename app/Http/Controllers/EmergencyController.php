@@ -37,16 +37,43 @@ class EmergencyController extends Controller
             $userId = null;
         }
 
-        $partners = Partner::routeMultipleByCategory(
-            $request->category,
-            5,
-            $request->latitude ? (float) $request->latitude : null,
-            $request->longitude ? (float) $request->longitude : null
-        );
+        $idempotencyKey = $request->header('Idempotency-Key') ?: $request->input('idempotency_key');
+
+
+        // unknown_emergency: jangan route ke partner (tetap kirim notifikasi/WA terdekat via notifyNearestUsers)
+        $partners = collect();
+        if (strtolower((string) $request->category) !== 'unknown_emergency') {
+            $partners = Partner::routeMultipleByCategory(
+                $request->category,
+                5,
+                $request->latitude ? (float) $request->latitude : null,
+                $request->longitude ? (float) $request->longitude : null
+            );
+        }
         $firstPartner = $partners->first();
-        $expiryMinutes = (int) env('REPORT_ROUTING_EXPIRY_MINUTES', 3);
+        $expiryMinutes = (int) env('REPORT_ROUTING_EXPIRY_MINUTES', 180);
         $expiresAt = now()->addMinutes(max(1, $expiryMinutes));
+
+
         $urgency = $this->determineUrgency($request->category);
+
+        if (!empty($idempotencyKey)) {
+            $existing = Report::query()
+                ->where('report_type', 'Emergency')
+                ->where('idempotency_key', $idempotencyKey)
+                ->first();
+
+            if ($existing) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'ok' => true,
+                        'report_id' => $existing->id,
+                        'tracking_url' => url('/tracking/' . $existing->id),
+                    ]);
+                }
+                return redirect('/tracking/' . $existing->id);
+            }
+        }
 
         $report = DB::transaction(function () use ($request, $partners, $firstPartner, $expiresAt, $urgency) {
             $report = Report::create([
@@ -58,6 +85,8 @@ class EmergencyController extends Controller
                 'longitude' => $request->longitude,
                 'location_text' => $request->location_text,
                 'anonymous' => $request->anonymous ?? false,
+                'idempotency_key' => $idempotencyKey,
+
 
                 'status' => $partners->isNotEmpty() ? 'Routed' : 'Submitted',
                 'urgency_level' => $urgency,

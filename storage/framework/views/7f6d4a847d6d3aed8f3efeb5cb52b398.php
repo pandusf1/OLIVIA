@@ -433,4 +433,4 @@
 </script>
 </body>
 </html>
-<?php /**PATH D:\CODING\olivia_final\resources\views/pages/user/chat.blade.php ENDPATH**/ ?>
+<?php /**PATH D:\CODING\olivia_final\resources\views\pages\user\chat.blade.php ENDPATH**/ ?>

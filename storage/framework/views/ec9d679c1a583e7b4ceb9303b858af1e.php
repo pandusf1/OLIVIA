@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
     <title>Safora - Darurat</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
 </head>
 <body class="min-h-screen bg-red-950 text-white antialiased">
-@php
+<?php
     $backUrl = request()->headers->get('referer') ?: (auth()->check() ? route('dashboard') : '/');
     $backLabel = 'Kembali';
     $showBrand = false;
-@endphp
-@include('partials.nav-auth')
+?>
+<?php echo $__env->make('partials.nav-auth', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
 <main class="mx-auto flex min-h-[calc(100vh-72px)] max-w-lg flex-col px-4 pb-6 pt-5">
     <section id="phase-start" class="flex flex-1 flex-col justify-between">
@@ -58,19 +58,19 @@
         </div>
 
         <div class="grid grid-cols-2 gap-3">
-            @foreach([
+            <?php $__currentLoopData = [
                 ['Kekerasan', 'Perlu perlindungan'],
                 ['Kesehatan', 'Butuh bantuan medis'],
                 ['Pelecehan', 'Butuh pendampingan'],
                 ['Kecelakaan', 'Butuh respons cepat'],
                 ['Ancaman', 'Merasa tidak aman'],
                 ['Lainnya', 'Saya butuh bantuan'],
-            ] as [$category, $hint])
-                <button type="button" data-category="{{ $category }}" class="category-button min-h-32 rounded-2xl bg-white p-4 text-left text-red-950 shadow-lg active:scale-[0.99]">
-                    <span class="block text-xl font-black">{{ $category }}</span>
-                    <span class="mt-2 block text-sm font-semibold text-gray-500">{{ $hint }}</span>
+            ]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as [$category, $hint]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <button type="button" data-category="<?php echo e($category); ?>" class="category-button min-h-32 rounded-2xl bg-white p-4 text-left text-red-950 shadow-lg active:scale-[0.99]">
+                    <span class="block text-xl font-black"><?php echo e($category); ?></span>
+                    <span class="mt-2 block text-sm font-semibold text-gray-500"><?php echo e($hint); ?></span>
                 </button>
-            @endforeach
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </div>
 
         <textarea id="description" rows="2" placeholder="Opsional: tulis 1 kalimat jika aman dilakukan" class="mt-4 hidden w-full resize-none rounded-xl border-0 bg-white px-4 py-4 text-base text-gray-950 placeholder-gray-400"></textarea>
@@ -258,3 +258,4 @@
 </script>
 </body>
 </html>
+<?php /**PATH D:\CODING\olivia_final\resources\views\pages\emergency.blade.php ENDPATH**/ ?>

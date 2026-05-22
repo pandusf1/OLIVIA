@@ -17,7 +17,7 @@ use Illuminate\Support\Str;
 
 class PartnerController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $partnerId = auth()->user()->partner_id;
 
@@ -62,7 +62,49 @@ class PartnerController extends Controller
             'resolved_month' => $resolvedReports->count(),
         ];
 
-        return view('pages.partner.index', compact('partner', 'pendingRoutings', 'activeReports', 'resolvedReports', 'stats'));
+        // For "Semua Laporan" Tab
+        $allReportsQuery = Report::whereHas('partnerRoutings', function ($q) use ($partnerId) {
+            $q->where('partner_id', $partnerId);
+        });
+
+        // Search Filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $allReportsQuery->where(function($q) use ($search) {
+                $q->where('anonymous', false)
+                  ->whereHas('user', function($uq) use ($search) {
+                      $uq->where('name', 'like', '%' . $search . '%');
+                  })
+                  ->orWhere(function($aq) use ($search) {
+                      $aq->where('anonymous', true)
+                         ->whereRaw("LOWER(?) LIKE '%anonim%'", [$search]);
+                  });
+            });
+        }
+
+        // Handled Filter
+        if ($request->filled('handled')) {
+            if ($request->handled == 'yes') {
+                $allReportsQuery->where('handler_partner_id', $partnerId);
+            } elseif ($request->handled == 'no') {
+                $allReportsQuery->where(function($q) use ($partnerId) {
+                    $q->whereNull('handler_partner_id')
+                      ->orWhere('handler_partner_id', '!=', $partnerId);
+                });
+            }
+        }
+
+        // Month & Year Filter
+        if ($request->filled('month')) {
+            $allReportsQuery->whereMonth('created_at', $request->month);
+        }
+        if ($request->filled('year')) {
+            $allReportsQuery->whereYear('created_at', $request->year);
+        }
+
+        $allReports = $allReportsQuery->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
+
+        return view('pages.partner.index', compact('partner', 'pendingRoutings', 'activeReports', 'resolvedReports', 'stats', 'allReports'));
     }
 
     public function show($id)
@@ -74,23 +116,23 @@ class PartnerController extends Controller
         ])->findOrFail($id);
 
         $partnerId = auth()->user()->partner_id;
-        $hasRoutingAccess = $report->partnerRoutings()
+        $routing = $report->partnerRoutings()
             ->where('partner_id', $partnerId)
-            ->exists();
+            ->first();
 
-        if ($report->routed_partner_id !== $partnerId && !$hasRoutingAccess) {
+        if ($report->routed_partner_id !== $partnerId && !$routing) {
             abort(403, 'Laporan ini bukan untuk mitra anda.');
         }
 
+        $isHandling = ($report->handler_partner_id === $partnerId);
+        $isPending = ($routing && $routing->status === 'pending' && (is_null($routing->expires_at) || $routing->expires_at > now()));
+        $canViewSensitive = $isHandling || $isPending;
+
         // Catat bahwa mitra telah melihat laporan
-        if ($report->status === 'Routed') {
-            ReportPartnerRouting::query()
-                ->where('report_id', $report->id)
-                ->where('partner_id', $partnerId)
-                ->where('status', 'pending')
-                ->update([
-                    'reviewed_at' => now(),
-                ]);
+        if ($report->status === 'Routed' && $isPending) {
+            $routing->update([
+                'reviewed_at' => now(),
+            ]);
 
             ReportTimelineEvent::create([
                 'report_id' => $report->id,
@@ -116,7 +158,7 @@ class PartnerController extends Controller
             AuditLog::log('view_report', 'report', $report->id);
         }
 
-        return view('pages.partner.show', compact('report'));
+        return view('pages.partner.show', compact('report', 'canViewSensitive', 'isHandling'));
     }
 
     public function updateStatus(Request $request, $id)
@@ -265,8 +307,8 @@ class PartnerController extends Controller
 
                 ChatMessage::create([
                     'chat_thread_id' => $thread->id,
-                    'sender_type' => 'system',
-                    'sender_id' => auth()->id(),
+                    'sender_type' => 'partner',
+                    'sender_id' => $partnerId,
                     'message' => "Halo, laporan Anda dengan kategori {$report->category} telah diterima oleh {$partner?->partner_name}. Tim kami siap membantu Anda.",
                 ]);
 
@@ -284,10 +326,9 @@ class PartnerController extends Controller
                     }
                 }
 
-                $redirectPartnerId = $partnerId;
             });
 
-            return redirect('/chat/messages/' . $redirectPartnerId . '?report_id=' . $id);
+            return redirect()->route('partner.show', $id)->with('success', 'Laporan berhasil diterima.');
         } catch (\Exception $e) {
             return back()->with('error', 'Laporan tidak dapat diterima. Mungkin sudah expired atau diambil mitra lain.');
         }

@@ -124,7 +124,40 @@ class ChatController extends Controller
                 });
         }
 
-        return $this->paidThreads();
+        $paidPartnerIds = $this->paidPartnerIds()->toArray();
+        $emergencyPartnerIds = Report::query()
+            ->where('user_id', $user->id)
+            ->whereNotNull('handler_partner_id')
+            ->pluck('handler_partner_id')
+            ->unique()
+            ->toArray();
+
+        $allPartnerIds = array_unique(array_merge($paidPartnerIds, $emergencyPartnerIds));
+
+        // Create threads if not exist for paid ones
+        foreach ($paidPartnerIds as $partnerId) {
+            ChatThread::firstOrCreate(
+                ['user_id' => $user->id, 'partner_id' => $partnerId],
+                ['id' => (string) Str::uuid(), 'last_message_at' => now()]
+            );
+        }
+
+        return ChatThread::query()
+            ->where('user_id', $user->id)
+            ->whereIn('partner_id', $allPartnerIds)
+            ->with('partner')
+            ->orderByDesc('last_message_at')
+            ->get()
+            ->map(function ($thread) {
+                // Determine if this is an emergency thread to set report context
+                $report = Report::query()
+                    ->where('user_id', $thread->user_id)
+                    ->where('handler_partner_id', $thread->partner_id)
+                    ->latest('updated_at')
+                    ->first();
+                $thread->report_context_id = $report?->id;
+                return $thread;
+            });
     }
 
     private function threadFor(string $partnerId, ?Report $report = null, ?string $userId = null): ?ChatThread

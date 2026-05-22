@@ -31,9 +31,27 @@
                         <span>{{ $report->created_at->format('d M Y, H:i') }}</span>
                         @if($report->latitude)<a href="https://maps.google.com/?q={{ $report->latitude }},{{ $report->longitude }}" target="_blank" class="text-red-700 hover:text-red-800 text-xs underline">📍 Lihat Peta</a>@endif
                     </div>
+                    @if($canViewSensitive && $report->user && $report->user->phone)
+                    <div class="mt-2 text-sm text-gray-700 font-semibold">
+                        📞 <a href="tel:{{ $report->user->phone }}" class="text-blue-600 hover:underline">{{ $report->user->phone }}</a>
+                    </div>
+                    @endif
                 </div>
                 <span class="px-3 py-1.5 rounded-full text-sm font-semibold {{ $sc[$report->status]??'bg-gray-100 text-gray-600' }} whitespace-nowrap">{{ $report->status }}</span>
             </div>
+            
+            @if($isHandling)
+            <div class="mt-6 flex flex-wrap gap-3">
+                <a href="/chat/messages/{{ auth()->user()->partner_id }}?report_id={{ $report->id }}" class="bg-gray-900 hover:bg-gray-700 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition text-center">💬 Lanjut Chat</a>
+                @if($report->status !== 'Resolved')
+                <form method="POST" action="{{ route('partner.status', $report->id) }}" class="inline-block">
+                    @csrf
+                    <input type="hidden" name="status" value="Resolved">
+                    <button type="submit" class="bg-green-700 hover:bg-green-800 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition">✅ Tandai Selesai</button>
+                </form>
+                @endif
+            </div>
+            @endif
         </div>
 
         @if($report->description)
@@ -96,7 +114,9 @@
         {{-- Bukti Korban --}}
         <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
             <h2 class="font-bold text-gray-900 mb-4">Bukti dari Korban ({{ $report->evidences->count() }})</h2>
-            @if($report->evidences->count() > 0)
+            @if(!$canViewSensitive)
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-semibold">Bukti hanya dapat dilihat oleh mitra yang menangani kasus ini, atau jika permintaan belum kadaluarsa.</div>
+            @elseif($report->evidences->count() > 0)
             <div class="space-y-2">
                 @foreach($report->evidences as $ev)
                 <div class="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3">
@@ -118,6 +138,9 @@
         @if($report->witnessReports && $report->witnessReports->count() > 0)
         <div class="bg-white border border-gray-200 rounded-2xl p-6">
             <h2 class="font-bold text-gray-900 mb-4">Bukti dari Saksi</h2>
+            @if(!$canViewSensitive)
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-semibold">Bukti hanya dapat dilihat oleh mitra yang menangani kasus ini.</div>
+            @else
             <div class="space-y-4">
                 @foreach($report->witnessReports as $w)
                 <div class="border border-gray-100 rounded-xl p-4">
@@ -135,6 +158,7 @@
                 </div>
                 @endforeach
             </div>
+            @endif
         </div>
         @endif
 

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Safora — Dashboard</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -23,23 +23,24 @@
 </head>
 <body class="bg-[#f5f4f1] text-gray-900 antialiased min-h-screen">
 
-    @php $backUrl = null; @endphp
-    @include('partials.nav-auth')
+    <?php $backUrl = null; ?>
+    <?php echo $__env->make('partials.nav-auth', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <div class="max-w-6xl mx-auto px-6 py-10 fade-in">
 
-        @if(session('success'))
+        <?php if(session('success')): ?>
         <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl mb-6 text-sm flex items-center gap-2">
             <svg class="w-4 h-4 text-green-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-            {{ session('success') }}
+            <?php echo e(session('success')); ?>
+
         </div>
-        @endif
+        <?php endif; ?>
 
 
-        {{-- ===== BIG EMERGENCY BUTTON ===== --}}
+        
         <div class="flex justify-center mb-10 mt-6 fade-in">
             <div class="relative flex flex-col items-center">
-                {{-- Decorative background pulse --}}
+                
                 <div class="absolute inset-0 bg-red-100 rounded-full scale-[1.3] opacity-60 panic-pulse pointer-events-none"></div>
                 <div class="absolute inset-0 bg-red-200 rounded-full scale-[1.15] opacity-80 pointer-events-none"></div>
 
@@ -48,7 +49,7 @@
                     <span class="font-unbounded text-sm sm:text-base text-red-100 font-bold mt-2 tracking-widest">DARURAT</span>
                 </button>
 
-                {{-- Countdown Area --}}
+                
                 <div id="countdown-area" class="hidden relative z-20 w-52 h-52 sm:w-64 sm:h-64 bg-white rounded-full flex flex-col items-center justify-center shadow-2xl border-[6px] border-red-700">
                     <p class="text-[10px] sm:text-xs text-gray-500 font-bold uppercase tracking-widest mb-1">MENGIRIM DALAM</p>
                     <p id="cd-num" class="text-7xl sm:text-8xl font-black text-red-700 font-unbounded leading-none mb-1">5</p>
@@ -62,28 +63,29 @@
         </div>
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 fade-in">
-            @foreach([
+            <?php $__currentLoopData = [
                 [route('trusted-contact.index'), '👤', 'Kontak Darurat', 'Orang terpercaya', 'bg-blue-50'],
                 ['/evidence',                   '🗂️', 'Galeri Bukti',  'Aman tersimpan', 'bg-purple-50'],
                 [route('chat.threads'),         '💬', 'Chat', 'Riwayat chat', 'bg-orange-50'],
                 ['/witness',                    '🛡️', 'Mode Saksi',    'Bantu korban', 'bg-green-50'],
-            ] as [$url, $icon, $title, $sub, $bg])
-            <a href="{{ $url }}" class="bg-white border border-gray-100 hover:border-gray-200 rounded-2xl p-4 flex flex-col items-center text-center transition group shadow-sm active:scale-95">
-                <div class="w-12 h-12 {{ $bg }} rounded-full flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition-transform">
-                    {{ $icon }}
+            ]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as [$url, $icon, $title, $sub, $bg]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+            <a href="<?php echo e($url); ?>" class="bg-white border border-gray-100 hover:border-gray-200 rounded-2xl p-4 flex flex-col items-center text-center transition group shadow-sm active:scale-95">
+                <div class="w-12 h-12 <?php echo e($bg); ?> rounded-full flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition-transform">
+                    <?php echo e($icon); ?>
+
                 </div>
-                <p class="font-bold text-gray-900 text-sm mb-0.5">{{ $title }}</p>
-                <p class="text-[11px] text-gray-500">{{ $sub }}</p>
+                <p class="font-bold text-gray-900 text-sm mb-0.5"><?php echo e($title); ?></p>
+                <p class="text-[11px] text-gray-500"><?php echo e($sub); ?></p>
             </a>
-            @endforeach
+            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
         </div>
 
         <div class="grid lg:grid-cols-2 gap-6 fade-in">
 
-            {{-- ===== LEFT COLUMN ===== --}}
+            
             <div class="space-y-6">
 
-                {{-- Map Partner (Style Card berurut jarak) --}}
+                
                 <div class="bg-white border border-gray-200 rounded-2xl p-6">
                         <div class="flex items-center justify-between mb-4">
                         <div>
@@ -106,7 +108,7 @@
 
 
                     <div id="nearby-map" class="relative overflow-hidden rounded-xl bg-[#faf9f7] border border-gray-100">
-                        {{-- Topographic / map-like background (no real map API) --}}
+                        
                         <div class="absolute inset-0 pointer-events-none" style="
                             background:
                                 radial-gradient(circle at 30% 25%, rgba(239,68,68,0.10) 0%, rgba(239,68,68,0.00) 55%),
@@ -124,7 +126,7 @@
                         </div>
 
                         <div class="p-4 relative">
-                            {{-- Map header row --}}
+                            
                             <div class="flex items-center gap-2 mb-3">
                                 <span class="w-2.5 h-2.5 rounded-full bg-red-700" title="Kamu"></span>
                                 <p class="text-xs font-semibold text-gray-600">Lokasi kamu</p>
@@ -132,9 +134,9 @@
 
 
 
-                            {{-- Map canvas (visual only) --}}
+                            
                             <div class="relative w-full h-44 rounded-xl border border-gray-100 bg-white/40 overflow-hidden" aria-label="Peta semu partner terdekat">
-                                {{-- Center user marker --}}
+                                
                                 <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
                                     <div class="w-3 h-3 rounded-full bg-red-700 shadow-md shadow-red-200"></div>
                                     <div class="w-6 h-6 rounded-full border-2 border-red-200/80 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" style="animation-duration:2.2s"></div>
@@ -175,22 +177,22 @@
                 </div>
             </div>
 
-            {{-- ===== RIGHT COLUMN ===== --}}
+            
             <div class="space-y-6">
-                {{-- Laporan Saya --}}
+                
                 <div class="bg-white border border-gray-200 rounded-2xl p-6">
                     <div class="flex items-center justify-between mb-5">
                         <div>
 <h2 class="font-semibold text-gray-900">Riwayat Laporan</h2>
-                            <p class="text-gray-400 text-xs mt-0.5">{{ $totalReports }} laporan tercatat</p>
+                            <p class="text-gray-400 text-xs mt-0.5"><?php echo e($totalReports); ?> laporan tercatat</p>
                         </div>
-                        <a href="{{ route('report.create') }}" class="text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition">+ Buat Laporan</a>
+                        <a href="<?php echo e(route('report.create')); ?>" class="text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition">+ Buat Laporan</a>
                     </div>
 
-                    @if($reports->count() > 0)
+                    <?php if($reports->count() > 0): ?>
                     <div class="space-y-2">
-                        @foreach($reports->take(5) as $report)
-                        @php
+                        <?php $__currentLoopData = $reports->take(5); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $report): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                        <?php
                         $sc = [
                             'Submitted'   => ['bg'=>'bg-gray-100',    'text'=>'text-gray-600',  'dot'=>'bg-gray-400'],
                             'Routed'      => ['bg'=>'bg-blue-50',     'text'=>'text-blue-700',  'dot'=>'bg-blue-500'],
@@ -199,52 +201,56 @@
                             'Resolved'    => ['bg'=>'bg-green-50',    'text'=>'text-green-700', 'dot'=>'bg-green-500'],
                         ];
                         $s = $sc[$report->status] ?? $sc['Submitted'];
-                        @endphp
-                        <a href="/tracking/{{ $report->id }}" class="flex items-center justify-between p-4 bg-[#faf9f7] hover:bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition group">
+                        ?>
+                        <a href="/tracking/<?php echo e($report->id); ?>" class="flex items-center justify-between p-4 bg-[#faf9f7] hover:bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition group">
                             <div class="min-w-0 flex-1">
                                 <div class="flex items-center gap-2 flex-wrap">
-                                    <p class="font-semibold text-gray-900 text-sm">{{ $report->category }}</p>
-                                    @if($report->anonymous)
+                                    <p class="font-semibold text-gray-900 text-sm"><?php echo e($report->category); ?></p>
+                                    <?php if($report->anonymous): ?>
                                     <span class="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">Anonim</span>
-                                    @endif
-                                    @if($report->evidences_count > 0)
-                                    <span class="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">{{ $report->evidences_count }} bukti</span>
-                                    @endif
+                                    <?php endif; ?>
+                                    <?php if($report->evidences_count > 0): ?>
+                                    <span class="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full"><?php echo e($report->evidences_count); ?> bukti</span>
+                                    <?php endif; ?>
                                 </div>
-                                <p class="text-gray-400 text-xs mt-0.5">{{ $report->created_at->format('d M Y, H:i') }}</p>
-                                @if($report->partner)
+                                <p class="text-gray-400 text-xs mt-0.5"><?php echo e($report->created_at->format('d M Y, H:i')); ?></p>
+                                <?php if($report->partner): ?>
                                 <div class="mt-2 bg-white border border-gray-100 rounded-lg p-2.5 shadow-sm">
                                     <p class="text-xs font-semibold text-gray-800 flex items-center gap-1">
                                         <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                                        {{ $report->partner->partner_name }}
+                                        <?php echo e($report->partner->partner_name); ?>
+
                                     </p>
                                     <div class="mt-1 space-y-0.5">
                                         <p class="text-[11px] text-gray-500 flex items-center gap-1.5">
-                                            <span class="w-3.5 flex justify-center">📞</span> {{ $report->partner->phone ?? '-' }}
+                                            <span class="w-3.5 flex justify-center">📞</span> <?php echo e($report->partner->phone ?? '-'); ?>
+
                                         </p>
-                                        <p class="text-[11px] text-gray-500 flex items-center gap-1.5 line-clamp-1" title="{{ $report->partner->address }}">
-                                            <span class="w-3.5 flex justify-center">📍</span> {{ $report->partner->address ?? '-' }}
+                                        <p class="text-[11px] text-gray-500 flex items-center gap-1.5 line-clamp-1" title="<?php echo e($report->partner->address); ?>">
+                                            <span class="w-3.5 flex justify-center">📍</span> <?php echo e($report->partner->address ?? '-'); ?>
+
                                         </p>
                                     </div>
                                 </div>
-                                @endif
+                                <?php endif; ?>
                             </div>
                             <div class="flex items-center gap-2 ml-3">
-                                <span class="text-xs font-semibold px-2.5 py-1 rounded-full {{ $s['bg'] }} {{ $s['text'] }} flex items-center gap-1.5 whitespace-nowrap">
-                                    <span class="w-1.5 h-1.5 rounded-full {{ $s['dot'] }}"></span>
-                                    {{ $report->status }}
+                                <span class="text-xs font-semibold px-2.5 py-1 rounded-full <?php echo e($s['bg']); ?> <?php echo e($s['text']); ?> flex items-center gap-1.5 whitespace-nowrap">
+                                    <span class="w-1.5 h-1.5 rounded-full <?php echo e($s['dot']); ?>"></span>
+                                    <?php echo e($report->status); ?>
+
                                 </span>
                                 <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                             </div>
                         </a>
-                        @endforeach
-                        @if($reports->count() > 5)
+                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                        <?php if($reports->count() > 5): ?>
                         <a href="/emergency" class="block text-center text-xs text-gray-400 hover:text-gray-600 py-2 transition">
-                            Lihat {{ $reports->count() - 5 }} laporan lainnya →
+                            Lihat <?php echo e($reports->count() - 5); ?> laporan lainnya →
                         </a>
-                        @endif
+                        <?php endif; ?>
                     </div>
-                    @else
+                    <?php else: ?>
                     <div class="text-center py-10">
                         <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                             <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -252,14 +258,14 @@
                         <p class="text-gray-400 text-sm font-medium">Belum ada laporan</p>
                         <p class="text-gray-300 text-xs mt-1">Laporan kamu akan muncul di sini</p>
                     </div>
-                    @endif
+                    <?php endif; ?>
                 </div>
 
             </div>
         </div>
     </div>
 
-    {{-- ===== KATEGORI MODAL ===== --}}
+    
     <div id="all-partners-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center px-4">
         <div class="bg-white rounded-2xl w-full max-w-lg p-5 shadow-2xl max-h-[85vh] overflow-hidden flex flex-col">
             <div class="flex items-start justify-between gap-3 mb-3">
@@ -308,22 +314,22 @@
             <p class="text-gray-500 text-sm mb-6">Pilih kategori. GPS terekam otomatis.</p>
             
             <form id="emergency-form" action="/emergency" method="POST" class="flex flex-col h-full">
-                @csrf
+                <?php echo csrf_field(); ?>
                 <input type="hidden" name="latitude" id="f-lat">
                 <input type="hidden" name="longitude" id="f-lng">
                 <input type="hidden" name="category" id="fallback-category" value="Darurat" disabled>
-                <input type="hidden" name="idempotency_key" value="{{ Str::uuid() }}">
+                <input type="hidden" name="idempotency_key" value="<?php echo e(Str::uuid()); ?>">
                 
                 <div class="grid grid-cols-2 gap-3 mb-5">
-                    @foreach([['Kekerasan','👊'],['Kesehatan','🩺'],['Pelecehan','🛡️'],['Kecelakaan','🚑'],['Ancaman','⚠️'],['Lainnya','❓']] as [$val,$icon])
+                    <?php $__currentLoopData = [['Kekerasan','👊'],['Kesehatan','🩺'],['Pelecehan','🛡️'],['Kecelakaan','🚑'],['Ancaman','⚠️'],['Lainnya','❓']]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as [$val,$icon]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                     <label class="cursor-pointer" onclick="handleCategoryTap(this)">
-                        <input type="radio" name="category" value="{{ $val }}" class="peer hidden" required>
+                        <input type="radio" name="category" value="<?php echo e($val); ?>" class="peer hidden" required>
                         <div class="peer-checked:bg-red-50 peer-checked:border-red-500 border-2 border-gray-100 rounded-2xl p-4 text-center hover:border-gray-300 transition-all duration-200 active:scale-95 shadow-sm">
-                            <p class="text-3xl mb-2">{{ $icon }}</p>
-                            <p class="text-sm font-black text-gray-900">{{ $val }}</p>
+                            <p class="text-3xl mb-2"><?php echo e($icon); ?></p>
+                            <p class="text-sm font-black text-gray-900"><?php echo e($val); ?></p>
                         </div>
                     </label>
-                    @endforeach
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </div>
                 
                 <div class="flex items-center justify-between bg-gray-50 rounded-2xl px-5 py-4 mb-4">
@@ -675,7 +681,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
                     },
                     credentials: 'same-origin',
                     body: JSON.stringify({ latitude, longitude })
@@ -826,6 +832,7 @@
     document.getElementById('cat-modal').addEventListener('click',function(e){if(e.target===this)closeCatModal();});
     </script>
     
-    @include('partials.emergency-markers-js')
+    <?php echo $__env->make('partials.emergency-markers-js', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 </body>
 </html>
+<?php /**PATH D:\CODING\olivia_final\resources\views/dashboard.blade.php ENDPATH**/ ?>
