@@ -29,7 +29,7 @@ Route::get('/witness', [WitnessController::class, 'index'])->name('witness');
 Route::post('/witness', [WitnessController::class, 'store'])->name('witness.store');
 
 // ─── AUTH REQUIRED ────────────────────────────────────────────────
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'phone.required'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings');

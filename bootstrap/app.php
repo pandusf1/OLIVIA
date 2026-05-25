@@ -15,7 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'partner' => \App\Http\Middleware\EnsurePartnerRole::class,
             'admin' => \App\Http\Middleware\EnsureAdminRole::class,
-
+            'phone.required' => \App\Http\Middleware\EnsurePhoneIsFilled::class,
         ]);
 
         // 2. Tambahkan TrustProxies di sini agar HTTPS terdeteksi benar di Vercel

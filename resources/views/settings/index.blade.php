@@ -16,6 +16,7 @@
         </div>
 
         @if(session('success'))<div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl mb-6 text-sm">✓ {{ session('success') }}</div>@endif
+        @if(session('warning'))<div class="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-xl mb-6 text-sm">⚠️ {{ session('warning') }}</div>@endif
 
         {{-- Tab nav --}}
         <div class="flex gap-1 border-b border-gray-200 mb-8">

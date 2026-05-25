@@ -75,7 +75,7 @@ class EmergencyController extends Controller
             }
         }
 
-        $report = DB::transaction(function () use ($request, $partners, $firstPartner, $expiresAt, $urgency) {
+        $report = DB::transaction(function () use ($request, $partners, $firstPartner, $expiresAt, $urgency, $idempotencyKey) {
             $report = Report::create([
                 'user_id' => auth()->id(),
                 'report_type' => 'Emergency',

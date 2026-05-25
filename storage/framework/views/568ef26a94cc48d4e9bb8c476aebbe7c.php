@@ -127,13 +127,6 @@
 
                         <div class="p-4 relative">
                             
-                            <div class="flex items-center gap-2 mb-3">
-                                <span class="w-2.5 h-2.5 rounded-full bg-red-700" title="Kamu"></span>
-                                <p class="text-xs font-semibold text-gray-600">Lokasi kamu</p>
-                            </div>
-
-
-
                             
                             <div class="relative w-full h-44 rounded-xl border border-gray-100 bg-white/40 overflow-hidden" aria-label="Peta semu partner terdekat">
                                 
@@ -143,14 +136,6 @@
                                 </div>
 
                             <div id="nearby-markers" class="absolute inset-0"></div>
-
-
-
-
-                            <div class="absolute left-3 bottom-3 flex items-center gap-2 text-[11px] text-gray-500">
-                                    <span class="w-2 h-2 rounded-full bg-red-700"></span><span>Kamu</span>
-                                    <span class="w-2 h-2 rounded-full bg-red-300"></span><span>Lokasi</span>
-                                </div>
                             </div>
 
                             <div class="flex items-center gap-2 mb-3 mt-3">
@@ -304,8 +289,8 @@
         </div>
     </div>
 
-    <div id="cat-modal" class="hidden fixed inset-0 bg-black/80 z-[100] flex flex-col justify-end px-4 pb-6 transition-all duration-300">
-        <div class="bg-white rounded-t-3xl rounded-b-2xl w-full max-w-md mx-auto p-6 shadow-2xl">
+    <div id="cat-modal" class="hidden fixed inset-0 bg-black/80 z-[100] flex flex-col justify-end sm:justify-center px-4 pb-6 sm:py-6 transition-all duration-300">
+        <div class="bg-white rounded-t-3xl rounded-b-2xl sm:rounded-3xl w-full max-w-md mx-auto p-6 shadow-2xl max-h-[85vh] overflow-y-auto">
             <div class="flex items-center gap-2 mb-3">
                 <div class="w-2.5 h-2.5 bg-red-600 rounded-full animate-pulse"></div>
                 <p class="text-red-700 text-xs font-bold uppercase tracking-widest">Laporan Aktif</p>
@@ -351,12 +336,12 @@
                 </div>
                 
                 <div class="bg-red-50 rounded-2xl p-4 mb-4">
-                    <p id="auto-submit-info" class="text-sm text-red-700 font-bold text-center">Terkirim otomatis: <span id="auto-submit-cd" class="text-lg font-black">10</span>s</p>
+                    <p id="auto-submit-info" class="text-sm text-red-700 font-bold text-center">Terkirim otomatis: <span id="auto-submit-cd" class="text-lg font-black">30</span>s</p>
                 </div>
                 
-                <button type="submit" id="btn-submit-emergency" class="w-full bg-red-600 hover:bg-red-700 active:bg-red-800 text-white py-4 rounded-2xl font-black text-lg transition-all duration-200 shadow-[0_4px_14px_0_rgba(220,38,38,0.39)]">🚨 KIRIM SEKARANG</button>
+                <button type="submit" id="btn-submit-emergency" class="w-full bg-red-600 hover:bg-red-700 active:bg-red-800 text-white py-4 rounded-2xl font-black text-lg transition-all duration-200 shadow-[0_4px_14px_0_rgba(220,38,38,0.39)]">KIRIM SEKARANG</button>
+                <button onclick="closeCatModal()" class="w-full mt-2 text-gray-500 hover:text-gray-900 font-bold text-sm py-3 transition-colors">Kembali</button>
             </form>
-            <button onclick="closeCatModal()" class="w-full mt-4 text-gray-500 hover:text-gray-900 font-bold text-sm py-3 transition-colors">BATALKAN</button>
         </div>
     </div>
 
@@ -794,9 +779,9 @@
             r.required = false; // Remove required to avoid HTML5 validation blocking
         });
         if (!checked) {
-            // Jika user tidak memilih kategori, kirim sebagai unknown_emergency
+            // Jika user tidak memilih kategori, kirim sebagai Darurat
             document.getElementById('fallback-category').disabled = false;
-            document.getElementById('fallback-category').value = 'unknown_emergency';
+            document.getElementById('fallback-category').value = 'Darurat';
         }
 
         HTMLFormElement.prototype.submit.call(form);
@@ -812,9 +797,10 @@
         document.getElementById('cat-modal').classList.remove('hidden');
         document.body.style.overflow='hidden';
 
-        let cd = 10;
+        let cd = 30;
         document.getElementById('auto-submit-info').classList.remove('hidden');
         document.getElementById('auto-submit-cd').textContent = cd;
+        if(autoSubmitInterval) clearInterval(autoSubmitInterval);
         autoSubmitInterval = setInterval(() => {
             cd--;
             document.getElementById('auto-submit-cd').textContent = cd;
@@ -834,5 +820,4 @@
     
     <?php echo $__env->make('partials.emergency-markers-js', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 </body>
-</html>
-<?php /**PATH D:\CODING\olivia_final\resources\views/dashboard.blade.php ENDPATH**/ ?>
+</html><?php /**PATH D:\CODING\olivia_final\resources\views/dashboard.blade.php ENDPATH**/ ?>
