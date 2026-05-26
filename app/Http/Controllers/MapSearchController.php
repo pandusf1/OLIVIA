@@ -79,7 +79,11 @@ class MapSearchController extends Controller
         ->values();
 
         $page = $request->integer('page', 1);
-        $limit = 20;
+        $limit = (int) $request->integer('limit', 0);
+        // Default: tampilkan semua partner (hapus batas 20)
+        if ($limit <= 0) {
+            $limit = $partnersWithDistance->count();
+        }
         $offset = ($page - 1) * $limit;
 
         $paginatedPartners = $partnersWithDistance->slice($offset, $limit)->values();

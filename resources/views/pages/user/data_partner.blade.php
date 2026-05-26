@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Safora — Data Partner</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <style> @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
         * { font-family: 'Space Grotesk', sans-serif; }
         h1 { font-family: 'Space Grotesk', sans-serif !important; }
@@ -82,11 +84,7 @@
                                 <p class="text-xs font-semibold text-gray-600">Lokasi partner</p>
                             </div>
 
-                            <div class="relative w-full h-64 rounded-xl border border-gray-100 bg-white/40 overflow-hidden">
-                                <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                                    <div class="w-3 h-3 rounded-full bg-red-700 shadow-md shadow-red-200"></div>
-                                    <div class="w-7 h-7 rounded-full border-2 border-red-200/80 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" style="animation-duration:2.2s"></div>
-                                </div>
+                            <div id="partner-location-map" class="relative w-full h-64 rounded-xl border border-gray-100 bg-white/40 overflow-hidden z-0">
 
                                 @if($hasLatLng)
                                     <div class="absolute left-3 bottom-3 text-[11px] text-gray-600 bg-white/90 border border-gray-100 rounded-lg px-3 py-2">
@@ -97,13 +95,14 @@
                                         Koordinat tidak tersedia
                                     </div>
                                 @endif
+
                             </div>
 
                             @if($hasLatLng)
                                 <div class="mt-3">
-                                    <a href="https://maps.google.com/?q={{ $partner->latitude }},{{ $partner->longitude }}" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold text-red-700 hover:text-red-800 transition underline">
+                                    <a href="https://www.openstreetmap.org/?mlat={{ $partner->latitude }}&mlon={{ $partner->longitude }}#map=16/{{ $partner->latitude }}/{{ $partner->longitude }}" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold text-red-700 hover:text-red-800 transition underline">
                                         <span>📍</span>
-                                        Lihat di Google Maps
+                                        Lihat di OpenStreetMap
                                     </a>
                                 </div>
                             @endif
@@ -254,6 +253,30 @@
 </html>
 
 <script>
+@if($hasLatLng)
+(function () {
+    const lat = @json((float) $partner->latitude);
+    const lng = @json((float) $partner->longitude);
+    const mapEl = document.getElementById('partner-location-map');
+    if (!mapEl || !window.L) return;
+
+    const map = L.map(mapEl, { scrollWheelZoom: false }).setView([lat, lng], 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    const partnerIcon = L.divIcon({
+        className: 'custom-partner-location-marker',
+        html: '<div class="w-4 h-4 rounded-full bg-red-700 border-2 border-white shadow-md shadow-red-200"></div>',
+        iconSize: [16, 16],
+        iconAnchor: [8, 8]
+    });
+
+    L.marker([lat, lng], { icon: partnerIcon }).addTo(map);
+})();
+@endif
+
 (function () {
     const cards = Array.from(document.querySelectorAll('.price-list-card'));
     const ctaWrap = document.getElementById('selectedPriceListCtaWrap');

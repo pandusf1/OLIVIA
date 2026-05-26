@@ -23,16 +23,24 @@
 
 <main class="mx-auto max-w-5xl px-4 pb-10 pt-5 sm:px-6">
     <section class="rounded-lg border border-red-100 bg-white p-5 shadow-sm">
-        <div class="flex items-start justify-between gap-4">
-            <div>
+        <div class="grid gap-4 lg:grid-cols-[1fr_280px] lg:items-start">
+            <div class="min-w-0">
                 <p class="text-xs font-bold uppercase tracking-widest text-red-700">Laporan #<span data-field="short_id">{{ $livePayload['report']['short_id'] }}</span></p>
                 <h1 class="mt-2 text-2xl font-black sm:text-3xl" data-field="current_status">{{ $livePayload['current_status'] }}</h1>
                 <p class="mt-3 max-w-2xl text-base leading-7 text-gray-700" data-field="human_message">{{ $livePayload['human_message'] }}</p>
+        <p class="mt-1 text-sm leading-6" data-field="next_instruction">{{ $livePayload['next_instruction'] }}</p>
+        <p class="mt-2 text-xs leading-5" data-field="escalation_message">{{ $livePayload['escalation_message'] }}</p>
             </div>
-            <div class="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-black uppercase text-red-700" data-field="urgency">{{ $livePayload['report']['urgency_level'] }}</div>
+            <div class="rounded-lg bg-gray-50 p-4">
+                <p class="text-xs font-bold uppercase text-gray-500">Lokasi</p>
+                <a data-field="maps_url" href="{{ $livePayload['report']['location']['maps_url'] ?? '#' }}" target="_blank" class="mt-1 inline-block font-black text-red-700 underline mb-2">
+                    {{ $livePayload['report']['location']['verified'] ? 'GPS diterima' : 'GPS belum tersedia' }}
+                </a>
+                <div id="tracking-map" class="h-36 w-full rounded-lg z-0 border border-gray-200"></div>
+            </div>
         </div>
 
-        <div class="mt-5 grid gap-3 sm:grid-cols-3">
+        <div class="mt-5 grid gap-3 sm:grid-cols-2">
             <div class="rounded-lg bg-gray-50 p-4">
                 <p class="text-xs font-bold uppercase text-gray-500">Kategori</p>
                 <p class="mt-1 font-black" data-field="category">{{ $livePayload['report']['category'] }}</p>
@@ -40,13 +48,6 @@
             <div class="rounded-lg bg-gray-50 p-4">
                 <p class="text-xs font-bold uppercase text-gray-500">Estimasi Respons</p>
                 <p class="mt-1 font-black" data-field="eta">{{ $livePayload['eta'] }}</p>
-            </div>
-            <div class="rounded-lg bg-gray-50 p-4">
-                <p class="text-xs font-bold uppercase text-gray-500">Lokasi</p>
-                <a data-field="maps_url" href="{{ $livePayload['report']['location']['maps_url'] ?? '#' }}" target="_blank" class="mt-1 inline-block font-black text-red-700 underline mb-2">
-                    {{ $livePayload['report']['location']['verified'] ? 'GPS diterima' : 'GPS belum tersedia' }}
-                </a>
-                <div id="tracking-map" class="h-32 w-full rounded-lg z-0 border border-gray-200"></div>
             </div>
         </div>
     </section>
@@ -99,13 +100,6 @@
                     </form>
                 </div>
             </section>
-
-
-    <section class="mt-4 rounded-lg border border-orange-200 bg-orange-50 p-4">
-        <p class="text-sm font-black text-orange-950">Langkah berikutnya</p>
-        <p class="mt-1 text-sm leading-6 text-orange-900" data-field="next_instruction">{{ $livePayload['next_instruction'] }}</p>
-        <p class="mt-2 text-xs leading-5 text-orange-800" data-field="escalation_message">{{ $livePayload['escalation_message'] }}</p>
-    </section>
 
     <div class="mt-5 grid gap-5 lg:grid-cols-[1.1fr_.9fr]">
         <div class="space-y-5">
@@ -212,7 +206,7 @@
         const maps = document.querySelector('[data-field="maps_url"]');
         if (maps && payload.report.location.maps_url) {
             maps.href = payload.report.location.maps_url;
-            maps.textContent = payload.report.location.verified ? 'GPS diterima' : 'Buka peta';
+            maps.textContent = payload.report.location.verified ? 'Titik Lokasi ' : 'Buka peta';
         }
 
         if (payload.report.location.latitude && payload.report.location.longitude) {

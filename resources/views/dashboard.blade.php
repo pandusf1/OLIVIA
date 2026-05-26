@@ -365,7 +365,12 @@
                 iconAnchor: [8, 8]
             });
 
-            userMarker = L.marker([initialLat, initialLng], {icon: userIcon, zIndexOffset: 1000}).addTo(map);
+            userMarker = L.marker([initialLat, initialLng], {
+                icon: userIcon,
+                interactive: false,
+                keyboard: false,
+                zIndexOffset: 0
+            }).addTo(map);
             
             map.on('dragstart', () => { window.__mapUserPanned = true; });
 
@@ -434,6 +439,45 @@
 
     let emergencyMarkers = [];
 
+    function partnerMarkerVisual(type) {
+        const normalized = String(type || '').toLowerCase();
+        let key = 'default';
+        if (normalized.includes('ambulance') || normalized.includes('ambulans')) {
+            key = 'ambulance';
+        } else if (normalized.includes('legal') || normalized.includes('lbh') || normalized.includes('pengacara')) {
+            key = 'legal';
+        } else if (normalized.includes('counselor') || normalized.includes('konselor') || normalized.includes('psikolog')) {
+            key = 'counselor';
+        } else if (normalized.includes('pemadam') || normalized.includes('fire') || normalized.includes('rescue')) {
+            key = 'pemadam';
+        }
+
+        const visuals = {
+            ambulance: {
+                bg: 'bg-red-600',
+                svg: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17h6m-3-3v6M4 16V8a2 2 0 0 1 2-2h8v10H4Zm10-7h3l3 3v4h-6V9ZM7 18.5h.01M17 18.5h.01"/></svg>'
+            },
+            legal: {
+                bg: 'bg-slate-700',
+                svg: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18M6 7h12M6 7l-3 6h6L6 7Zm12 0-3 6h6l-3-6ZM8 21h8"/></svg>'
+            },
+            counselor: {
+                bg: 'bg-emerald-600',
+                svg: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21s-7-4.35-7-11a4 4 0 0 1 7-2.65A4 4 0 0 1 19 10c0 6.65-7 11-7 11Z"/></svg>'
+            },
+            pemadam: {
+                bg: 'bg-orange-600',
+                svg: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22a6 6 0 0 0 6-6c0-3.5-2.5-5.5-4.5-8.5-.5 2-2 3-3.5 4.5.2-2.5-.8-4.5-2-6C6.5 9.5 6 12 6 16a6 6 0 0 0 6 6Z"/></svg>'
+            },
+            default: {
+                bg: 'bg-gray-700',
+                svg: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 10h.01M15 10h.01"/></svg>'
+            }
+        };
+
+        return visuals[key];
+    }
+
     function renderMapMarkers(items, emergencies = []) {
         if (!map) return;
         
@@ -451,12 +495,13 @@
             const km = Number(x.distance_km) || 0;
             if (p.latitude && p.longitude) {
                 bounds.push([p.latitude, p.longitude]);
+                const visual = partnerMarkerVisual(p.partner_type);
                 
                 const partnerIcon = L.divIcon({
                     className: 'custom-partner-marker',
-                    html: `<div class="w-6 h-6 rounded-full bg-red-600 border-2 border-white shadow-md flex items-center justify-center text-[10px] font-bold text-white relative z-20">${i+1}</div>`,
-                    iconSize: [24, 24],
-                    iconAnchor: [12, 12]
+                    html: `<div class="w-7 h-7 rounded-full ${visual.bg} border-2 border-white shadow-md flex items-center justify-center text-white relative z-20">${visual.svg}</div>`,
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 14]
                 });
 
                 const popupHtml = `
@@ -480,7 +525,7 @@
 
                 const emergencyIcon = L.divIcon({
                     className: 'custom-emergency-marker',
-                    html: `<div class="w-6 h-6 rounded-full bg-orange-500 border-2 border-white shadow-md flex items-center justify-center text-white relative z-10 animate-pulse">
+                    html: `<div class="w-6 h-6 rounded-full bg-orange-500 border-2 border-white shadow-md flex items-center justify-center text-white relative z-[9999] animate-pulse">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                            </div>`,
                     iconSize: [24, 24],
@@ -495,7 +540,11 @@
                     </div>
                 `;
 
-                const m = L.marker([e.latitude, e.longitude], {icon: emergencyIcon})
+                const m = L.marker([e.latitude, e.longitude], {
+                        icon: emergencyIcon,
+                        riseOnHover: true,
+                        zIndexOffset: 2000
+                    })
                     .bindPopup(popupHtml)
                     .addTo(map);
                 emergencyMarkers.push(m);
