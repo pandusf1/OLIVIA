@@ -7,6 +7,8 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <style>
         * { font-family: 'Space Grotesk', sans-serif; }
         h1 { font-family: 'Space Grotesk', sans-serif !important; }
@@ -64,9 +66,9 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 fade-in">
             @foreach([
                 [route('trusted-contact.index'), '👤', 'Kontak Darurat', 'Orang terpercaya', 'bg-blue-50'],
+                ['/witness',                    '🛡️', 'Mode Saksi',    'Bantu korban', 'bg-green-50'],
                 ['/evidence',                   '🗂️', 'Galeri Bukti',  'Aman tersimpan', 'bg-purple-50'],
                 [route('chat.threads'),         '💬', 'Chat', 'Riwayat chat', 'bg-orange-50'],
-                ['/witness',                    '🛡️', 'Mode Saksi',    'Bantu korban', 'bg-green-50'],
             ] as [$url, $icon, $title, $sub, $bg])
             <a href="{{ $url }}" class="bg-white border border-gray-100 hover:border-gray-200 rounded-2xl p-4 flex flex-col items-center text-center transition group shadow-sm active:scale-95">
                 <div class="w-12 h-12 {{ $bg }} rounded-full flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition-transform">
@@ -106,34 +108,9 @@
 
 
                     <div id="nearby-map" class="relative overflow-hidden rounded-xl bg-[#faf9f7] border border-gray-100">
-                        {{-- Topographic / map-like background (no real map API) --}}
-                        <div class="absolute inset-0 pointer-events-none" style="
-                            background:
-                                radial-gradient(circle at 30% 25%, rgba(239,68,68,0.10) 0%, rgba(239,68,68,0.00) 55%),
-                                radial-gradient(circle at 70% 65%, rgba(239,68,68,0.08) 0%, rgba(239,68,68,0.00) 50%),
-                                repeating-linear-gradient(135deg, rgba(0,0,0,0.05) 0, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 14px),
-                                repeating-linear-gradient(45deg, rgba(0,0,0,0.03) 0, rgba(0,0,0,0.03) 1px, transparent 1px, transparent 18px);
-                            filter: saturate(1.05) contrast(1.02);
-                        "></div>
-
-                        <div class="absolute -top-24 -left-24 w-56 h-56 bg-red-50/60 rounded-full blur-2xl pointer-events-none"></div>
-                        <div class="absolute -bottom-24 -right-24 w-56 h-56 bg-red-50/40 rounded-full blur-2xl pointer-events-none"></div>
-
-                        <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
-                            <div id="range-ring" class="w-[78%] h-[78%] rounded-full border border-red-200/70 bg-red-50/20" style="box-shadow: inset 0 0 0 1px rgba(220,38,38,0.08);"></div>
-                        </div>
-
                         <div class="p-4 relative">
-                            
-                            {{-- Map canvas (visual only) --}}
-                            <div class="relative w-full h-44 rounded-xl border border-gray-100 bg-white/40 overflow-hidden" aria-label="Peta semu partner terdekat">
-                                {{-- Center user marker --}}
-                                <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-                                    <div class="w-3 h-3 rounded-full bg-red-700 shadow-md shadow-red-200"></div>
-                                    <div class="w-6 h-6 rounded-full border-2 border-red-200/80 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" style="animation-duration:2.2s"></div>
-                                </div>
-
-                            <div id="nearby-markers" class="absolute inset-0"></div>
+                            {{-- Map canvas --}}
+                            <div id="leaflet-map" class="relative w-full h-56 sm:h-64 rounded-xl border border-gray-100 bg-gray-100 overflow-hidden" style="z-index: 1;" aria-label="Peta partner terdekat">
                             </div>
 
                             <div class="flex items-center gap-2 mb-3 mt-3">
@@ -197,24 +174,18 @@
                                     @endif
                                 </div>
                                 <p class="text-gray-400 text-xs mt-0.5">{{ $report->created_at->format('d M Y, H:i') }}</p>
-                                @if($report->partner)
-                                <div class="mt-2 bg-white border border-gray-100 rounded-lg p-2.5 shadow-sm">
-                                    <p class="text-xs font-semibold text-gray-800 flex items-center gap-1">
-                                        <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                                        {{ $report->partner->partner_name }}
-                                    </p>
-                                    <div class="mt-1 space-y-0.5">
-                                        <p class="text-[11px] text-gray-500 flex items-center gap-1.5">
-                                            <span class="w-3.5 flex justify-center">📞</span> {{ $report->partner->phone ?? '-' }}
-                                        </p>
-                                        <p class="text-[11px] text-gray-500 flex items-center gap-1.5 line-clamp-1" title="{{ $report->partner->address }}">
-                                            <span class="w-3.5 flex justify-center">📍</span> {{ $report->partner->address ?? '-' }}
-                                        </p>
-                                    </div>
-                                </div>
-                                @endif
                             </div>
-                            <div class="flex items-center gap-2 ml-3">
+                            <div class="flex items-center gap-2 ml-3 flex-shrink-0">
+                                @if($report->created_at->diffInMinutes(now()) <= 15)
+                                    <div class="flex items-center gap-1 mr-2" onclick="event.preventDefault(); event.stopPropagation();">
+                                        <a href="{{ route('report.edit', $report->id) }}" class="text-xs bg-white hover:bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-200 transition font-medium">Edit</a>
+                                        <form action="{{ route('report.destroy', $report->id) }}" method="POST" onsubmit="return confirm('Hapus laporan ini?');" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-xs bg-white hover:bg-red-50 text-red-600 px-2.5 py-1.5 rounded-lg border border-gray-200 transition font-medium">Hapus</button>
+                                        </form>
+                                    </div>
+                                @endif
                                 <span class="text-xs font-semibold px-2.5 py-1 rounded-full {{ $s['bg'] }} {{ $s['text'] }} flex items-center gap-1.5 whitespace-nowrap">
                                     <span class="w-1.5 h-1.5 rounded-full {{ $s['dot'] }}"></span>
                                     {{ $report->status }}
@@ -271,7 +242,7 @@
                 <input id="all-partners-query" type="text" placeholder="Cari (mis. Semarang)" class="w-1/2 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
             </div>
 
-            <div class="flex-1 overflow-auto">
+            <div id="all-partners-scroll-container" class="flex-1 overflow-auto" onscroll="handleAllPartnersScroll()">
                 <div id="all-partners-list" class="space-y-2">
                     <div class="text-sm text-gray-400">Memuat partner...</div>
                 </div>
@@ -283,8 +254,8 @@
         </div>
     </div>
 
-    <div id="cat-modal" class="hidden fixed inset-0 bg-black/80 z-[100] flex flex-col justify-end sm:justify-center px-4 pb-6 sm:py-6 transition-all duration-300">
-        <div class="bg-white rounded-t-3xl rounded-b-2xl sm:rounded-3xl w-full max-w-md mx-auto p-6 shadow-2xl max-h-[85vh] overflow-y-auto">
+    <div id="cat-modal" class="hidden fixed inset-0 bg-black/80 z-[100] flex flex-col justify-center items-center px-6 py-6 transition-all duration-300">
+        <div class="bg-white rounded-3xl w-full max-w-sm mx-auto p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div class="flex items-center gap-2 mb-3">
                 <div class="w-2.5 h-2.5 bg-red-600 rounded-full animate-pulse"></div>
                 <p class="text-red-700 text-xs font-bold uppercase tracking-widest">Laporan Aktif</p>
@@ -292,20 +263,21 @@
             <h2 class="font-black text-2xl text-gray-900 mb-1 leading-tight tracking-tight">Apa yang terjadi?</h2>
             <p class="text-gray-500 text-sm mb-6">Pilih kategori. GPS terekam otomatis.</p>
             
-            <form id="emergency-form" action="/emergency" method="POST" class="flex flex-col h-full">
+            <form id="emergency-form" class="flex flex-col h-full" onsubmit="event.preventDefault();">
                 @csrf
                 <input type="hidden" name="latitude" id="f-lat">
                 <input type="hidden" name="longitude" id="f-lng">
-                <input type="hidden" name="category" id="fallback-category" value="Darurat" disabled>
+                <input type="hidden" name="category" id="fallback-category" value="ambulance" disabled>
                 <input type="hidden" name="idempotency_key" value="{{ Str::uuid() }}">
                 
+                <div id="step-1">
                 <div class="grid grid-cols-2 gap-3 mb-5">
-                    @foreach([['Kekerasan','👊'],['Kesehatan','🩺'],['Pelecehan','🛡️'],['Kecelakaan','🚑'],['Ancaman','⚠️'],['Lainnya','❓']] as [$val,$icon])
+                    @foreach([['Medis Darurat','🚑','ambulance'],['Bantuan Hukum','⚖️','legal'],['Psikososial','🧠','counselor'],['Pemadam / Rescue','🚒','pemadam']] as [$label,$icon,$val])
                     <label class="cursor-pointer" onclick="handleCategoryTap(this)">
                         <input type="radio" name="category" value="{{ $val }}" class="peer hidden" required>
                         <div class="peer-checked:bg-red-50 peer-checked:border-red-500 border-2 border-gray-100 rounded-2xl p-4 text-center hover:border-gray-300 transition-all duration-200 active:scale-95 shadow-sm">
                             <p class="text-3xl mb-2">{{ $icon }}</p>
-                            <p class="text-sm font-black text-gray-900">{{ $val }}</p>
+                            <p class="text-sm font-black text-gray-900">{{ $label }}</p>
                         </div>
                     </label>
                     @endforeach
@@ -317,12 +289,10 @@
                         <p class="text-[11px] text-gray-500 mt-0.5">Identitas tidak ditampilkan</p>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" name="anonymous" value="1" checked class="sr-only peer">
+                        <input type="checkbox" id="f-anon" name="anonymous" value="1" @guest checked @endguest class="sr-only peer">
                         <div class="w-11 h-6 bg-gray-200 peer-checked:bg-red-600 rounded-full transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
                     </label>
                 </div>
-                
-                <textarea name="description" rows="1" placeholder="Catatan opsional..." oninput="this.style.height='auto';this.style.height=(this.scrollHeight)+'px';" class="w-full border-2 border-gray-100 bg-gray-50 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:border-red-200 focus:bg-white mb-5 resize-none transition-all duration-200 overflow-hidden" style="min-height: 52px;"></textarea>
                 
                 <div id="loc-info" class="flex items-center gap-2 mb-4 text-[11px] text-gray-400 font-medium">
                     <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
@@ -333,7 +303,38 @@
                     <p id="auto-submit-info" class="text-sm text-red-700 font-bold text-center">Terkirim otomatis: <span id="auto-submit-cd" class="text-lg font-black">30</span>s</p>
                 </div>
                 
-                <button type="submit" id="btn-submit-emergency" class="w-full bg-red-600 hover:bg-red-700 active:bg-red-800 text-white py-4 rounded-2xl font-black text-lg transition-all duration-200 shadow-[0_4px_14px_0_rgba(220,38,38,0.39)]">KIRIM SEKARANG</button>
+                <button type="button" onclick="submitStep1()" id="btn-next-step" class="w-full bg-red-600 hover:bg-red-700 active:bg-red-800 text-white py-4 rounded-2xl font-black text-lg transition-all duration-200 shadow-[0_4px_14px_0_rgba(220,38,38,0.39)]">SELANJUTNYA</button>
+                </div>
+
+                <!-- STEP 2 -->
+                <div id="step-2" class="hidden flex-col h-full">
+                    <h3 class="font-bold text-lg mb-2 text-center text-gray-900 mt-2">Laporan Terkirim!</h3>
+                    <p class="text-xs text-gray-500 mb-4 text-center">Tambahkan detail opsional. Membantu partner memahami situasi lebih baik.</p>
+
+                    <textarea name="description" id="step2-desc" rows="3" placeholder="Deskripsi kejadian..." oninput="resetStep2Timer()" class="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-500 focus:bg-white mb-3 resize-none"></textarea>
+                    
+                    <div class="border border-dashed border-gray-300 rounded-xl p-4 mb-3 text-center bg-gray-50">
+                        <input type="file" id="step2-evidence" name="evidence[]" multiple class="text-xs w-full" accept="image/*,video/*,audio/*" onchange="resetStep2Timer()">
+                        <p class="text-xs text-gray-500 mt-2">Bisa pilih beberapa file sekaligus.</p>
+                    </div>
+
+                    <div class="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3 mb-4 border border-gray-200">
+                        <div>
+                            <p class="text-sm font-bold text-gray-900">Tampilkan Bukti</p>
+                            <p class="text-[10px] text-gray-500 mt-0.5">Izinkan semua orang melihat bukti ini</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="show_evidence" value="1" checked class="sr-only peer" id="step2-show-evidence">
+                            <div class="w-9 h-5 bg-gray-200 peer-checked:bg-red-600 rounded-full transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
+                        </label>
+                    </div>
+
+                    <div class="bg-red-50 rounded-xl p-3 mb-4">
+                        <p class="text-xs text-red-700 font-bold text-center">Menutup otomatis dalam: <span id="step2-cd" class="text-base font-black">60</span>s</p>
+                    </div>
+
+                    <button type="button" onclick="submitStep2()" id="btn-final-submit" class="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-xl font-bold transition-all text-lg mt-auto shadow-[0_4px_14px_0_rgba(17,24,39,0.39)]">KIRIM LAPORAN</button>
+                </div>
                 <button onclick="closeCatModal()" class="w-full mt-2 text-gray-500 hover:text-gray-900 font-bold text-sm py-3 transition-colors">Kembali</button>
             </form>
         </div>
@@ -341,6 +342,44 @@
 
     <script>
     let cdInterval=null, lat=null, lng=null;
+    let map = null;
+    let userMarker = null;
+    let partnerMarkers = [];
+    let watchId = null;
+
+    function initMap(initialLat, initialLng) {
+        if (!map) {
+            map = L.map('leaflet-map').setView([initialLat, initialLng], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap'
+            }).addTo(map);
+
+            const userIcon = L.divIcon({
+                className: 'custom-user-marker',
+                html: `<div class="relative">
+                            <div class="w-4 h-4 rounded-full bg-blue-600 border-2 border-white shadow-md z-10 relative"></div>
+                            <div class="w-10 h-10 rounded-full bg-blue-500/30 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-ping" style="animation-duration: 2s;"></div>
+                       </div>`,
+                iconSize: [16, 16],
+                iconAnchor: [8, 8]
+            });
+
+            userMarker = L.marker([initialLat, initialLng], {icon: userIcon, zIndexOffset: 1000}).addTo(map);
+            
+            map.on('dragstart', () => { window.__mapUserPanned = true; });
+
+            // Reload markers if they were loaded before map initialized
+            if (window.__lastNearbyItems) {
+                renderMapMarkers(window.__lastNearbyItems);
+            }
+        } else {
+            userMarker.setLatLng([initialLat, initialLng]);
+            if (!window.__mapUserPanned) {
+                map.panTo([initialLat, initialLng]);
+            }
+        }
+    }
 
     function openAllPartnersModal(){
         const m = document.getElementById('all-partners-modal');
@@ -357,24 +396,125 @@
     }
 
     if(navigator.geolocation){
-        navigator.geolocation.getCurrentPosition(
-            p=>{lat=p.coords.latitude;lng=p.coords.longitude;document.getElementById('f-lat').value=lat;document.getElementById('f-lng').value=lng;document.getElementById('loc-info').innerHTML='<div class="w-2 h-2 bg-green-500 rounded-full"></div><span class="text-green-600">Lokasi: '+lat.toFixed(4)+', '+lng.toFixed(4)+'</span>';},
-            ()=>{document.getElementById('loc-info').innerHTML='<div class="w-2 h-2 bg-red-400 rounded-full"></div><span class="text-red-500">GPS tidak tersedia.</span>';}
+        watchId = navigator.geolocation.watchPosition(
+            p=>{
+                lat=p.coords.latitude;
+                lng=p.coords.longitude;
+                document.getElementById('f-lat').value=lat;
+                document.getElementById('f-lng').value=lng;
+                document.getElementById('loc-info').innerHTML='<div class="w-2 h-2 bg-green-500 rounded-full"></div><span class="text-green-600">Lokasi: '+lat.toFixed(4)+', '+lng.toFixed(4)+'</span>';
+                
+                initMap(lat, lng);
+
+                @if(isset($userHasLocation) && !$userHasLocation)
+                    if (!window.__hasSavedInitialLocation) {
+                        window.__hasSavedInitialLocation = true;
+                        fetch('/user-location/reload', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                            },
+                            body: JSON.stringify({ latitude: lat, longitude: lng })
+                        }).then(() => {
+                            loadNearbyPartners({
+                                type: document.getElementById('map-search-type')?.value || '',
+                                query: document.getElementById('map-search-query')?.value || ''
+                            });
+                        }).catch(console.error);
+                    }
+                @endif
+            },
+            ()=>{document.getElementById('loc-info').innerHTML='<div class="w-2 h-2 bg-red-400 rounded-full"></div><span class="text-red-500">GPS tidak tersedia.</span>';},
+            { enableHighAccuracy: true, maximumAge: 10000, timeout: 10000 }
         );
     }
 
 
 
+    let emergencyMarkers = [];
+
+    function renderMapMarkers(items, emergencies = []) {
+        if (!map) return;
+        
+        partnerMarkers.forEach(m => map.removeLayer(m));
+        partnerMarkers = [];
+
+        emergencyMarkers.forEach(m => map.removeLayer(m));
+        emergencyMarkers = [];
+        
+        const bounds = [];
+        if (lat && lng) bounds.push([lat, lng]);
+
+        items.forEach((x, i) => {
+            const p = x.partner;
+            const km = Number(x.distance_km) || 0;
+            if (p.latitude && p.longitude) {
+                bounds.push([p.latitude, p.longitude]);
+                
+                const partnerIcon = L.divIcon({
+                    className: 'custom-partner-marker',
+                    html: `<div class="w-6 h-6 rounded-full bg-red-600 border-2 border-white shadow-md flex items-center justify-center text-[10px] font-bold text-white relative z-20">${i+1}</div>`,
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                });
+
+                const popupHtml = `
+                    <div class="text-xs p-1">
+                        <div class="font-bold">${String(p.partner_name).replace(/</g,'&lt;')}</div>
+                        <div class="text-gray-500">${p.partner_type} • ${km.toFixed(2)} km</div>
+                        <a href="/data-partner/${p.id}" class="text-blue-600 hover:underline mt-1 block">Lihat Detail &rarr;</a>
+                    </div>
+                `;
+
+                const m = L.marker([p.latitude, p.longitude], {icon: partnerIcon})
+                    .bindPopup(popupHtml)
+                    .addTo(map);
+                partnerMarkers.push(m);
+            }
+        });
+
+        emergencies.forEach((e) => {
+            if (e.latitude && e.longitude) {
+                bounds.push([e.latitude, e.longitude]);
+
+                const emergencyIcon = L.divIcon({
+                    className: 'custom-emergency-marker',
+                    html: `<div class="w-6 h-6 rounded-full bg-orange-500 border-2 border-white shadow-md flex items-center justify-center text-white relative z-10 animate-pulse">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                           </div>`,
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                });
+
+                const popupHtml = `
+                    <div class="text-xs p-1">
+                        <div class="font-bold text-orange-600">Darurat: ${e.category}</div>
+                        <div class="text-gray-500">Korban: ${e.victim_name} • ${Number(e.distance_km).toFixed(2)} km</div>
+                        <a href="/tracking/${e.id}" class="text-blue-600 hover:underline mt-1 block">Lacak Laporan &rarr;</a>
+                    </div>
+                `;
+
+                const m = L.marker([e.latitude, e.longitude], {icon: emergencyIcon})
+                    .bindPopup(popupHtml)
+                    .addTo(map);
+                emergencyMarkers.push(m);
+            }
+        });
+        
+        if (bounds.length > 0 && !window.__mapUserPanned) {
+            map.fitBounds(bounds, { padding: [30, 30], maxZoom: 15 });
+        }
+    }
+
     // Load partner gabungan (ambulans + LBH + psikolog + dll) + marker + search
     async function loadNearbyPartners({type = '', query = ''} = {}){
         const el = document.getElementById('nearby-partners');
-        const markersEl = document.getElementById('nearby-markers');
 
         if(!el) return;
 
         try{
             el.innerHTML = '<div class="text-sm text-gray-400">Memuat partner...</div>';
-            if(markersEl) markersEl.innerHTML = '';
 
             const params = new URLSearchParams();
             if(type) params.set('type', type);
@@ -385,77 +525,33 @@
 
             const json = await res.json();
             const items = json.data || [];
+            const emergencies = json.emergencies || [];
 
             if(items.length===0){
                 el.innerHTML = '<div class="text-sm text-gray-400">Belum ada partner yang cocok.</div>';
+                if (map) {
+                    partnerMarkers.forEach(m => map.removeLayer(m));
+                    partnerMarkers = [];
+                    emergencyMarkers.forEach(m => map.removeLayer(m));
+                    emergencyMarkers = [];
+                    
+                    if (emergencies.length > 0) {
+                        renderMapMarkers([], emergencies);
+                    }
+                }
                 return;
             }
 
             // Cache full result untuk dipakai fitur “Lihat Semua”
             window.__lastNearbyItems = items;
+            window.__lastNearbyEmergencies = emergencies;
+            
+            if (map) {
+                renderMapMarkers(items, emergencies);
+            }
 
             // Di bawah map hanya tampilkan 4 partner terdekat (preview)
             const previewTop = items.slice(0,4);
-            // Namun titik di map tetap menampilkan semua hasil sesuai filter
-            const mapAll = items;
-
-            // Visual marker layout: tanpa konversi koordinat ke piksel real map.
-            if(markersEl){
-                const maxKm = Math.max(...mapAll.map(x => Number(x.distance_km) || 0), 1);
-
-                mapAll.forEach((x, i)=>{
-
-
-                    const p = x.partner;
-                    const km = Number(x.distance_km) || 0;
-                    const t = Math.min(km / maxKm, 1);
-                    const rPct = 18 + t * 44;
-                    const angle = (i * 73 + (p.partner_name?.length || 0) * 11) * Math.PI / 180;
-
-                    const cx = 50;
-                    const cy = 50;
-                    const xPct = cx + Math.cos(angle) * rPct;
-                    const yPct = cy + Math.sin(angle) * rPct;
-
-                    const marker = document.createElement('a');
-                    marker.href = `/data-partner/${p.id}`;
-                    marker.className = 'absolute -translate-x-1/2 -translate-y-1/2 group';
-                    marker.style.zIndex = '0';
-
-                    marker.style.left = `${xPct}%`;
-                    marker.style.top = `${yPct}%`;
-
-                    marker.innerHTML = `
-                        <div class="w-2.5 h-2.5 rounded-full bg-red-300 border border-red-200 shadow-sm"></div>
-                        <div class="absolute -top-2 left-1/2 -translate-x-1/2">
-                            <div class="hidden group-hover:block relative z-[999]">
-                                <div class="text-[11px] bg-white/95 border border-gray-100 rounded-lg px-2 py-2 shadow text-gray-700 whitespace-nowrap max-w-[240px] relative z-[1000]">
-
-                                    <div class="flex items-start gap-2">
-                                        ${p.image_url ? `
-                                            <img src="${p.image_url}" class="w-12 h-12 object-cover rounded border border-gray-100 shrink-0" alt="${String(p.partner_name).replace(/</g,'<').replace(/>/g,'>')}">
-                                        ` : `
-                                            <div class="w-12 h-12 bg-gray-100 rounded border border-gray-100 shrink-0"></div>
-                                        `}
-                                        <div class="min-w-0">
-                                            <div class="font-semibold leading-tight">${String(p.partner_name).replace(/</g,'<').replace(/>/g,'>')}</div>
-                                            <div class="text-gray-500 leading-tight">${p.partner_type} • ${Number(km).toFixed(2)} km</div>
-                                            <div class="text-gray-600 leading-tight mt-1">${p.phone ? `📞 ${p.phone}` : '-'}</div>
-                                            <div class="text-gray-500 leading-tight mt-1">${p.address ? String(p.address).replace(/</g,'<').replace(/>/g,'>') : '-'}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-
-                    marker.style.zIndex = '0';
-
-                    markersEl.appendChild(marker);
-
-
-                });
-            }
 
             el.innerHTML = previewTop.map((x,i)=>{
                 const p = x.partner;
@@ -520,22 +616,40 @@
     const allTypeEl = document.getElementById('all-partners-type');
     const allQueryEl = document.getElementById('all-partners-query');
 
-    function renderAllPartners(items){
+    let allPartnersPage = 1;
+    let allPartnersHasMore = false;
+    let isFetchingAllPartners = false;
+
+    function handleAllPartnersScroll() {
+        const container = document.getElementById('all-partners-scroll-container');
+        if(!container) return;
+        
+        // If scrolled to bottom (within 50px)
+        if(container.scrollHeight - container.scrollTop - container.clientHeight < 50) {
+            if(allPartnersHasMore && !isFetchingAllPartners) {
+                fetchAllPartners(allPartnersPage + 1, true);
+            }
+        }
+    }
+
+    function renderAllPartners(items, append = false){
         const listEl = document.getElementById('all-partners-list');
         const subtitleEl = document.getElementById('all-partners-subtitle');
         if(!listEl) return;
 
-        if(!items || items.length === 0){
+        if(!append && (!items || items.length === 0)){
             listEl.innerHTML = '<div class="text-sm text-gray-400">Belum ada partner yang cocok.</div>';
             if(subtitleEl) subtitleEl.textContent = '0 hasil untuk filter & pencarian saat ini.';
             return;
         }
 
-        if(subtitleEl){
-            subtitleEl.textContent = `Menampilkan ${items.length} partner. (Preview map tetap 4 di bawah, tapi marker menampilkan semua.)`;
+        if(subtitleEl && !append){
+            subtitleEl.textContent = `Menampilkan partner terdekat. Scroll ke bawah untuk memuat lebih banyak.`;
         }
 
-        listEl.innerHTML = items.map((x, i)=>{
+        const currentCount = append ? listEl.querySelectorAll('a').length : 0;
+
+        const html = items.map((x, i)=>{
             const p = x.partner;
             const km = Number(x.distance_km) || 0;
             return `
@@ -545,11 +659,64 @@
                             <p class="font-bold text-gray-900 text-sm truncate">${p.partner_name}</p>
                             <p class="text-xs text-gray-500 mt-1">${p.partner_type} • ${km.toFixed(2)} km</p>
                         </div>
-                        <span class="text-xs font-semibold px-2 py-1 rounded-full bg-red-50 text-red-700 shrink-0">${i+1}</span>
                     </div>
                 </a>
             `;
         }).join('');
+
+        if (append) {
+            listEl.insertAdjacentHTML('beforeend', html);
+        } else {
+            listEl.innerHTML = html;
+        }
+    }
+
+    async function fetchAllPartners(page = 1, append = false) {
+        if(isFetchingAllPartners) return;
+        isFetchingAllPartners = true;
+        allPartnersPage = page;
+        
+        const listEl = document.getElementById('all-partners-list');
+        const t = allTypeEl?.value || '';
+        const q = allQueryEl?.value || '';
+
+        if(page === 1) {
+            if(listEl) listEl.innerHTML = '<div class="text-sm text-gray-400">Memuat partner...</div>';
+        } else {
+            if(listEl) {
+                const loadingEl = document.createElement('div');
+                loadingEl.id = 'all-partners-loading-indicator';
+                loadingEl.className = 'text-sm text-center text-gray-400 py-3';
+                loadingEl.innerHTML = '<div class="animate-pulse">Memuat lebih banyak...</div>';
+                listEl.appendChild(loadingEl);
+            }
+        }
+
+        try{
+            const params = new URLSearchParams();
+            if(t) params.set('type', t);
+            if(q) params.set('query', q);
+            params.set('page', page);
+
+            const res = await fetch(`/map-search?${params.toString()}`, { headers: { 'Accept':'application/json' } });
+            if(!res.ok) throw new Error('HTTP '+res.status);
+            const json = await res.json();
+            const items = json.data || [];
+            allPartnersHasMore = json.has_more || false;
+            
+            document.getElementById('all-partners-loading-indicator')?.remove();
+            
+            renderAllPartners(items, append);
+            
+            if(page === 1) window.__lastNearbyItems = items;
+        }catch(e){
+            document.getElementById('all-partners-loading-indicator')?.remove();
+            if(page === 1 && listEl) {
+                listEl.innerHTML = `<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">Gagal memuat partner: ${String(e && e.message ? e.message : e)}</div>`;
+            }
+        }finally{
+            isFetchingAllPartners = false;
+        }
     }
 
     // open modal sync input ke filter map yang aktif
@@ -562,8 +729,7 @@
 
         openAllPartnersModal();
 
-        const items = window.__lastNearbyItems || [];
-        renderAllPartners(items);
+        fetchAllPartners(1, false);
     });
 
     // modal search realtime (gunakan API yang sama)
@@ -571,28 +737,11 @@
     const allTriggerSearch = ()=>{
         if(allDebounceTimer) clearTimeout(allDebounceTimer);
         allDebounceTimer = setTimeout(async ()=>{
+            fetchAllPartners(1, false);
+            // refresh map juga agar marker & preview sesuai modal
             const t = allTypeEl?.value || '';
             const q = allQueryEl?.value || '';
-            const el = document.getElementById('all-partners-list');
-            if(el) el.innerHTML = '<div class="text-sm text-gray-400">Memuat partner...</div>';
-
-            try{
-                const params = new URLSearchParams();
-                if(t) params.set('type', t);
-                if(q) params.set('query', q);
-
-                const res = await fetch(`/map-search?${params.toString()}`, { headers: { 'Accept':'application/json' } });
-                if(!res.ok) throw new Error('HTTP '+res.status);
-                const json = await res.json();
-                const items = json.data || [];
-                window.__lastNearbyItems = items; // biar konsisten dengan map
-                renderAllPartners(items);
-
-                // refresh map juga agar marker & preview sesuai modal
-                loadNearbyPartners({ type: t, query: q });
-            }catch(e){
-                if(el) el.innerHTML = `<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">Gagal memuat partner: ${String(e && e.message ? e.message : e)}</div>`;
-            }
+            loadNearbyPartners({ type: t, query: q });
         }, 250);
     };
 
@@ -743,7 +892,10 @@
 
 
     let autoSubmitInterval = null;
+    let step2Interval = null;
     let isEmergencySubmitting = false;
+    let currentReportId = null;
+    let step2Cd = 60;
 
     function handleCategoryTap(el) {
         document.getElementById('fallback-category').disabled=true;
@@ -755,13 +907,16 @@
         openCatModal();
     }
 
-    function submitEmergencyForm() {
+    async function submitStep1() {
         if (isEmergencySubmitting) return;
         isEmergencySubmitting = true;
+        
+        if (autoSubmitInterval) clearInterval(autoSubmitInterval);
+
         const form = document.getElementById('emergency-form');
-        const submitBtn = document.getElementById('btn-submit-emergency');
+        const submitBtn = document.getElementById('btn-next-step');
         if(submitBtn) {
-            submitBtn.innerHTML = 'MENGIRIM...';
+            submitBtn.innerHTML = 'MEMPROSES...';
             submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
             submitBtn.disabled = true;
         }
@@ -770,37 +925,126 @@
         let checked = false;
         radios.forEach(r => {
             if(r.checked) checked = true;
-            r.required = false; // Remove required to avoid HTML5 validation blocking
+            r.required = false;
         });
         if (!checked) {
-            // Jika user tidak memilih kategori, kirim sebagai Darurat
             document.getElementById('fallback-category').disabled = false;
-            document.getElementById('fallback-category').value = 'Darurat';
+                            document.getElementById('fallback-category').value = 'ambulance';
         }
 
-        HTMLFormElement.prototype.submit.call(form);
+        const formData = new FormData(form);
+        try {
+            const response = await fetch('/emergency', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            const data = await response.json();
+            
+            if (data.ok && data.report_id) {
+                currentReportId = data.report_id;
+                // Move to step 2
+                document.getElementById('step-1').classList.add('hidden');
+                document.getElementById('step-2').classList.remove('hidden');
+                document.getElementById('step-2').classList.add('flex');
+                
+                // Start step 2 countdown
+                startStep2Timer();
+            }
+        } catch (e) {
+            console.error(e);
+            HTMLFormElement.prototype.submit.call(form); // fallback
+        }
+    }
+    
+    function startStep2Timer() {
+        if (step2Interval) clearInterval(step2Interval);
+        step2Cd = 60;
+        document.getElementById('step2-cd').textContent = step2Cd;
+        step2Interval = setInterval(() => {
+            step2Cd--;
+            document.getElementById('step2-cd').textContent = step2Cd;
+            if (step2Cd <= 0) {
+                clearInterval(step2Interval);
+                submitStep2();
+            }
+        }, 1000);
+    }
+    
+    function resetStep2Timer() {
+        if (step2Interval) {
+            step2Cd = 60;
+            document.getElementById('step2-cd').textContent = step2Cd;
+        }
     }
 
-    document.getElementById('emergency-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        if(autoSubmitInterval) clearInterval(autoSubmitInterval);
-        submitEmergencyForm();
-    });
+    async function submitStep2() {
+        if (step2Interval) clearInterval(step2Interval);
+        const submitBtn = document.getElementById('btn-final-submit');
+        submitBtn.innerHTML = 'MENYIMPAN...';
+        submitBtn.disabled = true;
+        
+        const desc = document.getElementById('step2-desc').value;
+        const showEvidence = document.getElementById('step2-show-evidence').checked ? '1' : '0';
+        const fileInput = document.getElementById('step2-evidence');
+        
+        const formData = new FormData();
+        formData.append('_token', '{{ csrf_token() }}');
+        formData.append('description', desc);
+        formData.append('show_evidence', showEvidence);
+        
+        if (fileInput.files.length > 0) {
+            for (let i = 0; i < fileInput.files.length; i++) {
+                formData.append('evidence[]', fileInput.files[i]);
+            }
+        }
+        
+        try {
+            await fetch(`/tracking/${currentReportId}/evidence`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+        } catch (e) {
+            console.error(e);
+        }
+        
+        window.location.href = `/tracking/${currentReportId}`;
+    }
 
     function openCatModal(){
         document.getElementById('cat-modal').classList.remove('hidden');
         document.body.style.overflow='hidden';
 
+        // Reset state
+        isEmergencySubmitting = false;
+        document.getElementById('step-1').classList.remove('hidden');
+        document.getElementById('step-2').classList.add('hidden');
+        document.getElementById('step-2').classList.remove('flex');
+        
+        const submitBtn = document.getElementById('btn-next-step');
+        if(submitBtn) {
+            submitBtn.innerHTML = 'SELANJUTNYA';
+            submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+            submitBtn.disabled = false;
+        }
+
         let cd = 30;
         document.getElementById('auto-submit-info').classList.remove('hidden');
         document.getElementById('auto-submit-cd').textContent = cd;
         if(autoSubmitInterval) clearInterval(autoSubmitInterval);
+        if(step2Interval) clearInterval(step2Interval);
+        
         autoSubmitInterval = setInterval(() => {
             cd--;
             document.getElementById('auto-submit-cd').textContent = cd;
             if (cd <= 0) {
                 clearInterval(autoSubmitInterval);
-                submitEmergencyForm();
+                submitStep1();
             }
         }, 1000);
     }
@@ -808,10 +1052,9 @@
         document.getElementById('cat-modal').classList.add('hidden');
         document.body.style.overflow='';
         if (autoSubmitInterval) clearInterval(autoSubmitInterval);
+        if (step2Interval) clearInterval(step2Interval);
     }
     document.getElementById('cat-modal').addEventListener('click',function(e){if(e.target===this)closeCatModal();});
     </script>
-    
-    @include('partials.emergency-markers-js')
 </body>
 </html>

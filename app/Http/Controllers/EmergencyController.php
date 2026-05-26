@@ -162,6 +162,9 @@ class EmergencyController extends Controller
             return $report;
         });
 
+        // Simpan ke session untuk memastikan guest bisa dikenali sebagai pembuat laporan
+        $request->session()->push('my_reports', $report->id);
+
         $trackingLink = url('/tracking/' . $report->id);
         $mapsLink = $report->latitude
             ? "https://maps.google.com/?q={$report->latitude},{$report->longitude}"
@@ -318,6 +321,9 @@ class EmergencyController extends Controller
                     'distance_km' => $distanceKm,
                 ];
             })
+            ->filter(function ($t) {
+                return $t['distance_km'] <= 15;
+            })
             ->sortBy('distance_km')
             ->take($limit)
             ->values();
@@ -331,9 +337,15 @@ class EmergencyController extends Controller
             // WA
             try {
                 FonnteService::send($user->phone, $message);
-            } catch (\Exception $e) {
-                // skip jika layanan WA tidak tersedia
+            } catch (\Throwable $e) {
+                // jangan silent: minimal log supaya tahu kenapa tidak terkirim
+                \Log::error('notifyNearestUsers Fonnte send failed', [
+                    'target_user_id' => $user->id,
+                    'target_phone' => $user->phone,
+                    'error' => $e->getMessage(),
+                ]);
             }
+
 
             // routing record
             ReportUserRouting::create([

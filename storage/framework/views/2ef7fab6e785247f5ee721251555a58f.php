@@ -10,6 +10,11 @@
     // In many pages, $backUrl is assigned request()->headers->get('referer').
     $resolvedFallbackUrl = (isset($backUrl) && $backUrl) ? $backUrl : $fallbackUrl;
 
+    // Prevent redirecting to the same page if referer was current url
+    if (trim($resolvedFallbackUrl, '/') === trim(url()->current(), '/')) {
+        $resolvedFallbackUrl = $fallbackUrl;
+    }
+
     $resolvedBackLabel = $backLabel ?? 'Kembali';
     $hideBrand = !$isDashboardInitial;
     
@@ -22,7 +27,6 @@
         <div class="flex items-center gap-3">
             <?php if($showBackButton): ?>
                 <a href="<?php echo e($resolvedFallbackUrl); ?>" 
-                   onclick="if(window.history.length > 1 && document.referrer.indexOf(window.location.host) !== -1) { history.back(); return false; }"
                    class="text-gray-400 hover:text-gray-700 text-sm transition flex items-center gap-1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                     <?php echo e($resolvedBackLabel); ?>

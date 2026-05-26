@@ -22,6 +22,7 @@ Route::post('/emergency', [EmergencyController::class, 'store']);
 
 Route::get('/tracking-search', [TrackingController::class, 'search'])->name('tracking.search');
 Route::get('/tracking/{id}/live', [TrackingController::class, 'live'])->name('tracking.live');
+Route::post('/tracking/{id}/location', [TrackingController::class, 'updateLocation'])->name('tracking.location');
 Route::get('/tracking/{id}', [TrackingController::class, 'show'])->name('tracking.show');
 Route::post('/tracking/{reportId}/evidence', [EvidenceController::class, 'store'])->name('evidence.store');
 
@@ -40,9 +41,12 @@ Route::middleware(['auth', 'phone.required'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
-    // Past Report (Laporan Biasa)
+    // Past Report (Laporan Biasa) & Editable Reports
     Route::get('/report/create', [\App\Http\Controllers\PastReportController::class, 'create'])->name('report.create');
     Route::post('/report', [\App\Http\Controllers\PastReportController::class, 'store'])->name('report.store');
+    Route::get('/report/{id}/edit', [\App\Http\Controllers\ReportController::class, 'edit'])->name('report.edit');
+    Route::patch('/report/{id}', [\App\Http\Controllers\ReportController::class, 'update'])->name('report.update');
+    Route::delete('/report/{id}', [\App\Http\Controllers\ReportController::class, 'destroy'])->name('report.destroy');
 
     // Password (dipakai di settings tab keamanan)
     Route::put('/password', [\App\Http\Controllers\Auth\PasswordController::class, 'update'])->name('password.update');

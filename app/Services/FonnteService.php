@@ -36,15 +36,24 @@ class FonnteService
         app()->terminating(function () use ($target, $message) {
             try {
                 $token = env('FONNTE_TOKEN');
-                
-                Http::timeout(10)->withHeaders([
-                    'Authorization' => $token
-                ])->post('https://api.fonnte.com/send', [
+
+                if (empty($token)) {
+                    Log::error('Fonnte API Error: missing FONNTE_TOKEN');
+                    return;
+                }
+
+                Http::timeout(15)
+                    ->withHeaders([
+                        'Authorization' => $token,
+                    ])
+                    ->post('https://api.fonnte.com/send', [
+                        'target' => $target,
+                        'message' => $message,
+                    ]);
+            } catch (\Throwable $e) {
+                Log::error('Fonnte API Error: ' . $e->getMessage(), [
                     'target' => $target,
-                    'message' => $message,
                 ]);
-            } catch (\Exception $e) {
-                Log::error('Fonnte API Error: ' . $e->getMessage());
             }
         });
     }

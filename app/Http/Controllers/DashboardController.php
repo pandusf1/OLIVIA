@@ -31,9 +31,11 @@ class DashboardController extends Controller
             ->orderByDesc('last_message_at')
             ->get();
 
+        $userHasLocation = \App\Models\UserLocation::where('user_id', auth()->id())->exists();
+
         return view('dashboard', compact(
             'reports', 'totalReports', 'activeReports', 'resolvedReports', 'totalEvidences',
-            'chatThreads'
+            'chatThreads', 'userHasLocation'
         ));
     }
 }

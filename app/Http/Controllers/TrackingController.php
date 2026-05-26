@@ -40,6 +40,30 @@ class TrackingController extends Controller
         return response()->json($this->buildLivePayload($report));
     }
 
+    public function updateLocation(Request $request, $id)
+    {
+        $report = Report::findOrFail($id);
+
+        // Allow update if auth user is the creator or session has the report id
+        $isCreator = (auth()->check() && auth()->id() === $report->user_id) 
+            || in_array($report->id, $request->session()->get('my_reports', []));
+
+        if (!$isCreator) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+        ]);
+
+        $report->latitude = $request->input('latitude');
+        $report->longitude = $request->input('longitude');
+        $report->save();
+
+        return response()->json(['ok' => true]);
+    }
+
     public function search(Request $request)
     {
         if ($request->has('id') && $request->id) {

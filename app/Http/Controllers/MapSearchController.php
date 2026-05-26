@@ -78,6 +78,13 @@ class MapSearchController extends Controller
         ->sortBy('distance_km')
         ->values();
 
+        $page = $request->integer('page', 1);
+        $limit = 20;
+        $offset = ($page - 1) * $limit;
+
+        $paginatedPartners = $partnersWithDistance->slice($offset, $limit)->values();
+        $hasMore = ($offset + $limit) < $partnersWithDistance->count();
+
         // Get active emergency reports with locations
         $activeReports = \App\Models\Report::with('user')
             ->where('status', '!=', 'Resolved')
@@ -98,8 +105,9 @@ class MapSearchController extends Controller
             ->values();
 
         return response()->json([
-            'data' => $partnersWithDistance,
+            'data' => $paginatedPartners,
             'emergencies' => $activeReports,
+            'has_more' => $hasMore,
         ]);
     }
 
