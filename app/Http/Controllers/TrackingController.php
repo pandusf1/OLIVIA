@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Report;
 use App\Models\ChatThread;
 use Illuminate\Http\Request;
+use App\Services\FonnteService;
 
 class TrackingController extends Controller
 {
@@ -62,6 +63,44 @@ class TrackingController extends Controller
         $report->save();
 
         return response()->json(['ok' => true]);
+    }
+
+    public function resolve(Request $request, $id)
+    {
+        $report = Report::findOrFail($id);
+
+        // Allow resolve if auth user is the creator or session has the report id
+        $isCreator = (auth()->check() && auth()->id() === $report->user_id) 
+            || in_array($report->id, $request->session()->get('my_reports', []));
+
+        if (!$isCreator) {
+            return redirect()->back()->with('error', 'Anda tidak berhak menyelesaikan laporan ini.');
+        }
+
+        if ($report->status !== 'Resolved') {
+            $report->update(['status' => 'Resolved']);
+            
+            $report->timelineEvents()->create([
+                'event_type' => 'resolved',
+                'event_message' => 'Laporan telah ditandai selesai oleh pelapor.',
+            ]);
+
+            // Notify trusted contacts
+            if ($report->user && $report->user->trustedContacts()->where('is_verified', true)->count() > 0) {
+                foreach ($report->user->trustedContacts()->where('is_verified', true)->get() as $contact) {
+                    $message = "Safora Info:\n\n" .
+                        "Laporan darurat yang dibuat oleh *{$report->user->name}* telah ditandai SELESAI dan pelapor menyatakan bahwa dirinya AMAN.\n\n" .
+                        "Kategori: *{$report->category}*\n" .
+                        "Tracking: " . url('/tracking/' . $report->id);
+                        
+                    FonnteService::send($contact->contact_phone, $message);
+                }
+            }
+            
+            return redirect('/tracking/' . $report->id)->with('success', 'Laporan berhasil diselesaikan dan kontak terpercaya telah dihubungi.');
+        }
+
+        return redirect('/tracking/' . $report->id);
     }
 
     public function search(Request $request)

@@ -22,6 +22,7 @@
         </div>
 
         @if(session('success'))<div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl mb-6 text-sm">✓ {{ session('success') }}</div>@endif
+        @if(session('error'))<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl mb-6 text-sm">✗ {{ session('error') }}</div>@endif
 
 <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
             <h2 class="font-semibold text-gray-900 mb-4">+ Tambah Kontak</h2>
@@ -49,7 +50,14 @@
                 @foreach($contacts as $c)
                 <div class="flex items-center justify-between px-5 py-4">
                     <div>
-                        <p class="font-semibold text-gray-900">{{ $c->contact_name }}</p>
+                        <div class="flex items-center gap-2">
+                            <p class="font-semibold text-gray-900">{{ $c->contact_name }}</p>
+                            @if($c->is_verified)
+                                <span class="px-2 py-0.5 text-[10px] font-bold bg-green-100 text-green-700 rounded-full">Terverifikasi</span>
+                            @else
+                                <span class="px-2 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 rounded-full">Belum Terverifikasi</span>
+                            @endif
+                        </div>
                         <p class="text-gray-400 text-sm">{{ $c->contact_phone }}</p>
                     </div>
                     <div class="flex items-center gap-3">
@@ -73,6 +81,35 @@
             <p class="text-amber-800 text-xs">💡 Tambahkan keluarga, pasangan, atau teman dekat. Mereka akan menerima lokasi GPS, status darurat, dan link tracking otomatis saat kamu panic.</p>
         </div>
     </div>
+
+    @if(session('verify_contact_id'))
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 class="text-lg font-bold text-gray-900 mb-2">Verifikasi WhatsApp</h3>
+            <p class="text-sm text-gray-500 mb-4">Masukkan 5 digit kode yang telah dikirimkan ke nomor <strong>{{ session('verify_contact_phone') }}</strong>.</p>
+            
+            @if(session('error'))
+                <div class="bg-red-50 text-red-800 text-xs px-3 py-2 rounded-lg mb-3">✗ {{ session('error') }}</div>
+            @endif
+
+            <form action="{{ route('trusted-contact.verify') }}" method="POST">
+                @csrf
+                <input type="hidden" name="contact_id" value="{{ session('verify_contact_id') }}">
+                
+                <div class="mb-4">
+                    <input type="text" name="code" maxlength="5" placeholder="_____" class="w-full text-center text-2xl tracking-[0.5em] font-bold border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-3 focus:outline-none transition" required>
+                </div>
+                
+                <button type="submit" class="w-full bg-gray-900 hover:bg-gray-700 text-white py-3 rounded-xl font-semibold text-sm transition">Verifikasi</button>
+            </form>
+            <form action="{{ route('trusted-contact.destroy', session('verify_contact_id')) }}" method="POST" class="mt-3">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="w-full text-gray-500 hover:text-gray-700 py-2 rounded-xl text-sm transition">Batal & Hapus</button>
+            </form>
+        </div>
+    </div>
+    @endif
 </body>
 </html>
 

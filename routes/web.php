@@ -25,6 +25,7 @@ Route::get('/tracking/{id}/live', [TrackingController::class, 'live'])->name('tr
 Route::post('/tracking/{id}/location', [TrackingController::class, 'updateLocation'])->name('tracking.location');
 Route::get('/tracking/{id}', [TrackingController::class, 'show'])->name('tracking.show');
 Route::post('/tracking/{reportId}/evidence', [EvidenceController::class, 'store'])->name('evidence.store');
+Route::post('/tracking/{id}/resolve', [TrackingController::class, 'resolve'])->name('tracking.resolve');
 
 Route::get('/witness', [WitnessController::class, 'index'])->name('witness');
 Route::post('/witness', [WitnessController::class, 'store'])->name('witness.store');
@@ -54,6 +55,7 @@ Route::middleware(['auth', 'phone.required'])->group(function () {
     // Trusted Contacts
     Route::get('/trusted-contacts', [TrustedContactController::class, 'index'])->name('trusted-contact.index');
     Route::post('/trusted-contact', [TrustedContactController::class, 'store'])->name('trusted-contact.store');
+    Route::post('/trusted-contact/verify', [TrustedContactController::class, 'verify'])->name('trusted-contact.verify');
     Route::get('/trusted-contact/{id}/edit', [TrustedContactController::class, 'edit'])->name('trusted-contact.edit');
     Route::patch('/trusted-contact/{id}', [TrustedContactController::class, 'update'])->name('trusted-contact.update');
     Route::delete('/trusted-contact/{id}', [TrustedContactController::class, 'destroy'])->name('trusted-contact.destroy');

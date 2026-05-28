@@ -95,16 +95,31 @@
             <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
                 <div class="px-6 py-4 border-b border-gray-100"><h2 class="font-bold text-gray-900">Preferensi Notifikasi</h2></div>
                 <div class="px-6 py-6 space-y-3">
+                    <form action="{{ route('settings.update') }}" method="POST" id="form-nearby-alerts">
+                        @csrf @method('patch')
+                        <input type="hidden" name="receive_nearby_alerts" value="0">
+                        <div class="flex items-center justify-between border border-gray-100 rounded-xl px-4 py-3">
+                            <div>
+                                <p class="text-sm font-semibold text-gray-900">WhatsApp Alert Korban Terdekat</p>
+                                <p class="text-gray-400 text-xs">Terima alert ketika ada korban di sekitar yang butuh bantuan</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" name="receive_nearby_alerts" value="1" {{ auth()->user()->receive_nearby_alerts ? 'checked' : '' }} class="sr-only peer" onchange="document.getElementById('form-nearby-alerts').submit()">
+                                <div class="w-10 h-6 bg-gray-200 peer-checked:bg-red-700 rounded-full transition-all after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-4"></div>
+                            </label>
+                        </div>
+                    </form>
+
                     @foreach([['WhatsApp Alert Panic','Kirim alert ke trusted contact saat panic',true],['Update Status','Notifikasi saat status laporan berubah',true],['Pengingat Keamanan','Tips keamanan berkala',false]] as [$l,$d,$c])
-                    <div class="flex items-center justify-between border border-gray-100 rounded-xl px-4 py-3">
+                    <div class="flex items-center justify-between border border-gray-100 rounded-xl px-4 py-3 opacity-70">
                         <div><p class="text-sm font-semibold text-gray-900">{{ $l }}</p><p class="text-gray-400 text-xs">{{ $d }}</p></div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" {{ $c?'checked':'' }} class="sr-only peer">
+                        <label class="relative inline-flex items-center cursor-not-allowed">
+                            <input type="checkbox" {{ $c?'checked':'' }} disabled class="sr-only peer">
                             <div class="w-10 h-6 bg-gray-200 peer-checked:bg-red-700 rounded-full transition-all after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-4"></div>
                         </label>
                     </div>
                     @endforeach
-                    <p class="text-gray-400 text-xs pt-2">💡 WhatsApp alert sudah aktif otomatis saat panic.</p>
+                    <p class="text-gray-400 text-xs pt-2">💡 WhatsApp alert kepanikan akan selalu dikirim ke kontak terpercaya tanpa batas jarak.</p>
                 </div>
             </div>
         </div>
@@ -146,6 +161,7 @@
     document.getElementById('new-pass').addEventListener('input',function(){const v=this.value;let s=0;if(v.length>=8)s++;if(v.length>=12)s++;if(/[A-Z]/.test(v))s++;if(/[0-9]/.test(v))s++;if(/[^A-Za-z0-9]/.test(v))s++;const c=['','bg-red-500','bg-orange-500','bg-yellow-500','bg-blue-500','bg-green-500'];const l=['','Sangat lemah','Lemah','Cukup','Kuat','Sangat kuat'];document.getElementById('str-bar').className='h-full rounded-full transition-all duration-300 '+(c[s]||'');document.getElementById('str-bar').style.width=v.length?s*20+'%':'0%';document.getElementById('str-label').textContent=v.length?l[s]:'';});
     @if($errors->updatePassword->any()) switchTab('keamanan'); @endif
     @if($errors->userDeletion->any()) switchTab('akun'); document.getElementById('del-form').classList.remove('hidden'); @endif
+    @if(session('success') == 'Pengaturan notifikasi berhasil diperbarui.') switchTab('notifikasi'); @endif
     </script>
 </body>
 </html>

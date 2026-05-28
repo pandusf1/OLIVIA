@@ -18,6 +18,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name', 'email', 'phone', 'password', 'role', 'partner_id', 'google_id',
+        'receive_nearby_alerts', 'nearby_alert_count', 'next_nearby_alert_threshold',
     ];
 
     protected $hidden = [

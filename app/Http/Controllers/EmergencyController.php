@@ -247,12 +247,12 @@ class EmergencyController extends Controller
 
     private function notifyTrustedContacts(Report $report, string $trackingLink, string $mapsLink): bool
     {
-        $user = auth()->user();
+        $user = $report->user;
         if (!$user) {
             return false;
         }
 
-        $contacts = $user->trustedContacts;
+        $contacts = $user->trustedContacts()->where('is_verified', true)->get();
         if ($contacts->isEmpty()) {
             return false;
         }
@@ -300,7 +300,7 @@ class EmergencyController extends Controller
         // Ambil semua lokasi user dengan role='user'
         $targets = UserLocation::query()
             ->whereHas('user', function ($q) {
-                $q->where('role', 'user');
+                $q->where('role', 'user')->where('receive_nearby_alerts', true);
             })
             ->where('user_id', '!=', $fromUserId)
             ->get();
@@ -337,6 +337,17 @@ class EmergencyController extends Controller
             // WA
             try {
                 FonnteService::send($user->phone, $message);
+                
+                $user->nearby_alert_count += 1;
+                if ($user->nearby_alert_count >= $user->next_nearby_alert_threshold) {
+                    $settingUrl = url('/settings');
+                    $noticeMsg = "ℹ️ *Info Safora*\nAnda telah menerima beberapa alert korban terdekat. Jika Anda merasa terganggu, Anda bisa menonaktifkan fitur ini di pengaturan aplikasi.\n\nAtur di sini: {$settingUrl}";
+                    FonnteService::send($user->phone, $noticeMsg);
+                    
+                    $user->nearby_alert_count = 0;
+                    $user->next_nearby_alert_threshold += 3;
+                }
+                $user->save();
             } catch (\Throwable $e) {
                 // jangan silent: minimal log supaya tahu kenapa tidak terkirim
                 \Log::error('notifyNearestUsers Fonnte send failed', [

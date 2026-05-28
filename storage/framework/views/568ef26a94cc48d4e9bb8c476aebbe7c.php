@@ -178,7 +178,7 @@
                                 <p class="text-gray-400 text-xs mt-0.5"><?php echo e($report->created_at->format('d M Y, H:i')); ?></p>
                             </div>
                             <div class="flex items-center gap-2 ml-3 flex-shrink-0">
-                                <?php if($report->created_at->diffInMinutes(now()) <= 15): ?>
+                                <?php if($report->created_at->diffInMinutes(now()) <= 15 && in_array($report->status, ['Submitted', 'Routed', 'Viewed'])): ?>
                                     <div class="flex items-center gap-1 mr-2" onclick="event.preventDefault(); event.stopPropagation();">
                                         <a href="<?php echo e(route('report.edit', $report->id)); ?>" class="text-xs bg-white hover:bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-200 transition font-medium">Edit</a>
                                         <form action="<?php echo e(route('report.destroy', $report->id)); ?>" method="POST" onsubmit="return confirm('Hapus laporan ini?');" class="inline">

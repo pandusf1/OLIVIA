@@ -31,7 +31,7 @@
         <p class="mt-1 text-sm leading-6" data-field="next_instruction">{{ $livePayload['next_instruction'] }}</p>
         <p class="mt-2 text-xs leading-5" data-field="escalation_message">{{ $livePayload['escalation_message'] }}</p>
             </div>
-            <div class="rounded-lg bg-gray-50 p-4">
+            <div class="rounded-lg p-4">
                 <p class="text-xs font-bold uppercase text-gray-500">Lokasi</p>
                 <a data-field="maps_url" href="{{ $livePayload['report']['location']['maps_url'] ?? '#' }}" target="_blank" class="mt-1 inline-block font-black text-red-700 underline mb-2">
                     {{ $livePayload['report']['location']['verified'] ? 'GPS diterima' : 'GPS belum tersedia' }}
@@ -50,6 +50,16 @@
                 <p class="mt-1 font-black" data-field="eta">{{ $livePayload['eta'] }}</p>
             </div>
         </div>
+        @if((auth()->check() && auth()->id() === $report->user_id) || in_array($report->id, session('my_reports', [])))
+            @if(in_array($report->status, ['In Progress', 'Assigned']))
+                <div class="mt-4">
+                    <form action="/tracking/{{ $report->id }}/resolve" method="POST" onsubmit="return confirm('Apakah Anda yakin laporan ini telah tertangani dan Anda sudah aman?');">
+                        @csrf
+                        <button type="submit" class="w-full rounded-lg bg-green-600 px-4 py-3 text-sm font-black text-white hover:bg-green-700 transition">Tandai Laporan Selesai & Beritahu Kontak</button>
+                    </form>
+                </div>
+            @endif
+        @endif
     </section>
 
             <section class="mt-4 rounded-lg border border-gray-200 bg-white p-5">

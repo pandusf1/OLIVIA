@@ -14,8 +14,8 @@ class ReportController extends Controller
     {
         $report = Report::where('user_id', auth()->id())->findOrFail($id);
 
-        if ($report->created_at->diffInMinutes(now()) > 15) {
-            return redirect()->route('dashboard')->with('error', 'Laporan tidak bisa diedit karena sudah lewat 15 menit.');
+        if ($report->created_at->diffInMinutes(now()) > 15 || in_array($report->status, ['Assigned', 'In Progress', 'Resolved'])) {
+            return redirect()->route('dashboard')->with('error', 'Laporan tidak bisa diedit karena sudah lewat 15 menit atau sudah diproses oleh partner.');
         }
 
         return view('pages.report.edit', compact('report'));
@@ -25,8 +25,8 @@ class ReportController extends Controller
     {
         $report = Report::where('user_id', auth()->id())->findOrFail($id);
 
-        if ($report->created_at->diffInMinutes(now()) > 15) {
-            return redirect()->route('dashboard')->with('error', 'Laporan tidak bisa diedit karena sudah lewat 15 menit.');
+        if ($report->created_at->diffInMinutes(now()) > 15 || in_array($report->status, ['Assigned', 'In Progress', 'Resolved'])) {
+            return redirect()->route('dashboard')->with('error', 'Laporan tidak bisa diedit karena sudah lewat 15 menit atau sudah diproses oleh partner.');
         }
 
         $request->validate([
@@ -100,8 +100,8 @@ class ReportController extends Controller
     {
         $report = Report::where('user_id', auth()->id())->findOrFail($id);
 
-        if ($report->created_at->diffInMinutes(now()) > 15) {
-            return redirect()->route('dashboard')->with('error', 'Laporan tidak bisa dihapus karena sudah lewat 15 menit.');
+        if ($report->created_at->diffInMinutes(now()) > 15 || in_array($report->status, ['Assigned', 'In Progress', 'Resolved'])) {
+            return redirect()->route('dashboard')->with('error', 'Laporan tidak bisa dihapus karena sudah lewat 15 menit atau sudah diproses oleh partner.');
         }
 
         $report->delete();

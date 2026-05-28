@@ -1,1 +1,0 @@
-<?php /**PATH D:\CODING\olivia_final\resources\views\pages\home.blade.php ENDPATH**/ ?>

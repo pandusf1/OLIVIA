@@ -32,29 +32,26 @@ class FonnteService
         // Format nomor target
         $target = self::formatPhoneNumber($target);
 
-        // Jalankan request HTTP setelah response dikirim ke user (background)
-        app()->terminating(function () use ($target, $message) {
-            try {
-                $token = env('FONNTE_TOKEN');
+        try {
+            $token = config('services.fonnte.token');
 
-                if (empty($token)) {
-                    Log::error('Fonnte API Error: missing FONNTE_TOKEN');
-                    return;
-                }
-
-                Http::timeout(15)
-                    ->withHeaders([
-                        'Authorization' => $token,
-                    ])
-                    ->post('https://api.fonnte.com/send', [
-                        'target' => $target,
-                        'message' => $message,
-                    ]);
-            } catch (\Throwable $e) {
-                Log::error('Fonnte API Error: ' . $e->getMessage(), [
-                    'target' => $target,
-                ]);
+            if (empty($token)) {
+                Log::error('Fonnte API Error: missing FONNTE_TOKEN');
+                return;
             }
-        });
+
+            Http::timeout(15)
+                ->withHeaders([
+                    'Authorization' => $token,
+                ])
+                ->post('https://api.fonnte.com/send', [
+                    'target' => $target,
+                    'message' => $message,
+                ])->throw();
+        } catch (\Throwable $e) {
+            Log::error('Fonnte API Error: ' . $e->getMessage(), [
+                'target' => $target,
+            ]);
+        }
     }
 }

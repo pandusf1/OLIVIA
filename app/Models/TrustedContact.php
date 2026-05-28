@@ -15,6 +15,8 @@ class TrustedContact extends Model
         'user_id',
         'contact_name',
         'contact_phone',
+        'is_verified',
+        'verification_code',
         'created_at'
     ];
 
