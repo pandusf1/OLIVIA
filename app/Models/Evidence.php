@@ -17,7 +17,9 @@ class Evidence extends Model
         'file_type',
         'file_hash',
         'uploaded_by',
-        'uploaded_at'
+        'uploaded_at',
+        'uploaded_ip',
+        'device_info'
     ];
 
     public $incrementing = false;

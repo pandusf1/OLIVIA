@@ -63,7 +63,7 @@ class PastReportController extends Controller
             'incident_date' => 'required|date',
             'anonymous' => 'nullable|boolean',
             'evidences' => 'nullable|array',
-            'evidences.*' => 'file|max:51200', // max 50MB
+            'evidences.*' => 'file|max:102400', // max 100MB
         ]);
 
         $report = Report::create([

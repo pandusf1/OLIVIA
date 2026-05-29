@@ -29,6 +29,7 @@
                     <div class="flex items-center gap-3 mt-1 text-sm text-gray-400 flex-wrap">
                         @if($report->anonymous)<span class="bg-purple-50 text-purple-700 text-xs px-2 py-0.5 rounded-full font-semibold">Anonim</span>@endif
                         <span>{{ $report->created_at->format('d M Y, H:i') }}</span>
+                        @if($report->incident_date)<span class="bg-gray-150 text-gray-700 text-xs px-2 py-0.5 rounded-full font-semibold">🗓️ Kejadian: {{ \Carbon\Carbon::parse($report->incident_date)->format('d M Y') }}</span>@endif
                         @if($report->latitude)<a href="https://maps.google.com/?q={{ $report->latitude }},{{ $report->longitude }}" target="_blank" class="text-red-700 hover:text-red-800 text-xs underline">📍 Lihat Peta</a>@endif
                     </div>
                     @if($canViewSensitive && $report->user && $report->user->phone)

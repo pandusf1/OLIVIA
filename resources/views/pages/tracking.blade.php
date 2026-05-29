@@ -40,10 +40,14 @@
             </div>
         </div>
 
-        <div class="mt-5 grid gap-3 sm:grid-cols-2">
+        <div class="mt-5 grid gap-3 sm:grid-cols-3">
             <div class="rounded-lg bg-gray-50 p-4">
                 <p class="text-xs font-bold uppercase text-gray-500">Kategori</p>
                 <p class="mt-1 font-black" data-field="category">{{ $livePayload['report']['category'] }}</p>
+            </div>
+            <div class="rounded-lg bg-gray-50 p-4" id="incident-date-container">
+                <p class="text-xs font-bold uppercase text-gray-500">Tanggal Kejadian</p>
+                <p class="mt-1 font-black" data-field="incident_date">{{ $livePayload['report']['incident_date'] ?? '-' }}</p>
             </div>
             <div class="rounded-lg bg-gray-50 p-4">
                 <p class="text-xs font-bold uppercase text-gray-500">Estimasi Respons</p>
@@ -214,6 +218,13 @@
         setText('[data-field="escalation_message"]', payload.escalation_message);
         setText('[data-field="urgency"]', payload.report.urgency_level);
         setText('[data-field="category"]', payload.report.category);
+        
+        if (payload.report.incident_date) {
+            document.getElementById('incident-date-container').classList.remove('hidden');
+            setText('[data-field="incident_date"]', payload.report.incident_date);
+        } else {
+            document.getElementById('incident-date-container').classList.add('hidden');
+        }
 
         const maps = document.querySelector('[data-field="maps_url"]');
         if (maps && payload.report.location.maps_url) {

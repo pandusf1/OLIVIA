@@ -154,6 +154,7 @@ class TrackingController extends Controller
                 'status' => $report->status,
                 'urgency_level' => $report->urgency_level ?? 'high',
                 'created_at' => optional($report->created_at)->format('d M Y, H:i'),
+                'incident_date' => $report->incident_date ? \Carbon\Carbon::parse($report->incident_date)->format('d M Y') : null,
                 'anonymous' => (bool) $report->anonymous,
                 'location' => [
                     'latitude' => $report->latitude,

@@ -80,25 +80,25 @@
             @endforeach
         </div>
 
-        <div class="grid lg:grid-cols-2 gap-6 fade-in">
+        <div class="grid lg:grid-cols-2 gap-4 sm:gap-6 fade-in">
 
             {{-- ===== LEFT COLUMN ===== --}}
             <div class="space-y-6">
 
                 {{-- Map Partner (Style Card berurut jarak) --}}
-                <div class="bg-white border border-gray-200 rounded-2xl p-6">
-                        <div class="flex items-center justify-between mb-4">
+                <div class="bg-white border border-gray-100 rounded-2xl p-4 sm:p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
                         <div>
-<h2 class="font-semibold text-gray-900">Partner Terdekat</h2>
+                            <h2 class="font-semibold text-gray-900">Partner Terdekat</h2>
                             <p class="text-gray-400 text-xs mt-0.5">Urut berdasarkan jarak dari lokasi kamu.</p>
                         </div>
                         <div class="flex items-center gap-2">
                             <button type="button" id="btn-view-all-partners" aria-label="Lihat semua partner" title="Lihat semua partner"
-                                class="hidden sm:inline-flex text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full transition">
+                                class="hidden sm:inline-flex text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full transition border border-gray-150">
                                 Lihat Semua
                             </button>
                             <button type="button" id="btn-reload-location" aria-label="Reload lokasi" title="Reload lokasi"
-                                class="text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full transition">
+                                class="text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full transition border border-gray-150">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
                                   <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
                                 </svg>
@@ -106,11 +106,10 @@
                         </div>
                     </div>
 
-
                     <div id="nearby-map" class="relative overflow-hidden rounded-xl bg-[#faf9f7] border border-gray-100">
-                        <div class="p-4 relative">
+                        <div class="p-3 sm:p-4 relative">
                             {{-- Map canvas --}}
-                            <div id="leaflet-map" class="relative w-full h-56 sm:h-64 rounded-xl border border-gray-100 bg-gray-100 overflow-hidden" style="z-index: 1;" aria-label="Peta partner terdekat">
+                            <div id="leaflet-map" class="relative w-full h-48 sm:h-64 rounded-xl border border-gray-100 bg-gray-100 overflow-hidden" style="z-index: 1;" aria-label="Peta partner terdekat">
                             </div>
 
                             <div class="flex items-center gap-2 mb-3 mt-3">
@@ -127,7 +126,7 @@
                                 <div class="text-sm text-gray-400">Memuat partner terdekat...</div>
                             </div>
 
-                            <button type="button" onclick="openAllPartnersModal()" class="w-full mt-3 sm:hidden text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 py-2.5 rounded-xl transition border border-gray-100 text-center block">
+                            <button type="button" onclick="openAllPartnersModal()" class="w-full mt-3 sm:hidden text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 py-2.5 rounded-xl transition border border-gray-150 text-center block">
                                 Lihat Semua Partner
                             </button>
 
@@ -140,17 +139,17 @@
             {{-- ===== RIGHT COLUMN ===== --}}
             <div class="space-y-6">
                 {{-- Laporan Saya --}}
-                <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                <div class="bg-white border border-gray-100 rounded-2xl p-4 sm:p-6 shadow-sm">
                     <div class="flex items-center justify-between mb-5">
                         <div>
-<h2 class="font-semibold text-gray-900">Riwayat Laporan</h2>
+                            <h2 class="font-semibold text-gray-900">Riwayat Laporan</h2>
                             <p class="text-gray-400 text-xs mt-0.5">{{ $totalReports }} laporan tercatat</p>
                         </div>
-                        <a href="{{ route('report.create') }}" class="text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition">+ Buat Laporan</a>
+                        <a href="{{ route('report.create') }}" class="text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition border border-red-100">+ Laporan Baru</a>
                     </div>
 
                     @if($reports->count() > 0)
-                    <div class="space-y-2">
+                    <div class="space-y-3">
                         @foreach($reports->take(5) as $report)
                         @php
                         $sc = [
@@ -162,22 +161,25 @@
                         ];
                         $s = $sc[$report->status] ?? $sc['Submitted'];
                         @endphp
-                        <a href="/tracking/{{ $report->id }}" class="flex items-center justify-between p-4 bg-[#faf9f7] hover:bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition group">
+                        <a href="/tracking/{{ $report->id }}" class="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-[#faf9f7] hover:bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition group gap-3">
                             <div class="min-w-0 flex-1">
                                 <div class="flex items-center gap-2 flex-wrap">
                                     <p class="font-semibold text-gray-900 text-sm">{{ $report->category }}</p>
                                     @if($report->anonymous)
-                                    <span class="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">Anonim</span>
+                                    <span class="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-semibold">Anonim</span>
                                     @endif
                                     @if($report->evidences_count > 0)
-                                    <span class="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">{{ $report->evidences_count }} bukti</span>
+                                    <span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-semibold">{{ $report->evidences_count }} bukti</span>
+                                    @endif
+                                    @if($report->incident_date)
+                                    <span class="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-semibold">🗓️ {{ \Carbon\Carbon::parse($report->incident_date)->format('d M Y') }}</span>
                                     @endif
                                 </div>
-                                <p class="text-gray-400 text-xs mt-0.5">{{ $report->created_at->format('d M Y, H:i') }}</p>
+                                <p class="text-gray-400 text-xs mt-1">Dibuat: {{ $report->created_at->format('d M Y, H:i') }}</p>
                             </div>
-                            <div class="flex items-center gap-2 ml-3 flex-shrink-0">
+                            <div class="flex items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto flex-shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-gray-100">
                                 @if(in_array($report->status, ['Submitted', 'Routed', 'Viewed']))
-                                    <div class="flex items-center gap-1 mr-2 report-action-buttons" data-time="{{ $report->created_at->timestamp }}">
+                                    <div class="flex items-center gap-1.5 report-action-buttons" data-time="{{ $report->created_at->timestamp }}">
                                         <button type="button" data-id="{{ $report->id }}" data-category="{{ $report->category }}" data-desc="{{ $report->description }}" onclick="event.preventDefault(); event.stopPropagation(); openEditReportModal(this)" class="text-xs bg-white hover:bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-200 transition font-medium">Edit</button>
                                         <form action="{{ route('report.destroy', $report->id) }}" method="POST" onsubmit="return confirm('Hapus laporan ini?');" onclick="event.stopPropagation();" class="inline">
                                             @csrf
@@ -186,11 +188,13 @@
                                         </form>
                                     </div>
                                 @endif
-                                <span class="text-xs font-semibold px-2.5 py-1 rounded-full {{ $s['bg'] }} {{ $s['text'] }} flex items-center gap-1.5 whitespace-nowrap">
-                                    <span class="w-1.5 h-1.5 rounded-full {{ $s['dot'] }}"></span>
-                                    {{ $report->status }}
-                                </span>
-                                <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                <div class="flex items-center gap-2 ml-auto sm:ml-0">
+                                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full {{ $s['bg'] }} {{ $s['text'] }} flex items-center gap-1.5 whitespace-nowrap">
+                                        <span class="w-1.5 h-1.5 rounded-full {{ $s['dot'] }}"></span>
+                                        {{ $report->status }}
+                                    </span>
+                                    <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                </div>
                             </div>
                         </a>
                         @endforeach
