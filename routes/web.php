@@ -41,6 +41,7 @@ Route::middleware(['auth', 'phone.required'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::post('/profile/phone/verify', [ProfileController::class, 'verifyPhone'])->name('profile.phone.verify');
+    Route::post('/profile/phone/resend', [ProfileController::class, 'resendPhoneVerification'])->name('profile.phone.resend');
     Route::delete('/profile/phone', [ProfileController::class, 'removePhone'])->name('profile.phone.remove');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
@@ -58,6 +59,7 @@ Route::middleware(['auth', 'phone.required'])->group(function () {
     Route::get('/trusted-contacts', [TrustedContactController::class, 'index'])->name('trusted-contact.index');
     Route::post('/trusted-contact', [TrustedContactController::class, 'store'])->name('trusted-contact.store');
     Route::post('/trusted-contact/verify', [TrustedContactController::class, 'verify'])->name('trusted-contact.verify');
+    Route::post('/trusted-contact/resend', [TrustedContactController::class, 'resend'])->name('trusted-contact.resend');
     Route::get('/trusted-contact/{id}/edit', [TrustedContactController::class, 'edit'])->name('trusted-contact.edit');
     Route::patch('/trusted-contact/{id}', [TrustedContactController::class, 'update'])->name('trusted-contact.update');
     Route::delete('/trusted-contact/{id}', [TrustedContactController::class, 'destroy'])->name('trusted-contact.destroy');

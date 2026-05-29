@@ -22,5 +22,23 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*'); 
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
+            if ($request->expectsJson()
+                || $e instanceof \Illuminate\Validation\ValidationException
+                || $e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface
+            ) {
+                return null;
+            }
+
+            \Illuminate\Support\Facades\Log::error('System error shown to user', [
+                'message' => $e->getMessage(),
+                'url' => $request->fullUrl(),
+                'user_id' => optional($request->user())->id,
+            ]);
+
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Maaf, ada masalah di sistem. Silakan coba lagi dari halaman ini atau kembali ke halaman sebelumnya.')
+                ->with('system_error', 'Maaf, ada masalah di sistem. Silakan coba lagi dari halaman ini atau kembali ke halaman sebelumnya.');
+        });
     })->create();

@@ -24,6 +24,7 @@ class EnsurePhoneIsFilled
                 'profile.update',
                 'profile.edit',
                 'profile.phone.verify',
+                'profile.phone.resend',
                 'profile.phone.remove',
                 'logout',
             ];

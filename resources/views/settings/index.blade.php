@@ -189,6 +189,10 @@
 
                 <button type="submit" class="w-full bg-gray-900 hover:bg-gray-700 text-white py-3 rounded-xl font-semibold text-sm transition">Verifikasi</button>
             </form>
+            <form action="{{ route('profile.phone.resend') }}" method="POST" class="mt-3">
+                @csrf
+                <button type="submit" class="w-full border border-gray-200 hover:bg-gray-50 text-gray-700 py-3 rounded-xl font-semibold text-sm transition">Kirim Ulang Kode</button>
+            </form>
             <form action="{{ route('profile.phone.remove') }}" method="POST" class="mt-3">
                 @csrf
                 @method('DELETE')

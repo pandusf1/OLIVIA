@@ -84,6 +84,31 @@ class ProfileController extends Controller
             ->with('error', 'Kode verifikasi salah.');
     }
 
+    public function resendPhoneVerification(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        if (!$user->phone) {
+            return Redirect::route('settings')->with('error', 'Nomor WhatsApp belum diisi.');
+        }
+
+        if ($user->phone_is_verified) {
+            return Redirect::route('settings')->with('success', 'Nomor WhatsApp sudah terverifikasi.');
+        }
+
+        $code = str_pad((string) rand(0, 99999), 5, '0', STR_PAD_LEFT);
+        $user->update([
+            'phone_verification_code' => $code,
+        ]);
+
+        $message = "Halo {$user->name},\n\nKode verifikasi WhatsApp Safora Anda adalah: *{$code}*\n\nJika Anda tidak meminta kode ini, abaikan pesan ini.";
+        FonnteService::send($user->phone, $message);
+
+        return Redirect::route('settings')
+            ->with('verify_user_phone', $user->phone)
+            ->with('success', 'Kode verifikasi baru sudah dikirim ke WhatsApp.');
+    }
+
     public function removePhone(Request $request): RedirectResponse
     {
         $request->user()->update([

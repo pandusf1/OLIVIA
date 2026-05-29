@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\FonnteService;
+use App\Services\PhoneNumberService;
 use Illuminate\Http\Request;
 use App\Models\TrustedContact;
 
@@ -15,9 +17,15 @@ class TrustedContactController extends Controller
 
     public function store(Request $request)
     {
+        $request->merge([
+            'contact_phone' => PhoneNumberService::normalize($request->input('contact_phone')),
+        ]);
+
         $request->validate([
             'contact_name'  => 'required|string|max:100',
-            'contact_phone' => 'required|string|max:20',
+            'contact_phone' => 'required|string|max:20|regex:/^62[0-9]{8,18}$/',
+        ], [
+            'contact_phone.regex' => 'Nomor WhatsApp harus berupa nomor Indonesia dengan format 62...',
         ]);
 
         $existing = TrustedContact::where('user_id', auth()->id())
@@ -40,7 +48,7 @@ class TrustedContactController extends Controller
         ]);
 
         $message = "Halo {$contact->contact_name},\n\nAnda didaftarkan sebagai kontak terpercaya oleh " . auth()->user()->name . " di aplikasi Safora.\nKode verifikasi Anda adalah: *{$code}*\n\nJika Anda tidak mengenali permintaan ini, abaikan pesan ini.";
-        \App\Services\FonnteService::send($contact->contact_phone, $message);
+        FonnteService::send($contact->contact_phone, $message);
 
         return back()->with('verify_contact_id', $contact->id)
                      ->with('verify_contact_phone', $contact->contact_phone)
@@ -71,6 +79,34 @@ class TrustedContactController extends Controller
                      ->with('error', 'Kode verifikasi salah.');
     }
 
+    public function resend(Request $request)
+    {
+        $request->validate([
+            'contact_id' => 'required',
+        ]);
+
+        $contact = TrustedContact::where('id', $request->contact_id)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        if ($contact->is_verified) {
+            return redirect()->route('trusted-contact.index')->with('success', 'Kontak terpercaya sudah terverifikasi.');
+        }
+
+        $code = str_pad((string) rand(0, 99999), 5, '0', STR_PAD_LEFT);
+        $contact->update([
+            'verification_code' => $code,
+        ]);
+
+        $message = "Halo {$contact->contact_name},\n\nKode verifikasi kontak terpercaya Safora Anda adalah: *{$code}*\n\nJika Anda tidak mengenali permintaan ini, abaikan pesan ini.";
+        FonnteService::send($contact->contact_phone, $message);
+
+        return redirect()->route('trusted-contact.index')
+            ->with('verify_contact_id', $contact->id)
+            ->with('verify_contact_phone', $contact->contact_phone)
+            ->with('success', 'Kode verifikasi baru sudah dikirim ke WhatsApp.');
+    }
+
     public function edit($id)
     {
         $contact = TrustedContact::where('id', $id)
@@ -82,9 +118,15 @@ class TrustedContactController extends Controller
 
     public function update(Request $request, $id)
     {
+        $request->merge([
+            'contact_phone' => PhoneNumberService::normalize($request->input('contact_phone')),
+        ]);
+
         $request->validate([
             'contact_name'  => 'required|string|max:100',
-            'contact_phone' => 'required|string|max:20',
+            'contact_phone' => 'required|string|max:20|regex:/^62[0-9]{8,18}$/',
+        ], [
+            'contact_phone.regex' => 'Nomor WhatsApp harus berupa nomor Indonesia dengan format 62...',
         ]);
 
         $contact = TrustedContact::where('id', $id)
@@ -119,7 +161,7 @@ class TrustedContactController extends Controller
 
         if ($needsVerification) {
             $message = "Halo {$contact->contact_name},\n\nNomor Anda telah diperbarui sebagai kontak terpercaya oleh " . auth()->user()->name . " di aplikasi Safora.\nKode verifikasi Anda adalah: *{$code}*\n\nJika Anda tidak mengenali permintaan ini, abaikan pesan ini.";
-            \App\Services\FonnteService::send($contact->contact_phone, $message);
+            FonnteService::send($contact->contact_phone, $message);
 
             return redirect()->route('trusted-contact.index')
                          ->with('verify_contact_id', $contact->id)

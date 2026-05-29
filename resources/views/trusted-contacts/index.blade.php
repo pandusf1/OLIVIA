@@ -102,6 +102,11 @@
                 
                 <button type="submit" class="w-full bg-gray-900 hover:bg-gray-700 text-white py-3 rounded-xl font-semibold text-sm transition">Verifikasi</button>
             </form>
+            <form action="{{ route('trusted-contact.resend') }}" method="POST" class="mt-3">
+                @csrf
+                <input type="hidden" name="contact_id" value="{{ session('verify_contact_id') }}">
+                <button type="submit" class="w-full border border-gray-200 hover:bg-gray-50 text-gray-700 py-3 rounded-xl font-semibold text-sm transition">Kirim Ulang Kode</button>
+            </form>
             <form action="{{ route('trusted-contact.destroy', session('verify_contact_id')) }}" method="POST" class="mt-3">
                 @csrf
                 @method('DELETE')
