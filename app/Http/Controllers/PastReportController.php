@@ -60,9 +60,10 @@ class PastReportController extends Controller
             'category' => 'required|string|max:255',
             'description' => 'required|string',
             'location_text' => 'required|string|max:255',
+            'incident_date' => 'required|date',
             'anonymous' => 'nullable|boolean',
-            'temp_evidences' => 'nullable|array',
-            'temp_evidences.*' => 'string',
+            'evidences' => 'nullable|array',
+            'evidences.*' => 'file|max:51200', // max 50MB
         ]);
 
         $report = Report::create([
@@ -71,23 +72,21 @@ class PastReportController extends Controller
             'category' => $request->category,
             'description' => $request->description,
             'location_text' => $request->location_text,
+            'incident_date' => $request->incident_date,
             'anonymous' => $request->has('anonymous') ? 1 : 0,
             'status' => 'Submitted',
         ]);
 
-        // Process temp uploaded files
-        if ($request->has('temp_evidences')) {
-            foreach ($request->temp_evidences as $tempPath) {
-                if (Storage::disk('public')->exists($tempPath)) {
-                    // Move file from temp to final
-                    $newPath = str_replace('temp_evidences/', 'evidences/', $tempPath);
-                    Storage::disk('public')->move($tempPath, $newPath);
+        // Process directly uploaded files
+        if ($request->hasFile('evidences')) {
+            foreach ($request->file('evidences') as $file) {
+                if ($file->isValid()) {
+                    $newPath = $file->store('evidences', 'public');
                     
                     $fullPath = storage_path('app/public/' . $newPath);
                     $hash = file_exists($fullPath) ? hash_file('sha256', $fullPath) : null;
                     
-                    // We need original mime type, but since it's already moved, we can guess it or use default
-                    $mimeType = mime_content_type($fullPath) ?: 'application/octet-stream';
+                    $mimeType = $file->getClientMimeType() ?: 'application/octet-stream';
 
                     Evidence::create([
                         'report_id'   => $report->id,

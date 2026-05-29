@@ -22,6 +22,7 @@ class Report extends Model
         'latitude',
         'longitude',
         'location_text',
+        'incident_date',
         'anonymous',
         'status',
         'urgency_level',
