@@ -18,17 +18,19 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name', 'email', 'phone', 'password', 'role', 'partner_id', 'google_id',
+        'phone_is_verified', 'phone_verification_code',
         'receive_nearby_alerts', 'nearby_alert_count', 'next_nearby_alert_threshold',
     ];
 
     protected $hidden = [
-        'password', 'remember_token',
+        'password', 'remember_token', 'phone_verification_code',
     ];
 
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
+            'phone_is_verified' => 'boolean',
             'password' => 'hashed',
         ];
     }

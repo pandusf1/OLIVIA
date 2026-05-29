@@ -7,7 +7,11 @@
     <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');*{font-family:'Inter',sans-serif;}</style>
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
-    @php $backUrl = route('dashboard'); $backLabel = 'Dashboard'; @endphp
+    @php
+        $backUrl = route('dashboard');
+        $backLabel = 'Dashboard';
+        $pendingPhoneVerification = session('verify_user_phone') ?: (auth()->user()->phone && !auth()->user()->phone_is_verified ? auth()->user()->phone : null);
+    @endphp
     @include('partials.nav-auth')
     <div class="max-w-3xl mx-auto px-6 py-10">
         <div class="mb-8">
@@ -17,6 +21,7 @@
 
         @if(session('success'))<div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl mb-6 text-sm">✓ {{ session('success') }}</div>@endif
         @if(session('warning'))<div class="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-xl mb-6 text-sm">⚠️ {{ session('warning') }}</div>@endif
+        @if(session('error'))<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl mb-6 text-sm">✗ {{ session('error') }}</div>@endif
 
         {{-- Tab nav --}}
         <div class="flex gap-1 border-b border-gray-200 mb-8">
@@ -57,6 +62,17 @@
                     <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">No. HP</label>
                         <input type="tel" name="phone" value="{{ old('phone', auth()->user()->phone) }}" placeholder="628xxxxxxxxx" class="w-full border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-3 text-sm focus:outline-none transition">
+                        <div class="flex items-center justify-between gap-3 mt-1">
+                            <p class="text-gray-400 text-xs">Format internasional tanpa + (contoh: 6281234567890)</p>
+                            @if(auth()->user()->phone)
+                                @if(auth()->user()->phone_is_verified)
+                                    <span class="shrink-0 px-2 py-0.5 text-[10px] font-bold bg-green-100 text-green-700 rounded-full">Terverifikasi</span>
+                                @else
+                                    <span class="shrink-0 px-2 py-0.5 text-[10px] font-bold bg-red-100 text-red-700 rounded-full">Belum Terverifikasi</span>
+                                @endif
+                            @endif
+                        </div>
+                        @error('phone')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                     </div>
                     <div class="flex justify-end"><button type="submit" class="bg-gray-900 hover:bg-gray-700 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition">Simpan</button></div>
                 </form>
@@ -155,6 +171,33 @@
         </div>
     </div>
 
+    @if($pendingPhoneVerification)
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 class="text-lg font-bold text-gray-900 mb-2">Verifikasi WhatsApp</h3>
+            <p class="text-sm text-gray-500 mb-4">Masukkan 5 digit kode yang telah dikirimkan ke nomor <strong>{{ $pendingPhoneVerification }}</strong>.</p>
+
+            @if(session('error'))
+                <div class="bg-red-50 text-red-800 text-xs px-3 py-2 rounded-lg mb-3">✗ {{ session('error') }}</div>
+            @endif
+
+            <form action="{{ route('profile.phone.verify') }}" method="POST">
+                @csrf
+                <div class="mb-4">
+                    <input type="text" name="code" maxlength="5" placeholder="_____" class="w-full text-center text-2xl tracking-[0.5em] font-bold border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-3 focus:outline-none transition" required>
+                </div>
+
+                <button type="submit" class="w-full bg-gray-900 hover:bg-gray-700 text-white py-3 rounded-xl font-semibold text-sm transition">Verifikasi</button>
+            </form>
+            <form action="{{ route('profile.phone.remove') }}" method="POST" class="mt-3">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="w-full text-gray-500 hover:text-gray-700 py-2 rounded-xl text-sm transition">Batal & Hapus</button>
+            </form>
+        </div>
+    </div>
+    @endif
+
     <script>
     const tabs=['profil','keamanan','notifikasi','akun'];
     function switchTab(n){tabs.forEach(t=>{document.getElementById('panel-'+t).classList.add('hidden');const b=document.getElementById('tab-'+t);b.classList.remove('border-gray-900','text-gray-900');b.classList.add('border-transparent','text-gray-400');});document.getElementById('panel-'+n).classList.remove('hidden');const ab=document.getElementById('tab-'+n);ab.classList.add('border-gray-900','text-gray-900');ab.classList.remove('border-transparent','text-gray-400');}
@@ -162,6 +205,7 @@
     @if($errors->updatePassword->any()) switchTab('keamanan'); @endif
     @if($errors->userDeletion->any()) switchTab('akun'); document.getElementById('del-form').classList.remove('hidden'); @endif
     @if(session('success') == 'Pengaturan notifikasi berhasil diperbarui.') switchTab('notifikasi'); @endif
+    @if($pendingPhoneVerification || $errors->has('phone') || $errors->has('name') || $errors->has('email')) switchTab('profil'); @endif
     </script>
 </body>
 </html>

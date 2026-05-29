@@ -40,6 +40,8 @@ Route::middleware(['auth', 'phone.required'])->group(function () {
     // Profile (update & delete tetap via profile route)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/phone/verify', [ProfileController::class, 'verifyPhone'])->name('profile.phone.verify');
+    Route::delete('/profile/phone', [ProfileController::class, 'removePhone'])->name('profile.phone.remove');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     
     // Past Report (Laporan Biasa) & Editable Reports

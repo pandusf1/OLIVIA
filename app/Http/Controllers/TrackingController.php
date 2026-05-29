@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Report;
 use App\Models\ChatThread;
+use App\Models\Partner;
 use Illuminate\Http\Request;
 use App\Services\FonnteService;
 
@@ -118,9 +119,10 @@ class TrackingController extends Controller
     private function buildLivePayload(Report $report): array
     {
         $assignedPartner = $report->assignedPartner;
-        $acceptedRouting = $report->partnerRoutings->firstWhere('status', 'accepted');
-        $pendingCount = $report->partnerRoutings->where('status', 'pending')->count();
-        $reviewingCount = $report->partnerRoutings
+        $relevantRoutings = $this->relevantPartnerRoutings($report);
+        $pendingRoutings = $relevantRoutings->where('status', 'pending');
+        $pendingCount = $pendingRoutings->count();
+        $reviewingCount = $pendingRoutings
             ->where('status', 'pending')
             ->filter(fn ($routing) => filled($routing->reviewed_at))
             ->count();
@@ -128,8 +130,8 @@ class TrackingController extends Controller
         $humanMessage = $this->humanStatusMessage($report, $pendingCount, $reviewingCount);
         $eta = $assignedPartner
             ? 'Partner sudah terhubung'
-            : ($report->partnerRoutings->where('status', 'pending')->min('estimated_response_minutes')
-                ? $report->partnerRoutings->where('status', 'pending')->min('estimated_response_minutes') . '-' . ($report->partnerRoutings->where('status', 'pending')->min('estimated_response_minutes') + 3) . ' menit'
+            : ($pendingRoutings->min('estimated_response_minutes')
+                ? $pendingRoutings->min('estimated_response_minutes') . '-' . ($pendingRoutings->min('estimated_response_minutes') + 3) . ' menit'
                 : '3-5 menit');
 
         $latestMessages = collect();
@@ -179,7 +181,7 @@ class TrackingController extends Controller
                 'handler_name' => $report->handlerUser?->name,
                 'assigned_at' => optional($report->assigned_at)->format('d M Y, H:i'),
             ] : null,
-            'routed_partners' => $report->partnerRoutings
+            'routed_partners' => $relevantRoutings
                 ->sortByDesc(fn ($routing) => $routing->status === 'accepted')
                 ->values()
                 ->map(fn ($routing) => [
@@ -233,7 +235,7 @@ class TrackingController extends Controller
         }
 
         if ($pendingCount > 0) {
-            return 'Laporan Anda sudah diteruskan ke ' . $report->partnerRoutings->count() . ' institusi terdekat. Kami sedang menunggu partner tersedia menerima kasus ini.';
+            return 'Laporan Anda sudah diteruskan ke ' . $pendingCount . ' institusi terdekat yang sesuai kategori. Kami sedang menunggu partner tersedia menerima kasus ini.';
         }
 
         return 'Kami masih mencoba menghubungkan Anda dengan responder. Jika kondisi memburuk, hubungi 112 sekarang.';
@@ -274,6 +276,19 @@ class TrackingController extends Controller
             'pemadam' => 'Pemadam / Rescue',
             default => 'Partner Krisis',
         };
+    }
+
+    private function relevantPartnerRoutings(Report $report)
+    {
+        $partnerTypes = Partner::partnerTypesForCategory($report->category);
+
+        if (empty($partnerTypes)) {
+            return collect();
+        }
+
+        return $report->partnerRoutings
+            ->filter(fn ($routing) => $routing->partner && Partner::matchesCategory($routing->partner->partner_type, $report->category))
+            ->values();
     }
 
     private function hotlines(): array

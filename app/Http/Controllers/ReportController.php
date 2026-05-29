@@ -15,6 +15,9 @@ class ReportController extends Controller
         $report = Report::where('user_id', auth()->id())->findOrFail($id);
 
         if ($report->created_at->diffInMinutes(now()) > 15 || in_array($report->status, ['Assigned', 'In Progress', 'Resolved'])) {
+            if (request()->wantsJson()) {
+                return response()->json(['error' => 'Laporan tidak bisa diedit karena sudah lewat 15 menit atau sudah diproses.'], 403);
+            }
             return redirect()->route('dashboard')->with('error', 'Laporan tidak bisa diedit karena sudah lewat 15 menit atau sudah diproses oleh partner.');
         }
 
@@ -26,6 +29,9 @@ class ReportController extends Controller
         $report = Report::where('user_id', auth()->id())->findOrFail($id);
 
         if ($report->created_at->diffInMinutes(now()) > 15 || in_array($report->status, ['Assigned', 'In Progress', 'Resolved'])) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'Laporan tidak bisa diedit karena sudah lewat 15 menit atau sudah diproses.'], 403);
+            }
             return redirect()->route('dashboard')->with('error', 'Laporan tidak bisa diedit karena sudah lewat 15 menit atau sudah diproses oleh partner.');
         }
 
@@ -42,10 +48,12 @@ class ReportController extends Controller
         $report->created_at = now();
         $report->save();
 
-        // If category changed, we need to re-route to new partners
-        if ($oldCategory !== $report->category && $report->status !== 'Resolved' && $report->status !== 'Assigned' && $report->status !== 'In Progress') {
-            // Delete pending routings
-            ReportPartnerRouting::where('report_id', $report->id)->where('status', 'pending')->delete();
+        // Teruskan/route ulang ke partner setiap kali ada perubahan laporan (kategori atau deskripsi)
+        if ($report->status !== 'Resolved' && $report->status !== 'Assigned' && $report->status !== 'In Progress') {
+            // Hapus routing lama yang belum diterima agar tracking tidak menampilkan partner dari kategori sebelumnya.
+            ReportPartnerRouting::where('report_id', $report->id)
+                ->whereIn('status', ['pending', 'expired'])
+                ->delete();
 
             $partners = Partner::routeMultipleByCategory(
                 $report->category,
@@ -56,6 +64,11 @@ class ReportController extends Controller
 
             $expiryMinutes = (int) env('REPORT_ROUTING_EXPIRY_MINUTES', 180);
             $expiresAt = now()->addMinutes(max(1, $expiryMinutes));
+
+            $report->update([
+                'status' => $partners->isNotEmpty() ? 'Routed' : 'Submitted',
+                'routed_partner_id' => $partners->first()?->id,
+            ]);
 
             foreach ($partners as $partner) {
                 ReportPartnerRouting::create([
@@ -91,6 +104,10 @@ class ReportController extends Controller
                     }
                 }
             }
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => 'Laporan berhasil diperbarui.']);
         }
 
         return redirect()->route('dashboard')->with('success', 'Laporan berhasil diperbarui.');

@@ -17,13 +17,38 @@ class EnsurePhoneIsFilled
     {
         $user = $request->user();
 
-        if ($user && $user->role === 'user' && empty($user->phone)) {
-            // Biarkan lewat jika mengakses halaman settings atau profile.update atau logout
-            if ($request->routeIs('settings') || $request->routeIs('settings.update') || $request->routeIs('profile.update') || $request->routeIs('profile.edit') || $request->routeIs('logout')) {
-                return $next($request);
+        if ($user && $user->role === 'user') {
+            $allowedRoutes = [
+                'settings',
+                'settings.update',
+                'profile.update',
+                'profile.edit',
+                'profile.phone.verify',
+                'profile.phone.remove',
+                'logout',
+            ];
+
+            if (empty($user->phone)) {
+                if ($request->routeIs(...$allowedRoutes)) {
+                    return $next($request);
+                }
+
+                return redirect()->route('settings')->with('warning', 'Anda harus mengisi nomor WhatsApp terlebih dahulu sebelum menggunakan fitur lainnya.');
             }
 
-            return redirect()->route('settings')->with('warning', 'Anda harus mengisi nomor telepon terlebih dahulu sebelum menggunakan fitur lainnya.');
+            if (!$user->phone_is_verified) {
+                if ($request->routeIs(...$allowedRoutes)) {
+                    return $next($request);
+                }
+
+                return redirect()->route('settings')
+                    ->with('verify_user_phone', $user->phone)
+                    ->with('warning', 'Verifikasi nomor WhatsApp terlebih dahulu sebelum menggunakan fitur lainnya.');
+            }
+
+            if ($request->routeIs(...$allowedRoutes)) {
+                return $next($request);
+            }
         }
 
         return $next($request);

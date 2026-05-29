@@ -239,8 +239,8 @@ class EmergencyController extends Controller
     private function determineUrgency(string $category): string
     {
         return match (strtolower($category)) {
-            'kekerasan', 'kesehatan', 'kecelakaan', 'ancaman' => 'critical',
-            'pelecehan' => 'high',
+            'kekerasan', 'kesehatan', 'kecelakaan', 'ancaman', 'ambulance', 'pemadam' => 'critical',
+            'pelecehan', 'legal', 'counselor' => 'high',
             default => 'normal',
         };
     }

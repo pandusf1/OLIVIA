@@ -66,16 +66,31 @@ class Partner extends Model
         return self::routeMultipleByCategory($category, 1)->first();
     }
 
+    public static function partnerTypesForCategory($category): array
+    {
+        $normalized = strtolower(trim((string) $category));
+        $normalized = str_replace(['_', '-'], ' ', $normalized);
+        $normalized = preg_replace('/\s+/', ' ', $normalized);
+
+        return match ($normalized) {
+            'ambulance', 'ambulans', 'medis', 'medis darurat', 'kesehatan', 'kecelakaan' => ['ambulance'],
+            'legal', 'lbh', 'pengacara', 'bantuan hukum', 'salah tangkap', 'pelecehan' => ['legal'],
+            'counselor', 'konselor', 'psikolog', 'psikososial' => ['counselor'],
+            'pemadam', 'damkar', 'rescue', 'pemadam rescue', 'pemadam / rescue', 'kebakaran' => ['pemadam'],
+            'kekerasan', 'ancaman' => ['legal', 'counselor'],
+            'lainnya' => ['ambulance', 'legal', 'counselor', 'pemadam'],
+            default => [],
+        };
+    }
+
+    public static function matchesCategory($partnerType, $category): bool
+    {
+        return in_array(strtolower((string) $partnerType), self::partnerTypesForCategory($category), true);
+    }
+
     public static function routeMultipleByCategory($category, $limit = 5, ?float $latitude = null, ?float $longitude = null)
     {
-        $partnerTypes = match (strtolower((string) $category)) {
-            'salah tangkap', 'pelecehan' => ['legal'],
-            'kecelakaan', 'kesehatan' => ['ambulance'],
-            'kekerasan' => ['counselor', 'legal'],
-            'ancaman' => ['legal', 'counselor'],
-            'lainnya' => ['ambulance', 'legal', 'counselor', 'pemadam'],
-            default => ['ambulance', 'legal', 'counselor'],
-        };
+        $partnerTypes = self::partnerTypesForCategory($category);
 
         if (!$partnerTypes) {
             return collect();

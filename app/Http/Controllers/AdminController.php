@@ -103,6 +103,10 @@ class AdminController extends Controller
         $partners = Partner::routeMultipleByCategory($report->category, 5, $report->latitude, $report->longitude);
         $expiresAt = now()->addMinutes(max(1, (int) env('REPORT_ROUTING_EXPIRY_MINUTES', 30)));
 
+        ReportPartnerRouting::where('report_id', $report->id)
+            ->whereIn('status', ['pending', 'expired'])
+            ->delete();
+
         foreach ($partners as $partner) {
             ReportPartnerRouting::create([
                 'report_id' => $report->id,
@@ -131,7 +135,7 @@ class AdminController extends Controller
         $oldStatus = $report->status;
         $report->update([
             'status' => $partners->isNotEmpty() ? 'Routed' : $report->status,
-            'routed_partner_id' => $partners->first()?->id ?? $report->routed_partner_id,
+            'routed_partner_id' => $partners->first()?->id,
         ]);
 
         if ($oldStatus !== $report->status) {

@@ -178,7 +178,7 @@
                             <div class="flex items-center gap-2 ml-3 flex-shrink-0">
                                 @if($report->created_at->diffInMinutes(now()) <= 15 && in_array($report->status, ['Submitted', 'Routed', 'Viewed']))
                                     <div class="flex items-center gap-1 mr-2" onclick="event.preventDefault(); event.stopPropagation();">
-                                        <a href="{{ route('report.edit', $report->id) }}" class="text-xs bg-white hover:bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-200 transition font-medium">Edit</a>
+                                        <button type="button" data-id="{{ $report->id }}" data-category="{{ $report->category }}" data-desc="{{ $report->description }}" onclick="openEditReportModal(this)" class="text-xs bg-white hover:bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-200 transition font-medium">Edit</button>
                                         <form action="{{ route('report.destroy', $report->id) }}" method="POST" onsubmit="return confirm('Hapus laporan ini?');" class="inline">
                                             @csrf
                                             @method('DELETE')
@@ -336,6 +336,45 @@
                     <button type="button" onclick="submitStep2()" id="btn-final-submit" class="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-xl font-bold transition-all text-lg mt-auto shadow-[0_4px_14px_0_rgba(17,24,39,0.39)]">KIRIM LAPORAN</button>
                 </div>
                 <button onclick="closeCatModal()" class="w-full mt-2 text-gray-500 hover:text-gray-900 font-bold text-sm py-3 transition-colors">Kembali</button>
+            </form>
+        </div>
+    </div>
+
+    {{-- ===== EDIT LAPORAN MODAL ===== --}}
+    <div id="edit-report-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[110] flex items-center justify-center px-4 transition-all duration-300">
+        <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+            <div class="flex items-start justify-between gap-3 mb-4">
+                <div>
+                    <h2 class="font-black text-xl text-gray-900 mb-1 font-unbounded">Edit Laporan</h2>
+                    <p class="text-gray-500 text-xs">Perbarui laporan. Sistem otomatis mengirim ulang notifikasi ke partner.</p>
+                </div>
+                <button type="button" onclick="closeEditReportModal()" class="text-gray-400 hover:text-gray-600 transition p-2 rounded-full">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <form id="edit-report-form" method="POST" action="">
+                @csrf
+                @method('PUT')
+                <div class="mb-4">
+                    <label class="block text-sm font-bold text-gray-900 mb-1">Kategori Laporan</label>
+                    <select name="category" id="edit-category" class="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-500 focus:bg-white" required>
+                        <option value="ambulance">Medis Darurat (Ambulans)</option>
+                        <option value="legal">Bantuan Hukum (LBH)</option>
+                        <option value="counselor">Psikososial (Psikolog)</option>
+                        <option value="pemadam">Pemadam / Rescue</option>
+                    </select>
+                </div>
+                
+                <div class="mb-5">
+                    <label class="block text-sm font-bold text-gray-900 mb-1">Deskripsi Kejadian</label>
+                    <textarea name="description" id="edit-description" rows="3" class="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-500 focus:bg-white resize-none" placeholder="Deskripsi kejadian..."></textarea>
+                </div>
+                
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="closeEditReportModal()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold text-sm transition">Batal</button>
+                    <button type="submit" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold text-sm transition shadow-sm">Simpan & Kirim Ulang</button>
+                </div>
             </form>
         </div>
     </div>
@@ -1104,6 +1143,37 @@
         if (step2Interval) clearInterval(step2Interval);
     }
     document.getElementById('cat-modal').addEventListener('click',function(e){if(e.target===this)closeCatModal();});
+
+    // ===== EDIT LAPORAN MODAL FUNCTIONS =====
+    function openEditReportModal(btn) {
+        const id = btn.getAttribute('data-id');
+        const category = btn.getAttribute('data-category');
+        const description = btn.getAttribute('data-desc');
+
+        const modal = document.getElementById('edit-report-modal');
+        const form = document.getElementById('edit-report-form');
+        const catSelect = document.getElementById('edit-category');
+        const descInput = document.getElementById('edit-description');
+
+        form.action = `/report/${id}`;
+        
+        if (!catSelect.querySelector(`option[value="${category}"]`)) {
+            const option = document.createElement('option');
+            option.value = category;
+            option.text = category.charAt(0).toUpperCase() + category.slice(1);
+            catSelect.appendChild(option);
+        }
+        catSelect.value = category;
+        descInput.value = description || '';
+
+        document.body.style.overflow = 'hidden';
+        modal.classList.remove('hidden');
+    }
+    function closeEditReportModal() {
+        document.getElementById('edit-report-modal').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+    document.getElementById('edit-report-modal').addEventListener('click', function(e) { if(e.target === this) closeEditReportModal(); });
     </script>
 </body>
 </html>

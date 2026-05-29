@@ -12,19 +12,7 @@ class FonnteService
      */
     private static function formatPhoneNumber($phone)
     {
-        // Hapus karakter selain angka dan tanda +
-        $phone = preg_replace('/[^0-9+]/', '', $phone);
-
-        // Jika diawali dengan +62, ubah jadi 62
-        if (str_starts_with($phone, '+62')) {
-            $phone = '62' . substr($phone, 3);
-        }
-        // Jika diawali dengan 0, ubah jadi 62
-        elseif (str_starts_with($phone, '0')) {
-            $phone = '62' . substr($phone, 1);
-        }
-
-        return $phone;
+        return PhoneNumberService::normalize($phone);
     }
 
     public static function send($target, $message)
