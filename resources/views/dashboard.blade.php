@@ -31,7 +31,7 @@
     <div class="max-w-6xl mx-auto px-6 py-10 fade-in">
 
         @if(session('success'))
-        <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl mb-6 text-sm flex items-center gap-2">
+        <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl mb-6 text-sm flex items-center gap-2" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms>
             <svg class="w-4 h-4 text-green-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
             {{ session('success') }}
         </div>
@@ -355,7 +355,7 @@
 
             <form id="edit-report-form" method="POST" action="">
                 @csrf
-                @method('PUT')
+                @method('PATCH')
                 <div class="mb-4">
                     <label class="block text-sm font-bold text-gray-900 mb-1">Kategori Laporan</label>
                     <select name="category" id="edit-category" class="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-500 focus:bg-white" required>

@@ -2,7 +2,7 @@
     <h1 class="font-unbounded text-xl font-black text-gray-900 mb-1">Buat Akun</h1>
     <p class="text-gray-400 text-sm mb-6">Gratis. Trusted contact, histori laporan & lebih.</p>
     @if ($errors->any())
-    <div class="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm">
+    <div class="mb-4 bg-red-50 border border-red-200 text-red-700 rounded-xl p-4 text-sm" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms>
         <ul class="list-disc pl-5 space-y-1">
             @foreach ($errors->all() as $error)
                 <li>{{ $error }}</li>

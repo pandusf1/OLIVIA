@@ -23,8 +23,8 @@
             <p class="text-gray-400 text-sm mt-1">Orang-orang ini otomatis dapat alert WhatsApp saat kamu menekan panic button, lengkap dengan lokasi dan link tracking.</p>
         </div>
 
-        @if(session('success'))<div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl mb-6 text-sm">✓ {{ session('success') }}</div>@endif
-        @if(session('error'))<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl mb-6 text-sm">✗ {{ session('error') }}</div>@endif
+        @if(session('success'))<div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl mb-6 text-sm" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms>✓ {{ session('success') }}</div>@endif
+        @if(session('error'))<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl mb-6 text-sm" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms>✗ {{ session('error') }}</div>@endif
 
 <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
             <h2 class="font-semibold text-gray-900 mb-4">+ Tambah Kontak</h2>
@@ -86,7 +86,7 @@
             <p class="text-sm text-gray-500 mb-4">Masukkan 5 digit kode yang telah dikirimkan ke nomor <strong>{{ session('verify_contact_phone') }}</strong>.</p>
             
             @if(session('error'))
-                <div class="bg-red-50 text-red-800 text-xs px-3 py-2 rounded-lg mb-3">✗ {{ session('error') }}</div>
+                <div class="bg-red-50 text-red-800 text-xs px-3 py-2 rounded-lg mb-3" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms>✗ {{ session('error') }}</div>
             @endif
 
             <form action="{{ route('trusted-contact.verify') }}" method="POST">

@@ -19,7 +19,7 @@
 <h1 class="font-unbounded text-2xl font-semibold text-gray-900 mb-2">Cek Status Laporan</h1>
             <p class="text-gray-400 text-sm">Masukkan ID laporan untuk melihat perkembangan.</p>
         </div>
-        @if(session('error'))<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-sm text-center">{{ session('error') }}</div>@endif
+        @if(session('error'))<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-sm text-center" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms>{{ session('error') }}</div>@endif
         <div class="bg-white border border-gray-200 rounded-2xl p-6">
             <form action="/tracking-search" method="GET">
                 <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">ID Laporan</label>

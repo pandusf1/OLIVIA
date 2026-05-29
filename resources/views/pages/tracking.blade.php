@@ -102,12 +102,14 @@
                 @endif
                 
                 <button type="button" onclick="document.getElementById('upload-area').classList.toggle('hidden')" class="mt-4 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-black">Tambah Bukti</button>
-                <div id="upload-area" class="hidden mt-4 rounded-lg border border-dashed border-gray-200 p-4">
-                    <form action="/tracking/{{ $report->id }}/evidence" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        <input type="file" name="evidence[]" multiple class="w-full text-sm">
-                        <button class="mt-3 w-full rounded-lg bg-gray-950 px-4 py-3 text-sm font-black text-white">Upload</button>
-                    </form>
+                <div id="upload-area" class="hidden mt-4">
+                    <div class="border border-dashed border-gray-300 hover:border-gray-400 rounded-xl p-5 text-center transition cursor-pointer" onclick="document.getElementById('evf').click()">
+                        <p class="text-2xl mb-1">📁</p>
+                        <p class="text-gray-500 text-sm">Klik untuk pilih file</p>
+                        <p class="text-gray-400 text-xs">Bisa pilih lebih dari 1 (Foto, video, dll — maks. 20MB/file)</p>
+                    </div>
+                    <input type="file" id="evf" class="hidden" multiple accept="*/*">
+                    <div id="upload-list" class="mt-3 space-y-2"></div>
                 </div>
             </section>
 
@@ -320,6 +322,83 @@
 
     if (isCreator) {
         pushLocation();
+    }
+
+    const fileInput = document.getElementById('evf');
+    const uploadList = document.getElementById('upload-list');
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            Array.from(this.files).forEach(file => {
+                uploadFile(file);
+            });
+            this.value = '';
+        });
+    }
+
+    function uploadFile(file) {
+        const uniqueId = Math.random().toString(36).substring(2, 15);
+        
+        const item = document.createElement('div');
+        item.id = `upload-${uniqueId}`;
+        item.className = "flex items-center justify-between bg-white border border-gray-100 p-3 rounded-xl shadow-sm";
+        item.innerHTML = `
+            <div class="flex-1 min-w-0 mr-3">
+                <p class="text-sm font-semibold text-gray-800 truncate">${file.name}</p>
+                <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1.5 overflow-hidden" id="progress-container-${uniqueId}">
+                    <div class="bg-green-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%" id="progress-${uniqueId}"></div>
+                </div>
+                <div class="flex items-center gap-1 mt-1">
+                    <svg class="w-3 h-3 text-green-500 hidden" id="check-${uniqueId}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                    <p class="text-[10px] text-gray-500" id="text-${uniqueId}">Uploading 0%</p>
+                </div>
+            </div>
+            <div class="text-gray-400 p-1" id="loading-${uniqueId}">
+                <svg class="animate-spin w-4 h-4 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            </div>
+        `;
+        uploadList.appendChild(item);
+
+        const formData = new FormData();
+        formData.append('evidence[]', file);
+        formData.append('_token', '{{ csrf_token() }}');
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/tracking/{{ $report->id }}/evidence', true);
+        xhr.setRequestHeader('Accept', 'application/json');
+
+        xhr.upload.onprogress = function(e) {
+            if (e.lengthComputable) {
+                const percent = Math.round((e.loaded / e.total) * 100);
+                document.getElementById(`progress-${uniqueId}`).style.width = percent + '%';
+                document.getElementById(`text-${uniqueId}`).innerText = `Uploading ${percent}%`;
+            }
+        };
+
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                document.getElementById(`text-${uniqueId}`).innerText = 'Selesai';
+                document.getElementById(`text-${uniqueId}`).classList.replace('text-gray-500', 'text-green-600');
+                document.getElementById(`progress-container-${uniqueId}`).classList.add('hidden');
+                document.getElementById(`check-${uniqueId}`).classList.remove('hidden');
+                document.getElementById(`loading-${uniqueId}`).classList.add('hidden');
+                setTimeout(() => window.location.reload(), 1000);
+            } else {
+                document.getElementById(`text-${uniqueId}`).innerText = 'Gagal upload';
+                document.getElementById(`text-${uniqueId}`).classList.add('text-red-500');
+                document.getElementById(`progress-${uniqueId}`).classList.replace('bg-green-500', 'bg-red-500');
+                document.getElementById(`loading-${uniqueId}`).classList.add('hidden');
+            }
+        };
+
+        xhr.onerror = function() {
+            document.getElementById(`text-${uniqueId}`).innerText = 'Gagal koneksi';
+            document.getElementById(`text-${uniqueId}`).classList.add('text-red-500');
+            document.getElementById(`progress-${uniqueId}`).classList.replace('bg-green-500', 'bg-red-500');
+            document.getElementById(`loading-${uniqueId}`).classList.add('hidden');
+        };
+
+        xhr.send(formData);
     }
 </script>
 </body>

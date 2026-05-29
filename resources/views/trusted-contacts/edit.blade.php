@@ -22,7 +22,7 @@
         </div>
 
         @if($errors->any())
-            <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl mb-6 text-sm">
+            <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl mb-6 text-sm" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms>
                 <ul class="list-disc pl-5">
                     @foreach($errors->all() as $e)
                         <li>{{ $e }}</li>

@@ -21,7 +21,7 @@
         <h1 class="font-unbounded text-3xl font-bold text-gray-900 mb-2">Buat Laporan Baru</h1>
         <p class="text-gray-500 text-sm mb-8">Gunakan formulir ini untuk melaporkan kejadian yang sudah berlalu (bukan darurat). Kamu bisa menceritakan kronologi dan lokasi kejadian secara spesifik.</p>
 
-        @if($errors->any())<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 text-sm">@foreach($errors->all() as $e)<p>• {{ $e }}</p>@endforeach</div>@endif
+        @if($errors->any())<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 text-sm" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms>@foreach($errors->all() as $e)<p>• {{ $e }}</p>@endforeach</div>@endif
 
         <div class="bg-white border border-gray-200 rounded-2xl p-6">
             <form action="{{ route('report.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
@@ -102,10 +102,13 @@
             item.innerHTML = `
                 <div class="flex-1 min-w-0 mr-3">
                     <p class="text-sm font-semibold text-gray-800 truncate">${file.name}</p>
-                    <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1.5 overflow-hidden">
+                    <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1.5 overflow-hidden" id="progress-container-${uniqueId}">
                         <div class="bg-green-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%" id="progress-${uniqueId}"></div>
                     </div>
-                    <p class="text-[10px] text-gray-500 mt-1" id="text-${uniqueId}">Uploading 0%</p>
+                    <div class="flex items-center gap-1 mt-1">
+                        <svg class="w-3 h-3 text-green-500 hidden" id="check-${uniqueId}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        <p class="text-[10px] text-gray-500" id="text-${uniqueId}">Uploading 0%</p>
+                    </div>
                 </div>
                 <button type="button" class="text-red-500 hover:text-red-700 p-1 hidden" id="delete-${uniqueId}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
@@ -136,6 +139,9 @@
                     const res = JSON.parse(xhr.responseText);
                     if (res.success) {
                         document.getElementById(`text-${uniqueId}`).innerText = 'Selesai';
+                        document.getElementById(`text-${uniqueId}`).classList.replace('text-gray-500', 'text-green-600');
+                        document.getElementById(`progress-container-${uniqueId}`).classList.add('hidden');
+                        document.getElementById(`check-${uniqueId}`).classList.remove('hidden');
                         document.getElementById(`loading-${uniqueId}`).classList.add('hidden');
                         const delBtn = document.getElementById(`delete-${uniqueId}`);
                         delBtn.classList.remove('hidden');

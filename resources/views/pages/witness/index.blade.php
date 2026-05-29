@@ -18,8 +18,8 @@
 <h1 class="font-unbounded text-3xl font-semibold text-gray-900 mb-2">Bantu dengan buktimu.</h1>
         <p class="text-gray-500 text-sm mb-8">Upload bukti untuk laporan yang kamu saksikan. Bersifat rahasia — hanya bisa diakses korban dan mitra terverifikasi.</p>
 
-        @if(session('success'))<div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl mb-6 text-sm">✓ {{ session('success') }}</div>@endif
-        @if($errors->any())<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 text-sm">@foreach($errors->all() as $e)<p>• {{ $e }}</p>@endforeach</div>@endif
+        @if(session('success'))<div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl mb-6 text-sm" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms>✓ {{ session('success') }}</div>@endif
+        @if($errors->any())<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 text-sm" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms>@foreach($errors->all() as $e)<p>• {{ $e }}</p>@endforeach</div>@endif
 
         <div class="bg-white border border-gray-200 rounded-2xl p-6">
             <form action="/witness" method="POST" enctype="multipart/form-data" class="space-y-4">

@@ -62,6 +62,21 @@ class ReportController extends Controller
                 $report->longitude ? (float) $report->longitude : null
             );
 
+            if ($partners->isEmpty()) {
+                // Create dummy partner for "Lembaga Sosial" (Laporan Biasa)
+                $dummyPartner = Partner::firstOrCreate(
+                    ['phone' => '080000000000'],
+                    [
+                        'partner_name' => 'Lembaga Sosial Mitra Safora',
+                        'partner_type' => 'lembaga_sosial',
+                        'city' => 'Semarang',
+                        'verified' => true,
+                        'is_active' => true,
+                    ]
+                );
+                $partners = collect([$dummyPartner]);
+            }
+
             $expiryMinutes = (int) env('REPORT_ROUTING_EXPIRY_MINUTES', 180);
             $expiresAt = now()->addMinutes(max(1, $expiryMinutes));
 
