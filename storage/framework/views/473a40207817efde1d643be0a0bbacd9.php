@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Safora — Buat Laporan</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
     <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
         * { font-family: 'Space Grotesk', sans-serif; }
         h1 { font-family: 'Space Grotesk', sans-serif !important; }
@@ -11,21 +11,21 @@
     </style>
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
-    @php
+    <?php
         $backUrl = route('dashboard');
         $backLabel = 'Batal';
-    @endphp
-    @include('partials.nav-auth')
+    ?>
+    <?php echo $__env->make('partials.nav-auth', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
     <div class="max-w-lg mx-auto px-6 py-12">
         <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">LAPORAN BIASA</p>
         <h1 class="font-unbounded text-3xl font-bold text-gray-900 mb-2">Buat Laporan Baru</h1>
         <p class="text-gray-500 text-sm mb-8">Gunakan formulir ini untuk melaporkan kejadian yang sudah berlalu (bukan darurat). Kamu bisa menceritakan kronologi dan lokasi kejadian secara spesifik.</p>
 
-        @if($errors->any())<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 text-sm">@foreach($errors->all() as $e)<p>• {{ $e }}</p>@endforeach</div>@endif
+        <?php if($errors->any()): ?><div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 text-sm"><?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $e): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?><p>• <?php echo e($e); ?></p><?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?></div><?php endif; ?>
 
         <div class="bg-white border border-gray-200 rounded-2xl p-6">
-            <form action="{{ route('report.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4">
-                @csrf
+            <form action="<?php echo e(route('report.store')); ?>" method="POST" enctype="multipart/form-data" class="space-y-4">
+                <?php echo csrf_field(); ?>
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">Kategori Kejadian *</label>
                     <select name="category" class="w-full border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-3 text-sm focus:outline-none transition bg-white" required>
@@ -40,13 +40,13 @@
                 
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">Lokasi Kejadian *</label>
-                    <input type="text" name="location_text" value="{{ old('location_text') }}" placeholder="Contoh: Jl. Sudirman depan stasiun, Semarang"
+                    <input type="text" name="location_text" value="<?php echo e(old('location_text')); ?>" placeholder="Contoh: Jl. Sudirman depan stasiun, Semarang"
                         class="w-full border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-3 text-sm focus:outline-none transition" required>
                 </div>
                 
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">Kronologi / Deskripsi *</label>
-                    <textarea name="description" rows="4" placeholder="Ceritakan secara detail waktu, orang yang terlibat, dan urutan kejadian..." class="w-full border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-3 text-sm focus:outline-none transition resize-none" required>{{ old('description') }}</textarea>
+                    <textarea name="description" rows="4" placeholder="Ceritakan secara detail waktu, orang yang terlibat, dan urutan kejadian..." class="w-full border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-3 text-sm focus:outline-none transition resize-none" required><?php echo e(old('description')); ?></textarea>
                 </div>
 
                 <div>
@@ -118,10 +118,10 @@
 
             const formData = new FormData();
             formData.append('evidence', file);
-            formData.append('_token', '{{ csrf_token() }}');
+            formData.append('_token', '<?php echo e(csrf_token()); ?>');
 
             const xhr = new XMLHttpRequest();
-            xhr.open('POST', '{{ route("report.evidence.upload") }}', true);
+            xhr.open('POST', '<?php echo e(route("report.evidence.upload")); ?>', true);
 
             xhr.upload.onprogress = function(e) {
                 if (e.lengthComputable) {
@@ -175,11 +175,11 @@
             if (hidden) hidden.remove();
 
             // Send delete request
-            fetch('{{ route("report.evidence.delete") }}', {
+            fetch('<?php echo e(route("report.evidence.delete")); ?>', {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>'
                 },
                 body: JSON.stringify({ path: path })
             }).catch(e => console.log('Delete error:', e));
@@ -187,3 +187,4 @@
     </script>
 </body>
 </html>
+<?php /**PATH D:\CODING\olivia_final\resources\views\pages\report\create.blade.php ENDPATH**/ ?>
