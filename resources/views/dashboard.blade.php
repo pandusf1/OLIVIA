@@ -66,7 +66,7 @@
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 fade-in">
             @foreach([
                 [route('trusted-contact.index'), '👤', 'Kontak Darurat', 'Orang terpercaya', 'bg-blue-50'],
-                ['/witness',                    '🛡️', 'Mode Saksi',    'Bantu korban', 'bg-green-50'],
+                [route('report.create'),         '🛡️', 'Buat Laporan',    'Laporan kejadian masa lalu', 'bg-green-50'],
                 ['/evidence',                   '🗂️', 'Galeri Bukti',  'Aman tersimpan', 'bg-purple-50'],
                 [route('chat.threads'),         '💬', 'Chat', 'Riwayat chat', 'bg-orange-50'],
             ] as [$url, $icon, $title, $sub, $bg])
@@ -176,10 +176,10 @@
                                 <p class="text-gray-400 text-xs mt-0.5">{{ $report->created_at->format('d M Y, H:i') }}</p>
                             </div>
                             <div class="flex items-center gap-2 ml-3 flex-shrink-0">
-                                @if($report->created_at->diffInMinutes(now()) <= 15 && in_array($report->status, ['Submitted', 'Routed', 'Viewed']))
-                                    <div class="flex items-center gap-1 mr-2" onclick="event.preventDefault(); event.stopPropagation();">
-                                        <button type="button" data-id="{{ $report->id }}" data-category="{{ $report->category }}" data-desc="{{ $report->description }}" onclick="openEditReportModal(this)" class="text-xs bg-white hover:bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-200 transition font-medium">Edit</button>
-                                        <form action="{{ route('report.destroy', $report->id) }}" method="POST" onsubmit="return confirm('Hapus laporan ini?');" class="inline">
+                                @if(in_array($report->status, ['Submitted', 'Routed', 'Viewed']))
+                                    <div class="flex items-center gap-1 mr-2 report-action-buttons" data-time="{{ $report->created_at->timestamp }}">
+                                        <button type="button" data-id="{{ $report->id }}" data-category="{{ $report->category }}" data-desc="{{ $report->description }}" onclick="event.preventDefault(); event.stopPropagation(); openEditReportModal(this)" class="text-xs bg-white hover:bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-200 transition font-medium">Edit</button>
+                                        <form action="{{ route('report.destroy', $report->id) }}" method="POST" onsubmit="return confirm('Hapus laporan ini?');" onclick="event.stopPropagation();" class="inline">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="text-xs bg-white hover:bg-red-50 text-red-600 px-2.5 py-1.5 rounded-lg border border-gray-200 transition font-medium">Hapus</button>
@@ -1174,6 +1174,19 @@
         document.body.style.overflow = '';
     }
     document.getElementById('edit-report-modal').addEventListener('click', function(e) { if(e.target === this) closeEditReportModal(); });
+
+    // Realtime hide edit/hapus report
+    function checkReportActionTime() {
+        const now = Math.floor(Date.now() / 1000);
+        document.querySelectorAll('.report-action-buttons').forEach(el => {
+            const time = parseInt(el.getAttribute('data-time'));
+            if (now - time > 15 * 60) {
+                el.style.display = 'none';
+            }
+        });
+    }
+    checkReportActionTime();
+    setInterval(checkReportActionTime, 10000);
     </script>
 </body>
 </html>
