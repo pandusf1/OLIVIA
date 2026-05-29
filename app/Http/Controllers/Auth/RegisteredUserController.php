@@ -12,6 +12,7 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
@@ -62,9 +63,11 @@ class RegisteredUserController extends Controller
         if ($request->phone) {
             $message = "Halo {$user->name},\n\nNomor WhatsApp ini baru saja didaftarkan di akun Safora Anda.\nKode verifikasi Anda adalah: *{$code}*\n\nJika Anda tidak melakukan pendaftaran ini, abaikan pesan ini.";
             FonnteService::send($user->phone, $message);
+            Cache::put('phone_verification_resend_available_at:' . $user->id, time() + 60, now()->addSeconds(60));
 
             return redirect(route('settings'))
                 ->with('verify_user_phone', $user->phone)
+                ->with('phone_resend_seconds', 60)
                 ->with('success', 'Akun berhasil dibuat. Silakan masukkan kode verifikasi yang dikirim ke WhatsApp.');
         }
 

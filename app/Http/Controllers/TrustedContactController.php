@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\FonnteService;
 use App\Services\PhoneNumberService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use App\Models\TrustedContact;
 
 class TrustedContactController extends Controller
@@ -49,9 +50,11 @@ class TrustedContactController extends Controller
 
         $message = "Halo {$contact->contact_name},\n\nAnda didaftarkan sebagai kontak terpercaya oleh " . auth()->user()->name . " di aplikasi Safora.\nKode verifikasi Anda adalah: *{$code}*\n\nJika Anda tidak mengenali permintaan ini, abaikan pesan ini.";
         FonnteService::send($contact->contact_phone, $message);
+        $this->startContactResendCooldown($contact->id);
 
         return back()->with('verify_contact_id', $contact->id)
                      ->with('verify_contact_phone', $contact->contact_phone)
+                     ->with('contact_resend_seconds', 60)
                      ->with('success', 'Silakan masukkan kode verifikasi yang dikirim ke WhatsApp.');
     }
 
@@ -93,6 +96,15 @@ class TrustedContactController extends Controller
             return redirect()->route('trusted-contact.index')->with('success', 'Kontak terpercaya sudah terverifikasi.');
         }
 
+        $remainingSeconds = $this->contactResendRemainingSeconds($contact->id);
+        if ($remainingSeconds > 0) {
+            return redirect()->route('trusted-contact.index')
+                ->with('verify_contact_id', $contact->id)
+                ->with('verify_contact_phone', $contact->contact_phone)
+                ->with('contact_resend_seconds', $remainingSeconds)
+                ->with('error', 'Tunggu ' . $remainingSeconds . ' detik sebelum mengirim ulang kode.');
+        }
+
         $code = str_pad((string) rand(0, 99999), 5, '0', STR_PAD_LEFT);
         $contact->update([
             'verification_code' => $code,
@@ -100,10 +112,12 @@ class TrustedContactController extends Controller
 
         $message = "Halo {$contact->contact_name},\n\nKode verifikasi kontak terpercaya Safora Anda adalah: *{$code}*\n\nJika Anda tidak mengenali permintaan ini, abaikan pesan ini.";
         FonnteService::send($contact->contact_phone, $message);
+        $this->startContactResendCooldown($contact->id);
 
         return redirect()->route('trusted-contact.index')
             ->with('verify_contact_id', $contact->id)
             ->with('verify_contact_phone', $contact->contact_phone)
+            ->with('contact_resend_seconds', 60)
             ->with('success', 'Kode verifikasi baru sudah dikirim ke WhatsApp.');
     }
 
@@ -162,10 +176,12 @@ class TrustedContactController extends Controller
         if ($needsVerification) {
             $message = "Halo {$contact->contact_name},\n\nNomor Anda telah diperbarui sebagai kontak terpercaya oleh " . auth()->user()->name . " di aplikasi Safora.\nKode verifikasi Anda adalah: *{$code}*\n\nJika Anda tidak mengenali permintaan ini, abaikan pesan ini.";
             FonnteService::send($contact->contact_phone, $message);
+            $this->startContactResendCooldown($contact->id);
 
             return redirect()->route('trusted-contact.index')
                          ->with('verify_contact_id', $contact->id)
                          ->with('verify_contact_phone', $contact->contact_phone)
+                         ->with('contact_resend_seconds', 60)
                          ->with('success', 'Nomor telepon diubah. Silakan masukkan kode verifikasi baru.');
         }
 
@@ -180,5 +196,22 @@ class TrustedContactController extends Controller
             ->delete();
 
         return back()->with('success', 'Kontak dihapus.');
+    }
+
+    private function startContactResendCooldown(string $contactId): void
+    {
+        Cache::put($this->contactResendCooldownKey($contactId), time() + 60, now()->addSeconds(60));
+    }
+
+    private function contactResendRemainingSeconds(string $contactId): int
+    {
+        $availableAt = Cache::get($this->contactResendCooldownKey($contactId));
+
+        return $availableAt ? max(0, $availableAt - time()) : 0;
+    }
+
+    private function contactResendCooldownKey(string $contactId): string
+    {
+        return 'trusted_contact_resend_available_at:' . $contactId;
     }
 }

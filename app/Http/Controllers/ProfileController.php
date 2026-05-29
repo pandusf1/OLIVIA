@@ -7,6 +7,7 @@ use App\Services\FonnteService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 
@@ -49,9 +50,11 @@ class ProfileController extends Controller
         if ($phoneChanged) {
             $message = "Halo {$user->name},\n\nNomor WhatsApp ini baru saja dimasukkan di akun Safora Anda.\nKode verifikasi Anda adalah: *{$code}*\n\nJika Anda tidak melakukan perubahan ini, abaikan pesan ini.";
             FonnteService::send($user->phone, $message);
+            $this->startPhoneResendCooldown($user->id);
 
             return Redirect::route('settings')
                 ->with('verify_user_phone', $user->phone)
+                ->with('phone_resend_seconds', 60)
                 ->with('success', 'Nomor WhatsApp diubah. Silakan masukkan kode verifikasi yang dikirim ke WhatsApp.');
         }
 
@@ -96,6 +99,14 @@ class ProfileController extends Controller
             return Redirect::route('settings')->with('success', 'Nomor WhatsApp sudah terverifikasi.');
         }
 
+        $remainingSeconds = $this->phoneResendRemainingSeconds($user->id);
+        if ($remainingSeconds > 0) {
+            return Redirect::route('settings')
+                ->with('verify_user_phone', $user->phone)
+                ->with('phone_resend_seconds', $remainingSeconds)
+                ->with('error', 'Tunggu ' . $remainingSeconds . ' detik sebelum mengirim ulang kode.');
+        }
+
         $code = str_pad((string) rand(0, 99999), 5, '0', STR_PAD_LEFT);
         $user->update([
             'phone_verification_code' => $code,
@@ -103,9 +114,11 @@ class ProfileController extends Controller
 
         $message = "Halo {$user->name},\n\nKode verifikasi WhatsApp Safora Anda adalah: *{$code}*\n\nJika Anda tidak meminta kode ini, abaikan pesan ini.";
         FonnteService::send($user->phone, $message);
+        $this->startPhoneResendCooldown($user->id);
 
         return Redirect::route('settings')
             ->with('verify_user_phone', $user->phone)
+            ->with('phone_resend_seconds', 60)
             ->with('success', 'Kode verifikasi baru sudah dikirim ke WhatsApp.');
     }
 
@@ -118,6 +131,23 @@ class ProfileController extends Controller
         ]);
 
         return Redirect::route('settings')->with('warning', 'Nomor WhatsApp dibatalkan. Silakan masukkan nomor lagi untuk melanjutkan.');
+    }
+
+    private function startPhoneResendCooldown(string $userId): void
+    {
+        Cache::put($this->phoneResendCooldownKey($userId), time() + 60, now()->addSeconds(60));
+    }
+
+    private function phoneResendRemainingSeconds(string $userId): int
+    {
+        $availableAt = Cache::get($this->phoneResendCooldownKey($userId));
+
+        return $availableAt ? max(0, $availableAt - time()) : 0;
+    }
+
+    private function phoneResendCooldownKey(string $userId): string
+    {
+        return 'phone_verification_resend_available_at:' . $userId;
     }
 
     /**
