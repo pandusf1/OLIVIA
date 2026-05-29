@@ -175,7 +175,7 @@
                                     <span class="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-semibold">🗓️ {{ \Carbon\Carbon::parse($report->incident_date)->format('d M Y') }}</span>
                                     @endif
                                 </div>
-                                <p class="text-gray-400 text-xs mt-1">Dibuat: {{ $report->created_at->format('d M Y, H:i') }}</p>
+                                <p class="text-gray-400 text-xs mt-1">{{ $report->created_at->format('d M Y, H:i') }}</p>
                             </div>
                             <div class="flex items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto flex-shrink-0 border-t sm:border-t-0 pt-2 sm:pt-0 border-gray-100">
                                 @if(in_array($report->status, ['Submitted', 'Routed', 'Viewed']))
