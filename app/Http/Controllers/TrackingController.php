@@ -107,9 +107,18 @@ class TrackingController extends Controller
     public function search(Request $request)
     {
         if ($request->has('id') && $request->id) {
-            $report = Report::find($request->id);
-            if ($report) {
-                return redirect('/tracking/' . $report->id);
+            $searchId = trim($request->id);
+            $searchId = ltrim($searchId, '#');
+            $searchId = trim($searchId);
+
+            if ($searchId) {
+                $report = Report::where('id', $searchId)
+                    ->orWhere('id', 'like', $searchId . '%')
+                    ->first();
+                
+                if ($report) {
+                    return redirect('/tracking/' . $report->id);
+                }
             }
             return back()->with('error', 'Laporan dengan ID tersebut tidak ditemukan.');
         }
@@ -154,7 +163,7 @@ class TrackingController extends Controller
                 'status' => $report->status,
                 'urgency_level' => $report->urgency_level ?? 'high',
                 'created_at' => optional($report->created_at)->format('d M Y, H:i'),
-                'incident_date' => $report->incident_date ? \Carbon\Carbon::parse($report->incident_date)->format('d M Y') : null,
+                'incident_date' => $report->incident_date ? \Carbon\Carbon::parse($report->incident_date)->format('d M Y, H:i') : null,
                 'anonymous' => (bool) $report->anonymous,
                 'location' => [
                     'latitude' => $report->latitude,

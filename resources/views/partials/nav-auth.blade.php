@@ -84,6 +84,12 @@
     </div>
 </nav>
 
+@include('partials.toasts')
+
 @if(session('system_error'))
-    <script>alert(@json(session('system_error')));</script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            showToast('{{ addslashes(session('system_error')) }}', 'error');
+        });
+    </script>
 @endif

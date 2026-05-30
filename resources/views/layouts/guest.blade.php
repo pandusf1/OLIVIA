@@ -34,5 +34,6 @@
             </p>
         </div>
     </div>
+    @include('partials.toasts')
 </body>
 </html>

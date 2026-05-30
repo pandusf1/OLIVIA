@@ -25,12 +25,7 @@
 @include('partials.nav-auth')
 
 <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-    @if(session('success'))
-        <div class="mb-5 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms>{{ session('success') }}</div>
-    @endif
-    @if(session('error'))
-        <div class="mb-5 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-800" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms>{{ session('error') }}</div>
-    @endif
+
 
     <header class="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
@@ -43,7 +38,7 @@
         </div>
     </header>
 
-    <section class="mb-8">
+    <section class="mb-8" id="pending-reports-container">
         <div class="mb-4 flex items-center justify-between">
             <div>
                 <h2 class="text-xl font-black text-gray-950">Laporan Masuk</h2>
@@ -102,7 +97,7 @@
         @endif
     </section>
 
-    <section class="mb-8">
+    <section class="mb-8" id="active-reports-container">
         <h2 class="mb-4 text-xl font-black text-gray-950">Sedang Ditangani</h2>
         <div class="overflow-hidden rounded-lg border border-gray-200 bg-white">
             @forelse($activeReports as $report)
@@ -207,17 +202,29 @@
 
     // Auto-refresh (AJAX Polling) to feel real-time
     setInterval(async function() {
-        if(window.location.search) return; // Don't auto-refresh if using search filters
         try {
-            const res = await fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            // Selalu fetch path dasar /partner agar terbebas dari query string filter pencarian di bawah
+            const fetchUrl = window.location.origin + window.location.pathname;
+            const res = await fetch(fetchUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
             const text = await res.text();
             const parser = new DOMParser();
             const doc = parser.parseFromString(text, 'text/html');
-            const newMain = doc.querySelector('main');
-            if (newMain) {
-                document.querySelector('main').innerHTML = newMain.innerHTML;
-                updateCountdowns(); // Re-init countdowns on new elements
+            
+            // Update Laporan Masuk
+            const newPending = doc.querySelector('#pending-reports-container');
+            const currentPending = document.querySelector('#pending-reports-container');
+            if (newPending && currentPending) {
+                currentPending.innerHTML = newPending.innerHTML;
             }
+            
+            // Update Laporan Sedang Ditangani
+            const newActive = doc.querySelector('#active-reports-container');
+            const currentActive = document.querySelector('#active-reports-container');
+            if (newActive && currentActive) {
+                currentActive.innerHTML = newActive.innerHTML;
+            }
+            
+            updateCountdowns(); // Re-init countdowns on new elements
         } catch (e) {}
     }, 5000);
 </script>

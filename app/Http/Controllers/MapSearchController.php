@@ -91,6 +91,7 @@ class MapSearchController extends Controller
 
         // Get active emergency reports with locations
         $activeReports = \App\Models\Report::with('user')
+            ->where('report_type', 'Emergency')
             ->where('status', '!=', 'Resolved')
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')

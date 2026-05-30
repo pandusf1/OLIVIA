@@ -30,6 +30,7 @@
             <div class="flex items-center gap-6">
                 <a href="#cara-kerja" class="text-gray-600 hover:text-gray-900 text-sm transition hidden md:block">Cara Kerja</a>
                 <a href="/witness" class="text-gray-600 hover:text-gray-900 text-sm transition hidden md:block">Saksi</a>
+                <a href="/tracking-search" class="text-gray-600 hover:text-gray-900 text-sm transition hidden md:block">Cek Laporan</a>
                 <a href="/emergency" class="text-gray-600 hover:text-gray-900 text-sm transition hidden md:block">Darurat</a>
                 @auth
                 <a href="{{ route('dashboard') }}" class="text-gray-600 hover:text-gray-900 text-sm transition">Dashboard</a>
@@ -53,7 +54,7 @@
                 <p class="text-gray-500 text-lg leading-relaxed mb-8 fade-up d3">
                     Platform respons darurat sosial & hukum berbasis web. Kirim laporan, simpan bukti otomatis, dan terhubung ke LBH, ambulans, atau psikolog terverifikasi — bahkan tanpa akun.
                 </p>
-                <div class="flex flex-col sm:flex-row gap-3 fade-up d3">
+                <div class="flex flex-col sm:flex-row gap-3 fade-up d3 mb-2">
                     <a href="/emergency" class="bg-red-700 hover:bg-red-800 text-white px-6 py-3 rounded-xl font-bold text-sm flex items-center gap-2 transition justify-center">
                         Kirim Laporan Darurat →
                     </a>
@@ -61,14 +62,40 @@
                         Cara Kerja
                     </a>
                 </div>
-                <p class="text-gray-400 text-xs mt-4 fade-up d3">Safora adalah penghubung & pelindung bukti digital — bukan pengganti layanan darurat resmi pemerintah.</p>
+                <p class="text-gray-400 text-xs mt-2 fade-up d3">Safora adalah penghubung & pelindung bukti digital — bukan pengganti layanan darurat resmi pemerintah.</p>
             </div>
-            <div class="hidden md:block">
-                <div class="bg-gray-900 rounded-2xl overflow-hidden aspect-video flex items-end p-6 relative">
-                    <div class="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-950"></div>
-                    <div class="relative z-10">
-                        <p class="text-gray-400 text-xs uppercase tracking-widest mb-2">AUTO EVIDENCE LOCKER</p>
-                        <p class="text-white font-bold text-xl">Bukti tetap aman, meski HP rusak.</p>
+            
+            <div class="w-full fade-up d3">
+                <div class="flex flex-col items-center justify-center p-6 bg-white border border-gray-200/80 rounded-3xl shadow-xl shadow-gray-200/50 relative overflow-hidden">
+                    {{-- Glowing backgrounds --}}
+                    <div class="absolute -top-24 -left-24 w-48 h-48 bg-red-100 rounded-full blur-3xl opacity-50"></div>
+                    <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-red-50 rounded-full blur-3xl opacity-50"></div>
+
+                    <div class="relative z-10 text-center flex flex-col items-center py-6 w-full">
+                        <div class="relative mb-8">
+                            {{-- Pulsing halos --}}
+                            <div class="absolute inset-0 bg-red-100 rounded-full scale-[1.3] opacity-60 animate-ping" style="animation-duration: 2.5s;"></div>
+                            <div class="absolute inset-0 bg-red-200 rounded-full scale-[1.15] opacity-80 animate-pulse pointer-events-none"></div>
+                            
+                            <a href="/emergency" class="relative z-10 w-40 h-40 sm:w-48 sm:h-48 bg-red-700 hover:bg-red-800 text-white rounded-full flex flex-col items-center justify-center shadow-[0_10px_40px_rgba(185,28,28,0.35)] transition-all hover:scale-105 active:scale-95 group">
+                                <svg class="w-12 h-12 text-red-100 mb-1.5 animate-bounce" fill="currentColor" viewBox="0 0 20 20" style="animation-duration: 2s;"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                                <span class="font-bold text-sm tracking-widest text-red-100">DARURAT</span>
+                                <span class="text-[9px] font-semibold text-red-200 uppercase tracking-widest mt-0.5">Anonim & Guest</span>
+                            </a>
+                        </div>
+                        
+                        <h3 class="font-bold text-gray-900 text-base mb-1">Respons Cepat Tanpa Akun</h3>
+                        <p class="text-gray-500 text-xs max-w-xs leading-relaxed px-4">
+                            Satu klik untuk mengaktifkan pelacak GPS, mengamankan bukti darurat, dan terhubung ke mitra — <strong>100% rahasia & tanpa login</strong>.
+                        </p>
+                        
+                        <div class="mt-5 flex flex-wrap justify-center gap-2 text-[10px] font-semibold text-red-700 bg-red-50/70 px-4 py-2.5 rounded-2xl border border-red-100 max-w-xs">
+                            <span class="flex items-center gap-1">🔒 Enkripsi Bukti</span>
+                            <span class="text-red-300">•</span>
+                            <span class="flex items-center gap-1">📍 Pelacakan GPS</span>
+                            <span class="text-red-300">•</span>
+                            <span class="flex items-center gap-1">👤 Anonimitas</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -103,9 +130,9 @@
             <h2 class="text-4xl font-black text-gray-900 mb-12">Tiga langkah. Selesai.</h2>
             <div class="grid md:grid-cols-3 gap-6">
                 @foreach([
-                    ['1','Tekan tombol darurat','Satu klik. Countdown 5 detik dengan opsi batal. GPS & waktu otomatis terekam.'],
-                    ['2','Pilih kategori kejadian','Salah tangkap, pelecehan, kekerasan, atau kecelakaan. Smart routing bekerja otomatis.'],
-                    ['3','Laporan terkirim & terlindungi','Mitra yang tepat menerima laporan. Trusted contact mendapat alert WhatsApp. Bukti tersimpan aman.'],
+                    ['1','Tekan tombol darurat','Satu klik. Countdown 10 detik dengan opsi batal. GPS & waktu otomatis terekam.'],
+                    ['2','Pilih kategori kejadian','Kekerasan, kesehatan, pelecehan, kecelakaan, ancaman, atau lainnya. Smart routing bekerja otomatis.'],
+                    ['3','Laporan terkirim & terlindungi','Mitra yang tepat menerima laporan. Saksi sekitar dapat berkontribusi. Bukti digital tersimpan aman.'],
                 ] as [$num, $title, $desc])
                 <div class="bg-white border border-gray-200 rounded-2xl p-6">
                     <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center font-black text-gray-700 text-sm mb-4">{{ $num }}</div>
@@ -124,12 +151,12 @@
             <h2 class="text-4xl font-black text-gray-900 mb-12">Dirancang untuk keadaan darurat.</h2>
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 @foreach([
-                    ['🚨','Quick Emergency','Panic button → countdown 5 detik → kategori → kirim. GPS otomatis. WhatsApp alert ke trusted contact.'],
-                    ['🔒','Auto Evidence Locker','SHA-256 hash, timestamp, GPS pada setiap file. Bukti aman meski HP korban rusak atau disita.'],
-                    ['👁️','Anonymous Mode','Identitas opsional. Hanya mitra terverifikasi (LBH) yang bisa akses data korban.'],
-                    ['👥','Community Witness','Saksi sekitar upload bukti via kode laporan. Tidak publik, masuk ke laporan terkait.'],
-                    ['🧭','Smart Routing','Laporan diarahkan otomatis: Salah tangkap→LBH, Kecelakaan→Ambulans, KDRT→Shelter+Psikolog.'],
-                    ['🔢','Stealth Mode','Sembunyikan layar satu klik, redirect ke tampilan kalkulator. Aman jika situasi berbahaya.'],
+                    ['🚨','Quick Emergency','Panic button → countdown → kategori → kirim. GPS otomatis. WhatsApp alert ke kontak terpercaya & pengguna sekitar.'],
+                    ['🔒','Auto Evidence Locker','SHA-256 hash, timestamp, GPS pada setiap bukti. Aman meski HP korban disita atau rusak.'],
+                    ['👁️','Anonymous Mode','Identitas bersifat opsional. Hanya mitra penangan terverifikasi yang bisa mengakses data korban.'],
+                    ['👥','Community Witness','Saksi di sekitar kejadian bisa mengunggah bukti tambahan lewat kode laporan unik.'],
+                    ['🧭','Smart Routing','Laporan darurat diarahkan otomatis ke mitra terdekat sesuai spesialisasi penanganan krisis.'],
+                    ['🔢','Stealth Mode','Sembunyikan layar sekali klik ke tampilan kalkulator jika situasi di sekitar membahayakan.'],
                 ] as [$icon, $title, $desc])
                 <div class="border border-gray-200 rounded-2xl p-5 hover:border-gray-300 transition">
                     <p class="text-xl mb-3">{{ $icon }}</p>
@@ -172,4 +199,3 @@
 
 </body>
 </html>
-

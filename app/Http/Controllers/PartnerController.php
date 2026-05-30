@@ -314,7 +314,7 @@ class PartnerController extends Controller
 
                 $thread->update(['last_message_at' => now()]);
 
-                if ($report->user?->phone) {
+                if ($report->report_type !== 'past_incident' && $report->user?->phone) {
                     $message =
                         "Safora: laporan Anda dengan kategori {$report->category} telah diterima oleh {$partner?->partner_name}. " .
                         "Silakan buka chat untuk koordinasi lanjutan.";

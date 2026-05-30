@@ -12,7 +12,7 @@
 
     <div class="max-w-3xl mx-auto px-6 py-10">
 
-        @if(session('success'))<div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl mb-6 text-sm" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms>✓ {{ session('success') }}</div>@endif
+
 
         @php
         $sc=['Submitted'=>'bg-gray-100 text-gray-600','Routed'=>'bg-blue-50 text-blue-700','Viewed'=>'bg-yellow-50 text-yellow-700','In Progress'=>'bg-orange-50 text-orange-700','Resolved'=>'bg-green-50 text-green-700'];
@@ -29,7 +29,7 @@
                     <div class="flex items-center gap-3 mt-1 text-sm text-gray-400 flex-wrap">
                         @if($report->anonymous)<span class="bg-purple-50 text-purple-700 text-xs px-2 py-0.5 rounded-full font-semibold">Anonim</span>@endif
                         <span>{{ $report->created_at->format('d M Y, H:i') }}</span>
-                        @if($report->incident_date)<span class="bg-gray-150 text-gray-700 text-xs px-2 py-0.5 rounded-full font-semibold">🗓️ Kejadian: {{ \Carbon\Carbon::parse($report->incident_date)->format('d M Y') }}</span>@endif
+                        @if($report->incident_date)<span class="bg-gray-150 text-gray-700 text-xs px-2 py-0.5 rounded-full font-semibold">🗓️ Kejadian: {{ \Carbon\Carbon::parse($report->incident_date)->format('d M Y, H:i') }}</span>@endif
                         @if($report->latitude)<a href="https://maps.google.com/?q={{ $report->latitude }},{{ $report->longitude }}" target="_blank" class="text-red-700 hover:text-red-800 text-xs underline">📍 Lihat Peta</a>@endif
                     </div>
                     @if($canViewSensitive && $report->user && $report->user->phone)

@@ -139,7 +139,13 @@
     </div>
 </nav>
 
+<?php echo $__env->make('partials.toasts', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
 <?php if(session('system_error')): ?>
-    <script>alert(<?php echo json_encode(session('system_error'), 15, 512) ?>);</script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            showToast('<?php echo e(addslashes(session('system_error'))); ?>', 'error');
+        });
+    </script>
 <?php endif; ?>
 <?php /**PATH D:\CODING\olivia_final\resources\views/partials/nav-auth.blade.php ENDPATH**/ ?>

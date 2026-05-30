@@ -22,6 +22,7 @@ class DashboardEmergencyMarkersController extends Controller
         $activeStatuses = ['Submitted', 'Routed', 'Viewed', 'In Progress'];
 
         $markers = \App\Models\Report::query()
+            ->where('report_type', 'Emergency')
             ->whereIn('status', $activeStatuses)
             ->where('user_id', '!=', $user->id)
             ->whereNotNull('latitude')

@@ -24,7 +24,7 @@ class WitnessController extends Controller
             'witness_note'  => 'nullable|string|max:1000',
             'witness_name'  => 'nullable|string|max:100',
             'witness_phone' => 'nullable|string|max:20',
-            'evidence_file' => 'nullable|file|max:20480',
+            'evidence_file' => 'nullable|file', // no size limit
         ];
 
         if ($fromDashboard) {

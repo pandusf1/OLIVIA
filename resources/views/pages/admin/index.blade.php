@@ -21,9 +21,7 @@
 @include('partials.nav-auth')
 
 <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-    @if(session('success'))
-        <div class="mb-5 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms>{{ session('success') }}</div>
-    @endif
+
 
     <header class="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>

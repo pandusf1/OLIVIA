@@ -46,7 +46,7 @@
                 <p class="mt-1 font-black" data-field="category">{{ $livePayload['report']['category'] }}</p>
             </div>
             <div class="rounded-lg bg-gray-50 p-4" id="incident-date-container">
-                <p class="text-xs font-bold uppercase text-gray-500">Tanggal Kejadian</p>
+                <p class="text-xs font-bold uppercase text-gray-500">Waktu Kejadian</p>
                 <p class="mt-1 font-black" data-field="incident_date">{{ $livePayload['report']['incident_date'] ?? '-' }}</p>
             </div>
             <div class="rounded-lg bg-gray-50 p-4">
@@ -79,7 +79,9 @@
                             $isVideo = str_starts_with($evidence->file_type, 'video/');
                             $isAudio = str_starts_with($evidence->file_type, 'audio/');
                             
-                            $canView = $report->show_evidence || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner'));
+                            $canView = $report->show_evidence 
+                                || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner'))
+                                || in_array($report->id, session('my_reports', []));
                         @endphp
                         <a href="{{ $canView ? asset('storage/' . $evidence->file_url) : '#' }}" target="{{ $canView ? '_blank' : '' }}" onclick="{{ !$canView ? "alert('Bukti hanya bisa dibuka oleh korban / mitra'); return false;" : '' }}" class="block aspect-square rounded-lg border border-gray-200 overflow-hidden relative group bg-gray-100 flex items-center justify-center">
                             @if($isImage)
@@ -110,7 +112,7 @@
                     <div class="border border-dashed border-gray-300 hover:border-gray-400 rounded-xl p-5 text-center transition cursor-pointer" onclick="document.getElementById('evf').click()">
                         <p class="text-2xl mb-1">📁</p>
                         <p class="text-gray-500 text-sm">Klik untuk pilih file</p>
-                        <p class="text-gray-400 text-xs">Bisa pilih lebih dari 1 (Foto, video, dll — maks. 20MB/file)</p>
+                        <p class="text-gray-400 text-xs">Bisa pilih lebih dari 1 (Foto, video, dll)</p>
                     </div>
                     <input type="file" id="evf" class="hidden" multiple accept="*/*">
                     <div id="upload-list" class="mt-3 space-y-2"></div>

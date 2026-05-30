@@ -39,6 +39,15 @@ class EmergencyController extends Controller
 
         $idempotencyKey = $request->header('Idempotency-Key') ?: $request->input('idempotency_key');
 
+        \Log::info("Safora Emergency: Memulai proses penyimpanan laporan darurat.", [
+            'category' => $request->category,
+            'anonymous' => $request->anonymous ?? false,
+            'user_id' => $userId ?: 'Guest/Anonim',
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'idempotency_key' => $idempotencyKey,
+        ]);
+
 
         // unknown_emergency: jangan route ke partner (tetap kirim notifikasi/WA terdekat via notifyNearestUsers)
         $partners = collect();
@@ -187,6 +196,22 @@ class EmergencyController extends Controller
             }
         }
 
+        // Juga kirim ke ADMIN_PHONE sebagai testing jika dalam mode testing
+        if (env('ADMIN_PHONE') && $partners->isNotEmpty()) {
+            $partnerMessage =
+                "🚨 *Safora - Laporan Darurat Baru (Test Partner)*\n\n" .
+                "Kategori: *{$report->category}*\n\n" .
+                "📍 Lokasi:\n{$mapsLink}\n\n" .
+                "🔗 Tracking:\n{$trackingLink}\n\n" .
+                "Buka dashboard Safora untuk menerima laporan ini.";
+
+            try {
+                FonnteService::send(env('ADMIN_PHONE'), $partnerMessage);
+            } catch (\Exception $e) {
+                // skip jika layanan WA tidak tersedia
+            }
+        }
+
         // Alert ke admin / nomor utama
         $adminMessage =
             "🚨 *Safora EMERGENCY ALERT*\n\n" .
@@ -212,6 +237,13 @@ class EmergencyController extends Controller
 
         // Alert ke 3 user terdekat (role='user') via users.phone + simpan routing
         $this->notifyNearestUsers($report, $trackingLink, $mapsLink, 3);
+
+        \Log::info("Safora Emergency: Laporan darurat berhasil dibuat & diroute.", [
+            'report_id' => $report->id,
+            'status' => $report->status,
+            'routed_partners_count' => $partners->count(),
+            'tracking_url' => $trackingLink,
+        ]);
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -285,9 +317,6 @@ class EmergencyController extends Controller
         }
 
         $fromUserId = $report->user_id;
-        if (!$fromUserId) {
-            return;
-        }
 
         $message =
             "🚨 *ALERT DARURAT — Safora*\n\n" .
@@ -298,12 +327,16 @@ class EmergencyController extends Controller
             "_Pesan ini dikirim otomatis oleh Safora._";
 
         // Ambil semua lokasi user dengan role='user'
-        $targets = UserLocation::query()
+        $targetsQuery = UserLocation::query()
             ->whereHas('user', function ($q) {
                 $q->where('role', 'user')->where('receive_nearby_alerts', true);
-            })
-            ->where('user_id', '!=', $fromUserId)
-            ->get();
+            });
+            
+        if ($fromUserId) {
+            $targetsQuery->where('user_id', '!=', $fromUserId);
+        }
+            
+        $targets = $targetsQuery->get();
 
         if ($targets->isEmpty()) {
             return;

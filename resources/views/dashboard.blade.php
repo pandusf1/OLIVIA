@@ -30,12 +30,7 @@
 
     <div class="max-w-6xl mx-auto px-6 py-10 fade-in">
 
-        @if(session('success'))
-        <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl mb-6 text-sm flex items-center gap-2" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms>
-            <svg class="w-4 h-4 text-green-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-            {{ session('success') }}
-        </div>
-        @endif
+
 
 
         {{-- ===== BIG EMERGENCY BUTTON ===== --}}
@@ -148,9 +143,24 @@
                         <a href="{{ route('report.create') }}" class="text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition border border-red-100">+ Laporan Baru</a>
                     </div>
 
+                    {{-- Pencarian Laporan --}}
+                    <div class="mb-5">
+                        <form action="/tracking-search" method="GET" class="flex gap-2">
+                            <div class="relative flex-1">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                                    <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                </span>
+                                <input type="text" name="id" placeholder="Cari ID / Kode Laporan (e.g. e439d57a)..." class="w-full border border-gray-200 focus:border-gray-400 rounded-xl pl-9 pr-4 py-2.5 text-xs focus:outline-none transition bg-white" required>
+                            </div>
+                            <button type="submit" class="text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-4 py-2.5 rounded-xl transition border border-gray-150 flex items-center justify-center shadow-sm">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            </button>
+                        </form>
+                    </div>
+
                     @if($reports->count() > 0)
                     <div class="space-y-3">
-                        @foreach($reports->take(5) as $report)
+                        @foreach($reports->take(6) as $report)
                         @php
                         $sc = [
                             'Submitted'   => ['bg'=>'bg-gray-100',    'text'=>'text-gray-600',  'dot'=>'bg-gray-400'],
@@ -174,7 +184,7 @@
                                 </div>
                                 <p class="text-gray-400 text-xs mt-1">
                                     @if($report->incident_date)
-                                        {{ \Carbon\Carbon::parse($report->incident_date)->format('d M Y') }}
+                                        {{ \Carbon\Carbon::parse($report->incident_date)->format('d M Y, H:i') }}
                                     @else
                                         {{ $report->created_at->format('d M Y, H:i') }}
                                     @endif
@@ -199,10 +209,10 @@
                             </div>
                         </a>
                         @endforeach
-                        @if($reports->count() > 5)
-                        <a href="/emergency" class="block text-center text-xs text-gray-400 hover:text-gray-600 py-2 transition">
-                            Lihat {{ $reports->count() - 5 }} laporan lainnya →
-                        </a>
+                        @if($reports->count() > 6)
+                        <button type="button" id="btn-view-all-reports" class="block w-full text-center text-xs text-gray-400 hover:text-gray-600 py-5 transition" onclick="openAllReportsModal()">
+    Lihat {{ $reports->count() - 6 }} laporan lainnya →
+</button>
                         @endif
                     </div>
                     @else
@@ -255,6 +265,77 @@
 
             <div class="mt-3">
                 <button type="button" onclick="closeAllPartnersModal()" class="w-full bg-gray-900 hover:bg-gray-700 text-white py-3 rounded-xl font-semibold text-sm transition">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    {{-- ===== ALL REPORTS MODAL ===== --}}
+    <div id="all-reports-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center px-4">
+        <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            {{-- Header --}}
+            <div class="flex items-start justify-between gap-3 p-5 border-b border-gray-100">
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                        <div class="w-2 h-2 bg-red-700 rounded-full animate-pulse"></div>
+                        <p class="text-red-700 text-xs font-semibold uppercase tracking-widest">Semua Laporan</p>
+                    </div>
+                    <h2 class="font-black text-xl text-gray-900 font-unbounded leading-tight">Riwayat Lengkap</h2>
+                    <p id="all-reports-subtitle" class="text-gray-400 text-xs mt-0.5">Menampilkan semua laporan kamu.</p>
+                </div>
+                <button type="button" onclick="closeAllReportsModal()" class="text-gray-400 hover:text-gray-600 transition p-2 rounded-full flex-shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            {{-- Filters --}}
+            <div class="p-4 border-b border-gray-100 space-y-2">
+                <div class="flex gap-2">
+                    <select id="all-reports-category" class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
+                        <option value="">Semua Kategori</option>
+                        <option value="ambulance">Medis Darurat</option>
+                        <option value="legal">Bantuan Hukum</option>
+                        <option value="counselor">Psikososial</option>
+                        <option value="pemadam">Pemadam / Rescue</option>
+                    </select>
+                    <select id="all-reports-status" class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
+                        <option value="">Semua Status</option>
+                        <option value="Submitted">Submitted</option>
+                        <option value="Routed">Routed</option>
+                        <option value="Viewed">Viewed</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="Resolved">Resolved</option>
+                    </select>
+                </div>
+                <div class="flex gap-2 items-center">
+                    <div class="relative flex-1">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </span>
+                        <input id="all-reports-start" type="date" class="w-full border border-gray-200 rounded-xl pl-8 pr-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400" placeholder="Dari tanggal">
+                    </div>
+                    <span class="text-gray-400 text-xs flex-shrink-0">s/d</span>
+                    <div class="relative flex-1">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        </span>
+                        <input id="all-reports-end" type="date" class="w-full border border-gray-200 rounded-xl pl-8 pr-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400" placeholder="Sampai tanggal">
+                    </div>
+                </div>
+            </div>
+
+            {{-- List --}}
+            <div id="all-reports-scroll-container" class="flex-1 overflow-auto p-4" onscroll="handleAllReportsScroll()">
+                <div id="all-reports-list" class="space-y-2">
+                    <div class="text-sm text-gray-400">Memuat laporan...</div>
+                </div>
+                <div id="all-reports-loader" class="hidden text-center py-3">
+                    <div class="inline-block w-5 h-5 border-2 border-gray-300 border-t-red-600 rounded-full animate-spin"></div>
+                </div>
+            </div>
+
+            {{-- Footer --}}
+            <div class="p-4 border-t border-gray-100">
+                <button type="button" onclick="closeAllReportsModal()" class="w-full bg-gray-900 hover:bg-gray-700 text-white py-3 rounded-xl font-semibold text-sm transition">Tutup</button>
             </div>
         </div>
     </div>
@@ -1192,6 +1273,138 @@
     }
     checkReportActionTime();
     setInterval(checkReportActionTime, 10000);
+
+    // ===== ALL REPORTS MODAL =====
+    let _arPage = 1;
+    let _arHasMore = false;
+    let _arFetching = false;
+    let _arDebounce = null;
+
+    const _arStatusColors = {
+        'Submitted':   { bg: 'bg-gray-100',   text: 'text-gray-600',   dot: 'bg-gray-400' },
+        'Routed':      { bg: 'bg-blue-50',     text: 'text-blue-700',   dot: 'bg-blue-500' },
+        'Viewed':      { bg: 'bg-yellow-50',   text: 'text-yellow-700', dot: 'bg-yellow-500' },
+        'In Progress': { bg: 'bg-orange-50',   text: 'text-orange-700', dot: 'bg-orange-500' },
+        'Resolved':    { bg: 'bg-green-50',    text: 'text-green-700',  dot: 'bg-green-500' },
+    };
+
+    function openAllReportsModal() {
+        const modal = document.getElementById('all-reports-modal');
+        if (!modal) return;
+        document.body.style.overflow = 'hidden';
+        modal.classList.remove('hidden');
+        _arPage = 1;
+        document.getElementById('all-reports-list').innerHTML = '';
+        fetchAllReports(true);
+    }
+
+    function closeAllReportsModal() {
+        const modal = document.getElementById('all-reports-modal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+
+    document.getElementById('all-reports-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeAllReportsModal();
+    });
+
+    async function fetchAllReports(reset = false) {
+        if (_arFetching) return;
+        if (!reset && !_arHasMore) return;
+
+        _arFetching = true;
+        if (reset) { _arPage = 1; }
+
+        const loader = document.getElementById('all-reports-loader');
+        const list   = document.getElementById('all-reports-list');
+        loader.classList.remove('hidden');
+
+        const category  = document.getElementById('all-reports-category')?.value || '';
+        const status    = document.getElementById('all-reports-status')?.value   || '';
+        const startDate = document.getElementById('all-reports-start')?.value    || '';
+        const endDate   = document.getElementById('all-reports-end')?.value      || '';
+
+        const params = new URLSearchParams({ page: _arPage });
+        if (category)  params.set('category',   category);
+        if (status)    params.set('status',      status);
+        if (startDate) params.set('start_date',  startDate);
+        if (endDate)   params.set('end_date',    endDate);
+
+        try {
+            const res  = await fetch(`/dashboard/reports?${params.toString()}`, { headers: { 'Accept': 'application/json' } });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const json = await res.json();
+
+            const items = json.data || [];
+            _arHasMore  = json.next_page_url != null;
+
+            // Subtitle
+            const subtitle = document.getElementById('all-reports-subtitle');
+            if (subtitle) subtitle.textContent = `${json.total} laporan ditemukan.`;
+
+            if (reset && items.length === 0) {
+                list.innerHTML = '<div class="text-sm text-gray-400 text-center py-6">Tidak ada laporan yang cocok.</div>';
+            } else {
+                const html = items.map(r => {
+                    const s   = _arStatusColors[r.status] || _arStatusColors['Submitted'];
+                    const date = r.incident_date
+                        ? new Date(r.incident_date).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
+                        : new Date(r.created_at).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+                    const catLabel = { ambulance:'Medis Darurat', legal:'Bantuan Hukum', counselor:'Psikososial', pemadam:'Pemadam / Rescue' }[r.category] || r.category;
+                    const anonBadge = r.anonymous ? `<span class="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-semibold">Anonim</span>` : '';
+                    const evBadge  = r.evidences_count > 0 ? `<span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-semibold">${r.evidences_count} bukti</span>` : '';
+                    return `
+                    <a href="/tracking/${r.id}" class="flex items-center justify-between p-4 bg-[#faf9f7] hover:bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition group gap-4">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <p class="font-semibold text-gray-900 text-sm truncate">${catLabel}</p>
+                                ${anonBadge}${evBadge}
+                            </div>
+                            <p class="text-gray-400 text-xs mt-1">${date}</p>
+                        </div>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${s.bg} ${s.text} flex items-center gap-1.5 whitespace-nowrap">
+                                <span class="w-1.5 h-1.5 rounded-full ${s.dot}"></span>${r.status}
+                            </span>
+                            <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </div>
+                    </a>`;
+                }).join('');
+                if (reset) list.innerHTML = html;
+                else       list.insertAdjacentHTML('beforeend', html);
+            }
+            _arPage++;
+        } catch (err) {
+            list.innerHTML = `<div class="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2">Gagal memuat laporan: ${err.message}</div>`;
+        } finally {
+            loader.classList.add('hidden');
+            _arFetching = false;
+        }
+    }
+
+    function handleAllReportsScroll() {
+        const container = document.getElementById('all-reports-scroll-container');
+        if (!container) return;
+        if (container.scrollTop + container.clientHeight >= container.scrollHeight - 100) {
+            fetchAllReports(false);
+        }
+    }
+
+    function triggerAllReportsFilter() {
+        if (_arDebounce) clearTimeout(_arDebounce);
+        _arDebounce = setTimeout(() => {
+            document.getElementById('all-reports-list').innerHTML = '';
+            fetchAllReports(true);
+        }, 300);
+    }
+
+    ['all-reports-category', 'all-reports-status'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', triggerAllReportsFilter);
+    });
+    ['all-reports-start', 'all-reports-end'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', triggerAllReportsFilter);
+    });
     </script>
 </body>
 </html>

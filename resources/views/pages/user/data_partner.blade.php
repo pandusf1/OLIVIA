@@ -18,11 +18,7 @@
 
     <div class="max-w-5xl mx-auto px-6 py-10">
 
-        @if(session('success'))
-            <div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl mb-6 text-sm" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms>
-                ✓ {{ session('success') }}
-            </div>
-        @endif
+
 
         @php
             // dashboard-detail: brand (logo+teks) disembunyikan, tombol kembali akan mengarah ke page sebelumnya.

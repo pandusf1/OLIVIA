@@ -34,6 +34,7 @@ Route::post('/witness', [WitnessController::class, 'store'])->name('witness.stor
 Route::middleware(['auth', 'phone.required'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/reports', [DashboardController::class, 'reportsJson'])->name('dashboard.reports.json');
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
     Route::patch('/settings', [SettingsController::class, 'update'])->name('settings.update');
 

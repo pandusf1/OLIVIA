@@ -25,9 +25,7 @@
             <h1 class="font-unbounded text-3xl font-black text-gray-900">Pengaturan</h1>
         </div>
 
-        @if(session('success'))<div class="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl mb-6 text-sm" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms>✓ {{ session('success') }}</div>@endif
-        @if(session('warning'))<div class="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-xl mb-6 text-sm" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms>⚠️ {{ session('warning') }}</div>@endif
-        @if(session('error'))<div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl mb-6 text-sm" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms>✗ {{ session('error') }}</div>@endif
+
 
         {{-- Tab nav --}}
         <div class="flex gap-1 border-b border-gray-200 mb-8">
@@ -178,9 +176,7 @@
             <h3 class="text-lg font-bold text-gray-900 mb-2">Verifikasi WhatsApp</h3>
             <p class="text-sm text-gray-500 mb-4">Masukkan 5 digit kode yang telah dikirimkan ke nomor <strong>{{ $pendingPhoneVerification }}</strong>.</p>
 
-            @if(session('error'))
-                <div class="bg-red-50 text-red-800 text-xs px-3 py-2 rounded-lg mb-3" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms>✗ {{ session('error') }}</div>
-            @endif
+
 
             <form action="{{ route('profile.phone.verify') }}" method="POST">
                 @csrf

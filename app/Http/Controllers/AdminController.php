@@ -119,7 +119,7 @@ class AdminController extends Controller
             if ($partner->phone) {
                 $mapsLink = $report->latitude ? "https://maps.google.com/?q={$report->latitude},{$report->longitude}" : 'Lokasi tidak tersedia';
                 $message =
-                    "Safora: laporan darurat kategori {$report->category} diroute ulang oleh admin.\n\n" .
+                    "Safora: Laporan darurat kategori {$report->category} diroute ulang oleh admin.\n\n" .
                     "Lokasi: {$mapsLink}\n" .
                     "Tracking: " . url('/tracking/' . $report->id) . "\n\n" .
                     "Buka dashboard Safora untuk menerima laporan ini.";
@@ -129,6 +129,23 @@ class AdminController extends Controller
                 } catch (\Exception $e) {
                     // skip jika layanan WA tidak tersedia
                 }
+            }
+        }
+
+        // Juga kirim ke ADMIN_PHONE sebagai testing jika dalam mode testing
+        if (env('ADMIN_PHONE') && $partners->isNotEmpty()) {
+            $partner = $partners->first();
+            $mapsLink = $report->latitude ? "https://maps.google.com/?q={$report->latitude},{$report->longitude}" : 'Lokasi tidak tersedia';
+            $message =
+                "Safora: Laporan darurat kategori {$report->category} diroute ulang oleh admin (Test Partner).\n\n" .
+                "Lokasi: {$mapsLink}\n" .
+                "Tracking: " . url('/tracking/' . $report->id) . "\n\n" .
+                "Buka dashboard Safora untuk menerima laporan ini.";
+
+            try {
+                FonnteService::send(env('ADMIN_PHONE'), $message);
+            } catch (\Exception $e) {
+                // skip jika layanan WA tidak tersedia
             }
         }
 

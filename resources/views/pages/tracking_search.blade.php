@@ -17,18 +17,17 @@
         <div class="text-center mb-8">
             <p class="text-4xl mb-4">🔍</p>
 <h1 class="font-unbounded text-2xl font-semibold text-gray-900 mb-2">Cek Status Laporan</h1>
-            <p class="text-gray-400 text-sm">Masukkan ID laporan untuk melihat perkembangan.</p>
+            <p class="text-gray-400 text-sm">Masukkan ID laporan atau 8 karakter pertama kode unik Anda.</p>
         </div>
-        @if(session('error'))<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-4 text-sm text-center" x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)" x-transition.duration.500ms>{{ session('error') }}</div>@endif
+
         <div class="bg-white border border-gray-200 rounded-2xl p-6">
             <form action="/tracking-search" method="GET">
-                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">ID Laporan</label>
-                <input type="text" name="id" placeholder="Paste ID laporan..." class="w-full border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-3 text-sm focus:outline-none transition mb-4" required>
+                <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">ID Laporan / Kode Pendek</label>
+                <input type="text" name="id" placeholder="Contoh: e439d57a atau #e439d57a..." class="w-full border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-3 text-sm focus:outline-none transition mb-4" required>
                 <button class="w-full bg-red-700 hover:bg-red-800 text-white py-3 rounded-xl font-bold text-sm transition">Cari Laporan</button>
             </form>
         </div>
-        <p class="text-center text-gray-400 text-xs mt-4">ID laporan tersimpan di URL tracking atau dikirim ke trusted contact via WhatsApp.</p>
+        <p class="text-center text-gray-400 text-xs mt-4">ID laporan Anda tersimpan di riwayat browser darurat, tautan tracking, atau terkirim ke WhatsApp kontak darurat.</p>
     </div>
 </body>
 </html>
-

@@ -7,6 +7,8 @@ use App\Models\Report;
 use App\Models\Evidence;
 use App\Models\Partner;
 use App\Models\ReportPartnerRouting;
+use App\Models\ReportStatusLog;
+use App\Models\ReportTimelineEvent;
 use App\Services\FonnteService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -21,18 +23,20 @@ class PastReportController extends Controller
     public function uploadEvidenceTemp(Request $request)
     {
         $request->validate([
-            'evidence' => 'required|file|max:20480', // max 20MB
+            'evidence' => 'required|file', // no size limit
         ]);
 
         if ($request->hasFile('evidence')) {
             $file = $request->file('evidence');
             if ($file->isValid()) {
                 $path = $file->store('temp_evidences', 'public');
+                $sizeMb = round($file->getSize() / 1024 / 1024, 2);
                 return response()->json([
                     'success' => true,
                     'path' => $path,
                     'name' => $file->getClientOriginalName(),
                     'mime_type' => $file->getClientMimeType(),
+                    'size' => $sizeMb,
                 ]);
             }
         }
@@ -63,7 +67,9 @@ class PastReportController extends Controller
             'incident_date' => 'required|date',
             'anonymous' => 'nullable|boolean',
             'evidences' => 'nullable|array',
-            'evidences.*' => 'file|max:102400', // max 100MB
+            'evidences.*' => 'file', // no size limit
+            'temp_evidences' => 'nullable|array',
+            'temp_evidences.*' => 'string',
         ]);
 
         $report = Report::create([
@@ -76,6 +82,52 @@ class PastReportController extends Controller
             'anonymous' => $request->has('anonymous') ? 1 : 0,
             'status' => 'Submitted',
         ]);
+
+        ReportStatusLog::create([
+            'report_id' => $report->id,
+            'old_status' => null,
+            'new_status' => 'Submitted',
+            'changed_by' => Auth::id(),
+            'changed_at' => now(),
+        ]);
+
+        ReportTimelineEvent::create([
+            'report_id' => $report->id,
+            'event_type' => 'report_submitted',
+            'event_message' => 'Laporan Anda sudah kami terima. Safora sedang memproses peninjauan kasus ini.',
+            'actor_type' => 'user',
+            'actor_id' => Auth::id(),
+        ]);
+
+        // Process temporary uploaded files from ajax
+        if ($request->has('temp_evidences')) {
+            foreach ($request->input('temp_evidences') as $tempPath) {
+                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($tempPath)) {
+                    $fileName = basename($tempPath);
+                    $newPath = 'evidences/' . $fileName;
+                    
+                    // Move file from temp to evidences
+                    \Illuminate\Support\Facades\Storage::disk('public')->move($tempPath, $newPath);
+                    
+                    $fullPath = storage_path('app/public/' . $newPath);
+                    $hash = file_exists($fullPath) ? hash_file('sha256', $fullPath) : null;
+                    
+                    // Detect mime type
+                    $mimeType = \Illuminate\Support\Facades\Storage::disk('public')->mimeType($newPath) ?: 'application/octet-stream';
+
+                    Evidence::create([
+                        'report_id'   => $report->id,
+                        'file_url'    => $newPath,
+                        'file_type'   => $mimeType,
+                        'file_hash'   => $hash,
+                        'uploaded_by' => Auth::id(),
+                        'uploaded_at' => now(),
+                        'uploaded_ip' => $request->ip(),
+                        'device_info' => $request->userAgent(),
+                    ]);
+                }
+            }
+        }
 
         // Process directly uploaded files
         if ($request->hasFile('evidences')) {
@@ -128,6 +180,37 @@ class PastReportController extends Controller
             'routed_partner_id' => $partners->first()->id,
         ]);
 
+        if ($partners->isNotEmpty()) {
+            ReportStatusLog::create([
+                'report_id' => $report->id,
+                'old_status' => 'Submitted',
+                'new_status' => 'Routed',
+                'changed_by' => Auth::id(),
+                'changed_at' => now(),
+            ]);
+
+            ReportTimelineEvent::create([
+                'report_id' => $report->id,
+                'event_type' => 'forwarded_to_partners',
+                'event_message' => 'Laporan Anda telah diteruskan ke ' . $partners->count() . ' institusi terdekat yang relevan.',
+                'actor_type' => 'system',
+            ]);
+
+            ReportTimelineEvent::create([
+                'report_id' => $report->id,
+                'event_type' => 'waiting_for_partner',
+                'event_message' => 'Kami sedang menunggu partner tersedia meninjau laporan ini.',
+                'actor_type' => 'system',
+            ]);
+        } else {
+            ReportTimelineEvent::create([
+                'report_id' => $report->id,
+                'event_type' => 'no_partner_found',
+                'event_message' => 'Kami belum menemukan partner yang sesuai. Admin Safora akan tetap diberi peringatan.',
+                'actor_type' => 'system',
+            ]);
+        }
+
         foreach ($partners as $partner) {
             ReportPartnerRouting::create([
                 'report_id' => $report->id,
@@ -147,6 +230,21 @@ class PastReportController extends Controller
 
                 try {
                     FonnteService::send($partner->phone, $partnerMessage);
+                } catch (\Exception $e) {
+                    // skip
+                }
+            }
+
+            // Juga kirim ke ADMIN_PHONE sebagai testing jika nomor partner adalah nomor dummy atau sedang ditest
+            if (env('ADMIN_PHONE')) {
+                $trackingLink = url('/partner/report/' . $report->id);
+                $partnerMessage =
+                    "🚨 *Safora - Laporan Baru Diterima (Test Partner)*\n\n" .
+                    "Kategori: *{$report->category}*\n\n" .
+                    "🔗 Buka dashboard mitra untuk merespons:\n{$trackingLink}";
+
+                try {
+                    FonnteService::send(env('ADMIN_PHONE'), $partnerMessage);
                 } catch (\Exception $e) {
                     // skip
                 }

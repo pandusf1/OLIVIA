@@ -37,7 +37,7 @@ class EvidenceController extends Controller
         if ($request->hasFile('evidence')) {
             $request->validate([
                 'evidence' => 'required|array',
-                'evidence.*' => 'file|max:20480',
+                'evidence.*' => 'file', // no size limit
             ]);
 
             $files = $request->file('evidence');
