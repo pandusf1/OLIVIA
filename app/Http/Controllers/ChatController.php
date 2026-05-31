@@ -301,23 +301,156 @@ class ChatController extends Controller
 
     // ─── Legacy methods (kept for backward compat, deprecated) ──────────────
 
+    // ─── Direct User Chat methods ───────────────────────────────────────────
+
     public function indexThreads()
     {
-        return redirect('/dashboard');
+        $user = auth()->user();
+        $isPartner = $user && $user->role === 'partner';
+        
+        if ($isPartner) {
+            $threads = ChatThread::with(['partner', 'user'])
+                ->where('partner_id', $user->partner_id)
+                ->orderBy('last_message_at', 'desc')
+                ->get();
+            $viewerType = 'partner';
+        } else {
+            $threads = ChatThread::with(['partner', 'user'])
+                ->where('user_id', $user->id)
+                ->orderBy('last_message_at', 'desc')
+                ->get();
+            $viewerType = 'user';
+        }
+
+        return view('pages.user.chat', [
+            'threads' => $threads,
+            'partnerId' => null,
+            'partner' => null,
+            'messages' => [],
+            'viewerType' => $viewerType,
+            'reportContext' => null,
+        ]);
     }
 
     public function start(string $partnerId)
     {
-        return redirect('/dashboard');
+        $user = auth()->user();
+        
+        $thread = ChatThread::firstOrCreate([
+            'user_id' => $user->id,
+            'partner_id' => $partnerId,
+        ], [
+            'id' => (string) \Illuminate\Support\Str::uuid(),
+            'last_message_at' => now(),
+        ]);
+        
+        return redirect()->route('chat.messages', ['partnerId' => $partnerId]);
     }
 
     public function messages(string $partnerId)
     {
-        return redirect('/dashboard');
+        $user = auth()->user();
+        $isPartner = $user && $user->role === 'partner';
+        
+        if ($isPartner) {
+            $threads = ChatThread::with(['partner', 'user'])
+                ->where('partner_id', $user->partner_id)
+                ->orderBy('last_message_at', 'desc')
+                ->get();
+                
+            $thread = ChatThread::firstOrCreate([
+                'user_id' => $partnerId,
+                'partner_id' => $user->partner_id,
+            ], [
+                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'last_message_at' => now(),
+            ]);
+            
+            $partner = Partner::find($user->partner_id);
+            $viewerType = 'partner';
+        } else {
+            $threads = ChatThread::with(['partner', 'user'])
+                ->where('user_id', $user->id)
+                ->orderBy('last_message_at', 'desc')
+                ->get();
+                
+            $thread = ChatThread::firstOrCreate([
+                'user_id' => $user->id,
+                'partner_id' => $partnerId,
+            ], [
+                'id' => (string) \Illuminate\Support\Str::uuid(),
+                'last_message_at' => now(),
+            ]);
+            
+            $partner = Partner::findOrFail($partnerId);
+            $viewerType = 'user';
+        }
+
+        $messages = $thread->messages()->orderBy('created_at', 'asc')->get();
+
+        if (request()->ajax() || request()->header('X-Requested-With') === 'XMLHttpRequest' || request()->expectsJson()) {
+            return response()->json([
+                'messages' => $messages->map(function ($msg) use ($viewerType, $user) {
+                    $isMine = false;
+                    if ($viewerType === 'partner') {
+                        $isMine = $msg->sender_type === 'partner' && (string) $msg->sender_id === (string) $user->partner_id;
+                    } else {
+                        $isMine = $msg->sender_type === 'user' && (string) $msg->sender_id === (string) $user->id;
+                    }
+                    return [
+                        'id'          => $msg->id,
+                        'message'     => $msg->message,
+                        'sender_type' => $msg->sender_type,
+                        'time'        => $msg->created_at->format('H:i'),
+                    ];
+                })
+            ]);
+        }
+
+        return view('pages.user.chat', [
+            'threads' => $threads,
+            'partnerId' => $partnerId,
+            'partner' => $partner,
+            'messages' => $messages,
+            'viewerType' => $viewerType,
+            'reportContext' => $thread->report,
+        ]);
     }
 
     public function send(Request $request, string $partnerId)
     {
-        return redirect('/dashboard');
+        $request->validate(['message' => 'required|string|max:2000']);
+
+        $user = auth()->user();
+        $isPartner = $user && $user->role === 'partner';
+
+        if ($isPartner) {
+            $thread = ChatThread::where('user_id', $partnerId)
+                ->where('partner_id', $user->partner_id)
+                ->firstOrFail();
+            $senderType = 'partner';
+            $senderId = $user->partner_id;
+        } else {
+            $thread = ChatThread::where('user_id', $user->id)
+                ->where('partner_id', $partnerId)
+                ->firstOrFail();
+            $senderType = 'user';
+            $senderId = $user->id;
+        }
+
+        $msg = ChatMessage::create([
+            'chat_thread_id' => $thread->id,
+            'sender_type'    => $senderType,
+            'sender_id'      => $senderId,
+            'message'        => $request->message,
+        ]);
+
+        $thread->update(['last_message_at' => now()]);
+
+        if ($request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return response()->json(['ok' => true]);
+        }
+
+        return redirect()->back();
     }
 }

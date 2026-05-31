@@ -55,27 +55,35 @@ class EvidenceController extends Controller
             }
 
             foreach ($files as $file) {
-                $path = $file->store('evidences', 'public');
-                $hash = hash_file('sha256', $file->getRealPath());
+                try {
+                    $path = $file->store('evidences', 'public');
+                    $hash = hash_file('sha256', $file->getRealPath());
 
-                $evidence = Evidence::create([
-                    'report_id'   => $reportId,
-                    'file_url'    => $path,
-                    'file_type'   => $file->getClientMimeType(),
-                    'file_hash'   => $hash,
-                    'uploaded_by' => auth()->id(),
-                    'uploaded_at' => now(),
-                    'uploaded_ip' => $request->ip(),
-                    'device_info' => $request->userAgent(),
-                    'uploader_role' => $uploaderRole,
-                ]);
+                    $evidence = Evidence::create([
+                        'report_id'   => $reportId,
+                        'file_url'    => $path,
+                        'file_type'   => $file->getClientMimeType(),
+                        'file_hash'   => $hash,
+                        'uploaded_by' => auth()->id(),
+                        'uploaded_at' => now(),
+                        'uploaded_ip' => $request->ip(),
+                        'device_info' => $request->userAgent(),
+                        'uploader_role' => $uploaderRole,
+                    ]);
 
-                $uploaded[] = [
-                    'id' => $evidence->id,
-                    'file_url' => asset('storage/' . $evidence->file_url),
-                    'file_type' => $evidence->file_type,
-                    'uploader_role' => $evidence->uploader_role,
-                ];
+                    $uploaded[] = [
+                        'id' => $evidence->id,
+                        'file_url' => asset('storage/' . $evidence->file_url),
+                        'file_type' => $evidence->file_type,
+                        'uploader_role' => $evidence->uploader_role,
+                    ];
+                } catch (\Exception $e) {
+                    \Log::error("Evidence upload error: " . $e->getMessage());
+                    return response()->json([
+                        'ok' => false,
+                        'error' => 'Gagal upload: ' . $e->getMessage()
+                    ], 500);
+                }
             }
         }
 

@@ -124,9 +124,14 @@ class TrackingController extends Controller
             $searchId = trim($searchId);
 
             if ($searchId) {
-                $report = Report::where('id', $searchId)
-                    ->orWhere('id', 'like', $searchId . '%')
-                    ->first();
+                $searchId = strtolower($searchId);
+                
+                // If it is a full valid UUID, query directly. Otherwise cast and match prefix (PostgreSQL compatible)
+                if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $searchId)) {
+                    $report = Report::where('id', $searchId)->first();
+                } else {
+                    $report = Report::whereRaw("CAST(id AS text) LIKE ?", [$searchId . '%'])->first();
+                }
                 
                 if ($report) {
                     return redirect('/tracking/' . $report->id);

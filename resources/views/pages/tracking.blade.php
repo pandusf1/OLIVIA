@@ -667,8 +667,13 @@
                 }
             } else {
                 const txt = document.getElementById(`text-${uniqueId}`);
+                let errMsg = 'Gagal upload';
+                try {
+                    const errData = JSON.parse(xhr.responseText);
+                    if (errData && errData.error) errMsg = errData.error;
+                } catch(e) {}
                 if (txt) {
-                    txt.innerText = 'Gagal upload';
+                    txt.innerText = errMsg;
                     txt.classList.add('text-red-500');
                 }
                 const bar = document.getElementById(`progress-${uniqueId}`);

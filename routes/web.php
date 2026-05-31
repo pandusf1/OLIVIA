@@ -48,6 +48,13 @@ Route::post('/tracking/{id}/location', [TrackingController::class, 'updateLocati
 Route::get('/tracking/{id}', [TrackingController::class, 'show'])->name('tracking.show');
 Route::post('/tracking/{reportId}/evidence', [EvidenceController::class, 'store'])->name('evidence.store');
 Route::delete('/evidence/{id}', [EvidenceController::class, 'destroy'])->name('evidence.destroy');
+Route::get('/storage/evidences/{filename}', function ($filename) {
+    $path = storage_path('app/public/evidences/' . $filename);
+    if (!file_exists($path)) {
+        abort(404);
+    }
+    return response()->file($path);
+});
 Route::post('/tracking/{id}/resolve', [TrackingController::class, 'resolve'])->name('tracking.resolve');
 Route::post('/tracking/{id}/chronology', [TrackingController::class, 'storeChronology'])->name('tracking.chronology');
 
