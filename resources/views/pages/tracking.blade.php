@@ -107,7 +107,7 @@
                         @else
                             <div id="chat-action" class="inline-flex items-center gap-1.5">
                                 <span id="chat-checking" class="text-[10px] text-gray-400 italic">Memeriksa lokasi...</span>
-                                <a id="chat-link" href="#" class="hidden inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-900 hover:bg-gray-700 text-white transition shadow-sm" title="Buka Chat Laporan">
+                                <a id="chat-link" href="#" class="hidden items-center justify-center w-8 h-8 rounded-full bg-gray-900 hover:bg-gray-700 text-white transition shadow-sm" title="Buka Chat Laporan">
                                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"/></svg>
                                 </a>
                             </div>
@@ -174,7 +174,7 @@
                                         || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner'))
                                         || in_array($report->id, session('my_reports', []));
                                 @endphp
-                                <a href="{{ $canView ? asset('storage/' . $evidence->file_url) : '#' }}" target="{{ $canView ? '_blank' : '' }}" onclick="{{ !$canView ? "alert('Bukti hanya bisa dibuka oleh korban / mitra'); return false;" : '' }}" class="block aspect-square rounded-lg border border-gray-200 overflow-hidden relative group bg-gray-100 flex items-center justify-center">
+                                <a href="{{ $canView ? asset('storage/' . $evidence->file_url) : '#' }}" target="{{ $canView ? '_blank' : '' }}" onclick="{{ !$canView ? "alert('Bukti hanya bisa dibuka oleh korban / mitra'); return false;" : '' }}" class="aspect-square rounded-lg border border-gray-200 overflow-hidden relative group bg-gray-100 flex items-center justify-center">
                                     @if($isImage)
                                         <img src="{{ asset('storage/' . $evidence->file_url) }}" class="w-full h-full object-cover {{ !$canView ? 'blur-md scale-110' : '' }}" alt="Bukti">
                                     @elseif($isVideo)
@@ -361,8 +361,10 @@
                 // Show/hide based on distance check result
                 if (window._chatAllowed) {
                     chatLink.classList.remove('hidden');
+                    chatLink.classList.add('inline-flex');
                 } else {
                     chatLink.classList.add('hidden');
+                    chatLink.classList.remove('inline-flex');
                 }
             }
         } else {
@@ -496,7 +498,10 @@
                     const dist = haversineKm(lat, lng, parseFloat(reportLat), parseFloat(reportLng));
                     if (dist <= 5.0) {
                         window._chatAllowed = true;
-                        if (chatLink) chatLink.classList.remove('hidden');
+                        if (chatLink) {
+                            chatLink.classList.remove('hidden');
+                            chatLink.classList.add('inline-flex');
+                        }
                         if (distNote) distNote.classList.remove('hidden');
                     } else {
                         window._chatAllowed = false;
@@ -506,7 +511,10 @@
                 } else {
                     // Laporan tidak punya GPS — tidak bisa verifikasi jarak
                     window._chatAllowed = true;
-                    if (chatLink) chatLink.classList.remove('hidden');
+                    if (chatLink) {
+                        chatLink.classList.remove('hidden');
+                        chatLink.classList.add('inline-flex');
+                    }
                     if (distNote) {
                         distNote.textContent = '📍 Lokasi laporan tidak tersedia — tombol chat tetap bisa dicoba.';
                         distNote.classList.remove('hidden');
@@ -617,12 +625,14 @@
         if (!m) return;
         document.body.style.overflow = 'hidden';
         m.classList.remove('hidden');
+        m.classList.add('flex');
     }
 
     function closeEvidenceModal() {
         const m = document.getElementById('evidence-modal');
         if (!m) return;
         m.classList.add('hidden');
+        m.classList.remove('flex');
         document.body.style.overflow = '';
         document.getElementById('upload-list').innerHTML = '';
     }
@@ -632,12 +642,14 @@
         if (!m) return;
         document.body.style.overflow = 'hidden';
         m.classList.remove('hidden');
+        m.classList.add('flex');
     }
 
     function closeChronologyModal() {
         const m = document.getElementById('chronology-modal');
         if (!m) return;
         m.classList.add('hidden');
+        m.classList.remove('flex');
         document.body.style.overflow = '';
         document.getElementById('chrono-description').value = '';
     }
@@ -723,7 +735,7 @@
 </script>
 
 {{-- ===== EVIDENCE MODAL ===== --}}
-<div id="evidence-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center px-4 transition-all duration-300">
+<div id="evidence-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center px-4 transition-all duration-300">
     <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl">
         <div class="flex items-start justify-between gap-3 mb-4">
             <div>
@@ -750,7 +762,7 @@
 </div>
 
 {{-- ===== KRONOLOGI MODAL ===== --}}
-<div id="chronology-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center px-4 transition-all duration-300">
+<div id="chronology-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center px-4 transition-all duration-300">
     <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl">
         <div class="flex items-start justify-between gap-3 mb-4">
             <div>

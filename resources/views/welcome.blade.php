@@ -111,7 +111,7 @@
     </section>
 
     {{-- EMERGENCY MODAL --}}
-    <div id="emergency-modal" class="fixed inset-0 z-[999] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm hidden" onclick="if(event.target===this)closeEmergencyModal()">
+    <div id="emergency-modal" class="fixed inset-0 z-[999] items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm hidden" onclick="if(event.target===this)closeEmergencyModal()">
         <div class="modal-in bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
 
             {{-- STEP 1: Pilih Kategori --}}
@@ -340,7 +340,9 @@ let isSubmitting = false;
 let selectedCategory = null;
 
 function openEmergencyModal() {
-    document.getElementById('emergency-modal').classList.remove('hidden');
+    const modal = document.getElementById('emergency-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
     document.getElementById('step-category').classList.remove('hidden');
     document.getElementById('step-sending').classList.add('hidden');
     document.body.style.overflow = 'hidden';
@@ -348,7 +350,9 @@ function openEmergencyModal() {
 
 function closeEmergencyModal() {
     cancelEmergency();
-    document.getElementById('emergency-modal').classList.add('hidden');
+    const modal = document.getElementById('emergency-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
     document.body.style.overflow = '';
 }
 
