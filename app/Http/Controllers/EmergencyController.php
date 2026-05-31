@@ -29,6 +29,29 @@ class EmergencyController extends Controller
             'category' => 'required|string',
         ]);
 
+        // Limit guest users to only 1 active unresolved report on the same device
+        if (!auth()->check()) {
+            $cookieIds = [];
+            if ($request->hasCookie('safora_my_reports')) {
+                $cookieIds = json_decode($request->cookie('safora_my_reports'), true) ?: [];
+            }
+            $sessionIds = $request->session()->get('my_reports', []);
+            $allIds = array_unique(array_merge($cookieIds, $sessionIds));
+
+            $hasActiveReport = false;
+            if (!empty($allIds)) {
+                $hasActiveReport = \App\Models\Report::whereIn('id', $allIds)
+                    ->where('status', '!=', 'Resolved')
+                    ->exists();
+            }
+
+            if ($hasActiveReport) {
+                return response()->json([
+                    'error' => 'Tidak bisa membuat laporan baru. Mohon login untuk membuat lebih dari 1 laporan.'
+                ], 400);
+            }
+        }
+
         $userId = null;
 
         try {
