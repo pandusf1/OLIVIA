@@ -13,6 +13,7 @@ class ChatThread extends Model
 
     protected $fillable = [
         'id',
+        'report_id',
         'user_id',
         'partner_id',
         'last_message_at',
@@ -33,6 +34,11 @@ class ChatThread extends Model
     public function partner()
     {
         return $this->belongsTo(Partner::class);
+    }
+
+    public function report()
+    {
+        return $this->belongsTo(Report::class);
     }
 
     public function messages()

@@ -6,315 +6,233 @@ use App\Models\ChatMessage;
 use App\Models\ChatThread;
 use App\Models\Partner;
 use App\Models\Report;
-use App\Models\UserPartnerPayment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class ChatController extends Controller
 {
-    private function paidPartnerIds()
+    /**
+     * Cek apakah user/guest boleh masuk ke chat laporan ini.
+     *
+     * Akses TERBUKA dari awal untuk:
+     * 1. Pelapor (user_id === report.user_id, atau via session my_reports)
+     * 2. Warga dalam radius < 5 km dari lokasi laporan (lat/lng via query param)
+     *
+     * Partner bisa join chat setelah menerima (accept) laporan.
+     * Partner yang belum accept tidak bisa masuk.
+     */
+    private function canAccessReportChat(Report $report, ?float $lat = null, ?float $lng = null): bool
     {
-        return UserPartnerPayment::query()
-            ->where('user_id', auth()->id())
-            ->where('status', 'paid')
-            ->pluck('partner_id')
-            ->unique()
-            ->values();
-    }
-
-    private function paidThreads()
-    {
-        $partnerIds = $this->paidPartnerIds();
-        $now = now();
-
-        foreach ($partnerIds as $partnerId) {
-            ChatThread::firstOrCreate(
-                ['user_id' => auth()->id(), 'partner_id' => $partnerId],
-                ['id' => (string) Str::uuid(), 'last_message_at' => $now]
-            );
-        }
-
-        return ChatThread::query()
-            ->where('user_id', auth()->id())
-            ->whereIn('partner_id', $partnerIds)
-            ->with('partner')
-            ->orderByDesc('last_message_at')
-            ->get();
-    }
-
-    private function canChat(string $partnerId, ?Report $report = null, ?string $userId = null): bool
-    {
-        if ($this->hasPaidAccess($partnerId, $userId)) {
-            return true;
-        }
-        return $this->hasEmergencyChatAccess($partnerId, $report);
-    }
-
-    private function hasPaidAccess(string $partnerId, ?string $userId = null): bool
-    {
-        $checkUserId = auth()->user()->role === 'partner' ? $userId : auth()->id();
-        
-        if (!$checkUserId) {
-            return false;
-        }
-
-        return UserPartnerPayment::query()
-            ->where('user_id', $checkUserId)
-            ->where('partner_id', $partnerId)
-            ->where('status', 'paid')
-            ->exists();
-    }
-
-    private function reportContext(?string $reportId): ?Report
-    {
-        if (!$reportId) {
-            return null;
-        }
-
-        return Report::with(['user', 'evidences', 'partnerRoutings.partner'])->find($reportId);
-    }
-
-    private function hasEmergencyChatAccess(string $partnerId, ?Report $report): bool
-    {
-        if (!$report) {
-            return false;
-        }
-
         $user = auth()->user();
 
-        if ($user->role === 'partner') {
-            return (string) $user->partner_id === (string) $partnerId
-                && $report->partnerRoutings()
-                    ->where('partner_id', $partnerId)
-                    ->where('status', 'accepted')
-                    ->exists();
-        }
-
-        return (string) $report->user_id === (string) $user->id
-            && $report->partnerRoutings()
-                ->where('partner_id', $partnerId)
+        // Partner: hanya yang sudah accept laporan ini
+        if ($user && $user->role === 'partner') {
+            return $report->partnerRoutings()
+                ->where('partner_id', $user->partner_id)
                 ->where('status', 'accepted')
                 ->exists();
+        }
+
+        // Pelapor login
+        if ($user && $report->user_id && (string) $user->id === (string) $report->user_id) {
+            return true;
+        }
+
+        // Pelapor via session (anonymous report)
+        if (in_array($report->id, session()->get('my_reports', []))) {
+            return true;
+        }
+
+        // Warga/saksi: dalam radius 5 km dari lokasi laporan
+        if ($lat !== null && $lng !== null && $report->latitude && $report->longitude) {
+            $dist = $this->haversineKm($lat, $lng, (float) $report->latitude, (float) $report->longitude);
+            if ($dist <= 5.0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
-    private function currentThreads()
+    private function haversineKm(float $lat1, float $lon1, float $lat2, float $lon2): float
     {
+        $R = 6371;
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        $a = sin($dLat / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) ** 2;
+        return $R * 2 * atan2(sqrt($a), sqrt(1 - $a));
+    }
+
+    /**
+     * Tentukan nama pengirim untuk tampilan chat.
+     */
+    private function senderDisplayName(ChatMessage $msg, Report $report): string
+    {
+        if ($msg->sender_type === 'partner') {
+            $partner = Partner::find($msg->sender_id);
+            return $partner ? $partner->partner_name : 'Mitra Safora';
+        }
+
+        // Cek jika pelapor via cache (guest reporter)
+        $reporterUuid = \Illuminate\Support\Facades\Cache::get("report_{$report->id}_reporter_uuid");
+
+        $isReporter = ($report->user_id && (string) $msg->sender_id === (string) $report->user_id)
+            || ($reporterUuid && (string) $msg->sender_id === (string) $reporterUuid);
+
+        if ($isReporter) {
+            if ($msg->sender_type === 'user') {
+                $user = \App\Models\User::find($msg->sender_id);
+                $name = $user ? $user->name : 'anonymous';
+                return "Korban ({$name})";
+            }
+            return 'Korban (anonymous)';
+        }
+
+        // Warga/saksi biasa (non-reporter)
+        if ($msg->sender_type === 'anonymous' || !$msg->sender_id) {
+            return 'anonymous';
+        }
+
+        $user = \App\Models\User::find($msg->sender_id);
+        return $user ? $user->name : 'anonymous';
+    }
+
+    /**
+     * Halaman chat laporan (GET /chat/report/{reportId})
+     */
+    public function reportChat(string $reportId)
+    {
+        $report = Report::with([
+            'user',
+            'partnerRoutings.partner',
+            'timelineEvents',
+        ])->findOrFail($reportId);
+
+        $lat  = request()->query('lat')  ? (float) request()->query('lat')  : null;
+        $lng  = request()->query('lng')  ? (float) request()->query('lng')  : null;
+
+        if (!$this->canAccessReportChat($report, $lat, $lng)) {
+            abort(403, 'Akses chat tidak diizinkan. Kamu harus berada dalam radius 5 km dari lokasi kejadian, atau merupakan pelapor/partner yang menangani.');
+        }
+
+        // Cek jika pelapor adalah guest, simpan anonymous_chat_uuid di cache agar teridentifikasi sebagai Korban
+        if (in_array($report->id, session()->get('my_reports', []))) {
+            if (!session()->has('anonymous_chat_uuid')) {
+                session()->put('anonymous_chat_uuid', (string) \Illuminate\Support\Str::uuid());
+            }
+            \Illuminate\Support\Facades\Cache::forever("report_{$report->id}_reporter_uuid", session()->get('anonymous_chat_uuid'));
+        }
+
+        // Buat/ambil thread untuk laporan ini
+        $thread = ChatThread::firstOrCreate(
+            ['report_id' => $report->id],
+            ['id' => (string) Str::uuid(), 'last_message_at' => now()]
+        );
+
+        $rawMessages = $thread->messages()->orderBy('created_at', 'asc')->get();
+
+        $messages = $rawMessages->map(function ($msg) use ($report) {
+            $user = auth()->user();
+            $isMine = false;
+
+            if ($user && $user->role === 'partner') {
+                $isMine = $msg->sender_type === 'partner' && (string) $msg->sender_id === (string) $user->partner_id;
+            } elseif ($user) {
+                $isMine = $msg->sender_type !== 'partner' && (string) $msg->sender_id === (string) $user->id;
+            } else {
+                // Guest: identifikasi via session UUID
+                if (!session()->has('anonymous_chat_uuid')) {
+                    session()->put('anonymous_chat_uuid', (string) \Illuminate\Support\Str::uuid());
+                }
+                $isMine = $msg->sender_type === 'anonymous' && $msg->sender_id === session()->get('anonymous_chat_uuid');
+            }
+
+            return [
+                'id'          => $msg->id,
+                'message'     => $msg->message,
+                'sender_type' => $msg->sender_type,
+                'sender_name' => $this->senderDisplayName($msg, $report),
+                'time'        => $msg->created_at->format('H:i'),
+                'date'        => $msg->created_at->format('d M'),
+                'is_mine'     => $isMine,
+            ];
+        });
+
+        // Identitas pengirim saat ini
         $user = auth()->user();
-
-        if ($user->role === 'partner') {
-            return ChatThread::query()
-                ->where('partner_id', $user->partner_id)
-                ->with(['partner', 'user'])
-                ->orderByDesc('last_message_at')
-                ->get()
-                ->map(function ($thread) {
-                    $report = Report::query()
-                        ->where('user_id', $thread->user_id)
-                        ->whereHas('partnerRoutings', function ($query) use ($thread) {
-                            $query->where('partner_id', $thread->partner_id)
-                                ->where('status', 'accepted');
-                        })
-                        ->latest('updated_at')
-                        ->first();
-
-                    $thread->report_context_id = $report?->id;
-                    $thread->is_anonymous = $report?->anonymous ?? false;
-
-                    return $thread;
-                });
+        if ($user && $user->role === 'partner') {
+            $currentSenderType = 'partner';
+            $currentSenderId   = $user->partner_id;
+            $currentName       = Partner::find($user->partner_id)?->partner_name ?? 'Mitra';
+        } elseif ($user) {
+            $currentSenderType = 'user';
+            $currentSenderId   = $user->id;
+            $isReporter        = $report->user_id && (string) $user->id === (string) $report->user_id;
+            $currentName       = $isReporter ? "Korban ({$user->name})" : $user->name;
+        } else {
+            $currentSenderType = 'anonymous';
+            if (!session()->has('anonymous_chat_uuid')) {
+                session()->put('anonymous_chat_uuid', (string) \Illuminate\Support\Str::uuid());
+            }
+            $currentSenderId   = session()->get('anonymous_chat_uuid');
+            
+            $isGuestReporter = in_array($report->id, session()->get('my_reports', []));
+            $currentName       = $isGuestReporter ? 'Korban (anonymous)' : 'anonymous';
         }
 
-        $paidPartnerIds = $this->paidPartnerIds()->toArray();
-        $emergencyPartnerIds = Report::query()
-            ->where('user_id', $user->id)
-            ->whereNotNull('handler_partner_id')
-            ->pluck('handler_partner_id')
-            ->unique()
-            ->toArray();
-
-        $allPartnerIds = array_unique(array_merge($paidPartnerIds, $emergencyPartnerIds));
-
-        // Create threads if not exist for paid ones
-        foreach ($paidPartnerIds as $partnerId) {
-            ChatThread::firstOrCreate(
-                ['user_id' => $user->id, 'partner_id' => $partnerId],
-                ['id' => (string) Str::uuid(), 'last_message_at' => now()]
-            );
-        }
-
-        return ChatThread::query()
-            ->where('user_id', $user->id)
-            ->whereIn('partner_id', $allPartnerIds)
-            ->with('partner')
-            ->orderByDesc('last_message_at')
-            ->get()
-            ->map(function ($thread) {
-                // Determine if this is an emergency thread to set report context
-                $report = Report::query()
-                    ->where('user_id', $thread->user_id)
-                    ->where('handler_partner_id', $thread->partner_id)
-                    ->latest('updated_at')
-                    ->first();
-                $thread->report_context_id = $report?->id;
-                return $thread;
-            });
-    }
-
-    private function threadFor(string $partnerId, ?Report $report = null, ?string $userId = null): ?ChatThread
-    {
-        $uId = auth()->id();
-
-        if (auth()->user()->role === 'partner') {
-            $uId = $report ? $report->user_id : $userId;
-        }
-
-        if (!$uId) {
-            return null;
-        }
-
-        return ChatThread::query()
-            ->where('user_id', $uId)
-            ->where('partner_id', $partnerId)
-            ->first();
-    }
-
-    public function start(string $partnerId)
-    {
-        if (!$this->hasPaidAccess($partnerId)) {
-            return redirect()
-                ->route('partner.data', ['partnerId' => $partnerId])
-                ->with('success', 'Pilih layanan dan selesaikan pembayaran dulu untuk membuka chat.');
-        }
-
-        $userId = auth()->id();
-
-        $thread = ChatThread::query()
-            ->where('user_id', $userId)
-            ->where('partner_id', $partnerId)
-            ->first();
-
-        if (!$thread) {
-            $thread = ChatThread::create([
-                'id'             => (string) Str::uuid(),
-                'user_id'        => $userId,
-                'partner_id'     => $partnerId,
-                'last_message_at'=> now(),
-            ]);
-        }
-
-        $messages = $thread->messages()->latest()->get()->reverse()->values();
-        $partner  = Partner::find($partnerId);
-
-        return view('pages.user.chat', [
-            'partnerId' => $partnerId,
-            'threadId'  => $thread->id,
-            'messages'  => $messages,
-            'partner'   => $partner,
-            'threads'   => $this->currentThreads(),
-            'reportContext' => null,
-            'viewerType' => 'user',
-        ]);
-    }
-
-    public function indexThreads()
-    {
-        return view('pages.user.chat', [
-            'partnerId' => null,
-            'threadId' => null,
-            'messages' => collect(),
-            'partner' => null,
-            'threads' => $this->currentThreads(),
-            'reportContext' => null,
-            'viewerType' => auth()->user()->role === 'partner' ? 'partner' : 'user',
+        return view('pages.chat', [
+            'report'            => $report,
+            'thread'            => $thread,
+            'messages'          => $messages,
+            'currentSenderType' => $currentSenderType,
+            'currentSenderId'   => $currentSenderId,
+            'currentName'       => $currentName,
+            'userLat'           => $lat,
+            'userLng'           => $lng,
         ]);
     }
 
     /**
-     * JSON endpoint: fetch messages for the widget
+     * Kirim pesan (POST /chat/report/{reportId}/send)
      */
-    public function messages(string $partnerId)
+    public function sendMessage(Request $request, string $reportId)
     {
-        $report = $this->reportContext(request('report_id'));
-        $userId = request('user_id');
+        $report = Report::with(['user', 'partnerRoutings'])->findOrFail($reportId);
 
-        if (!$this->canChat($partnerId, $report, $userId)) {
-            if (request()->ajax() || request()->expectsJson()) {
-                return response()->json(['messages' => []], 403);
+        $lat = $request->query('lat') ? (float) $request->query('lat') : null;
+        $lng = $request->query('lng') ? (float) $request->query('lng') : null;
+
+        if (!$this->canAccessReportChat($report, $lat, $lng)) {
+            if ($request->expectsJson()) {
+                return response()->json(['ok' => false, 'message' => 'Akses ditolak.'], 403);
             }
-
-            return redirect()->route('chat.threads')->with('success', 'Akses chat tidak tersedia.');
+            abort(403);
         }
 
-        $thread = $this->threadFor($partnerId, $report, $userId);
+        $request->validate(['message' => 'required|string|max:2000']);
 
-        if (!$thread && (request()->ajax() || request()->expectsJson())) {
-            return response()->json(['messages' => []]);
-        }
-
-        if (!$thread) {
-            return redirect()->route('chat.threads')->with('success', 'Thread chat belum tersedia.');
-        }
-
-        if (!(request()->ajax() || request()->expectsJson())) {
-            return view('pages.user.chat', [
-                'partnerId' => $partnerId,
-                'threadId' => $thread->id,
-                'messages' => $thread->messages()->latest()->get()->reverse()->values(),
-                'partner' => Partner::find($partnerId),
-                'threads' => $this->currentThreads(),
-                'reportContext' => $report,
-                'viewerType' => auth()->user()->role === 'partner' ? 'partner' : 'user',
-            ]);
-        }
-
-        $messages = $thread->messages()
-            ->latest()
-            ->limit(50)
-            ->get()
-            ->reverse()
-            ->values()
-            ->map(fn($m) => [
-                'sender_type' => $m->sender_type,
-                'message'     => $m->message,
-                'time'        => $m->created_at->format('H:i'),
-            ]);
-
-        return response()->json(['messages' => $messages]);
-    }
-
-    public function send(Request $request, string $partnerId)
-    {
-        $report = $this->reportContext($request->query('report_id'));
-        $userId = $request->query('user_id');
-
-        if (!$this->canChat($partnerId, $report, $userId)) {
-            if ($request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
-                return response()->json(['ok' => false], 403);
+        $user = auth()->user();
+        if ($user && $user->role === 'partner') {
+            $senderType = 'partner';
+            $senderId   = $user->partner_id;
+        } elseif ($user) {
+            $senderType = 'user';
+            $senderId   = $user->id;
+        } else {
+            $senderType = 'anonymous';
+            if (!session()->has('anonymous_chat_uuid')) {
+                session()->put('anonymous_chat_uuid', (string) \Illuminate\Support\Str::uuid());
             }
-
-            return redirect()
-                ->route('partner.data', ['partnerId' => $partnerId])
-                ->with('success', 'Pilih layanan dan selesaikan pembayaran dulu untuk membuka chat.');
-        }
-
-        $request->validate([
-            'message' => 'required|string|max:2000',
-        ]);
-
-        $senderType = auth()->user()->role === 'partner' ? 'partner' : 'user';
-        $senderId = $senderType === 'partner' ? auth()->user()->partner_id : auth()->id();
-        $threadUserId = $senderType === 'partner' ? ($report ? $report->user_id : $userId) : auth()->id();
-
-        if (!$threadUserId) {
-            if ($request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
-                return response()->json(['ok' => false], 422);
+            $senderId   = session()->get('anonymous_chat_uuid');
+            
+            // Cek jika pelapor adalah guest, simpan di cache
+            if (in_array($report->id, session()->get('my_reports', []))) {
+                \Illuminate\Support\Facades\Cache::forever("report_{$report->id}_reporter_uuid", $senderId);
             }
-
-            return back()->with('success', 'Chat belum bisa dibuka karena laporan tidak memiliki user pelapor.');
         }
 
         $thread = ChatThread::firstOrCreate(
-            ['user_id' => $threadUserId, 'partner_id' => $partnerId],
+            ['report_id' => $report->id],
             ['id' => (string) Str::uuid(), 'last_message_at' => now()]
         );
 
@@ -327,22 +245,79 @@ class ChatController extends Controller
 
         $thread->update(['last_message_at' => now()]);
 
-        // Return JSON for widget requests, HTML for normal form submissions
         if ($request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
             return response()->json(['ok' => true]);
         }
 
-        $messages = $thread->messages()->latest()->get()->reverse()->values();
-        $partner  = Partner::find($partnerId);
+        $redirectUrl = "/chat/report/{$reportId}";
+        if ($lat && $lng) {
+            $redirectUrl .= "?lat={$lat}&lng={$lng}";
+        }
+        return redirect($redirectUrl);
+    }
 
-        return view('pages.user.chat', [
-            'partnerId' => $partnerId,
-            'threadId'  => $thread->id,
-            'messages'  => $messages,
-            'partner'   => $partner,
-            'threads'   => $this->currentThreads(),
-            'reportContext' => $report,
-            'viewerType' => $senderType,
-        ]);
+    /**
+     * JSON endpoint: poll messages (GET /chat/report/{reportId}/messages)
+     */
+    public function pollMessages(string $reportId)
+    {
+        $report = Report::findOrFail($reportId);
+
+        $lat = request()->query('lat') ? (float) request()->query('lat') : null;
+        $lng = request()->query('lng') ? (float) request()->query('lng') : null;
+
+        if (!$this->canAccessReportChat($report, $lat, $lng)) {
+            return response()->json(['messages' => []], 403);
+        }
+
+        $thread = ChatThread::where('report_id', $reportId)->first();
+        if (!$thread) {
+            return response()->json(['messages' => []]);
+        }
+
+        $user = auth()->user();
+        $msgs = $thread->messages()->orderBy('created_at', 'asc')->get()->map(function ($msg) use ($report, $user) {
+            $isMine = false;
+            if ($user && $user->role === 'partner') {
+                $isMine = $msg->sender_type === 'partner' && (string) $msg->sender_id === (string) $user->partner_id;
+            } elseif ($user) {
+                $isMine = $msg->sender_type !== 'partner' && (string) $msg->sender_id === (string) $user->id;
+            } else {
+                $isMine = $msg->sender_type === 'anonymous' && $msg->sender_id === session()->get('anonymous_chat_uuid');
+            }
+
+            return [
+                'id'          => $msg->id,
+                'message'     => $msg->message,
+                'sender_name' => $this->senderDisplayName($msg, $report),
+                'time'        => $msg->created_at->format('H:i'),
+                'date'        => $msg->created_at->format('d M'),
+                'is_mine'     => $isMine,
+            ];
+        });
+
+        return response()->json(['messages' => $msgs]);
+    }
+
+    // ─── Legacy methods (kept for backward compat, deprecated) ──────────────
+
+    public function indexThreads()
+    {
+        return redirect('/dashboard');
+    }
+
+    public function start(string $partnerId)
+    {
+        return redirect('/dashboard');
+    }
+
+    public function messages(string $partnerId)
+    {
+        return redirect('/dashboard');
+    }
+
+    public function send(Request $request, string $partnerId)
+    {
+        return redirect('/dashboard');
     }
 }

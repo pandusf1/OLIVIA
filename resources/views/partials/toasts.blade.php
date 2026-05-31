@@ -107,21 +107,6 @@
     </script>
 @endif
 
-@if(session('witness_success'))
-    <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            showToast('{{ addslashes(session('witness_success')) }}', 'success');
-        });
-    </script>
-@endif
-
-@if(session('witness_success_message'))
-    <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            showToast('{{ addslashes(session('witness_success_message')) }}', 'success');
-        });
-    </script>
-@endif
 
 @if(session('warning'))
     <script>

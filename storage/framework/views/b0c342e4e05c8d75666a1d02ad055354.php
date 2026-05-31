@@ -3,15 +3,15 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
     <title>Safora</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
     <style>*{font-family:'Inter',sans-serif;} h1,.font-unbounded{font-family:'Space Grotesk',sans-serif!important;}</style>
 </head>
 <body class="bg-[#faf9f7] antialiased min-h-screen">
     <div class="min-h-screen flex flex-col">
-        {{-- Top nav --}}
+        
         <nav class="bg-white border-b border-gray-200">
             <div class="max-w-6xl mx-auto px-6 h-14 flex items-center">
                 <a href="/" class="flex items-center gap-2">
@@ -24,16 +24,18 @@
             </div>
         </nav>
 
-        {{-- Form area --}}
+        
         <div class="flex-1 flex flex-col items-center justify-center px-6 py-12">
             <div class="w-full max-w-sm bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
-                {{ $slot }}
+                <?php echo e($slot); ?>
+
             </div>
             <p class="text-gray-400 text-xs mt-6">
                 <a href="/" class="text-red-700 hover:text-red-800 transition">Kirim laporan darurat tanpa login →</a>
             </p>
         </div>
     </div>
-    @include('partials.toasts')
+    <?php echo $__env->make('partials.toasts', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 </body>
 </html>
+<?php /**PATH D:\CODING\olivia_final\resources\views/layouts/guest.blade.php ENDPATH**/ ?>

@@ -16,8 +16,7 @@
         </div>
         <div class="flex items-center gap-6">
             <a href="#cara-kerja" class="text-gray-500 hover:text-gray-900 text-sm transition hidden md:block">Cara Kerja</a>
-            <a href="/witness" class="text-gray-500 hover:text-gray-900 text-sm transition hidden md:block">Saksi</a>
-            <a href="/emergency" class="text-gray-500 hover:text-gray-900 text-sm transition hidden md:block">Darurat</a>
+            <a href="/tracking-search" class="text-gray-500 hover:text-gray-900 text-sm transition hidden md:block">Cek Laporan</a>
             @auth
             <div class="flex items-center">
                 <x-dropdown align="right" width="48">

@@ -107,21 +107,6 @@
     </script>
 <?php endif; ?>
 
-<?php if(session('witness_success')): ?>
-    <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            showToast('<?php echo e(addslashes(session('witness_success'))); ?>', 'success');
-        });
-    </script>
-<?php endif; ?>
-
-<?php if(session('witness_success_message')): ?>
-    <script>
-        window.addEventListener('DOMContentLoaded', () => {
-            showToast('<?php echo e(addslashes(session('witness_success_message'))); ?>', 'success');
-        });
-    </script>
-<?php endif; ?>
 
 <?php if(session('warning')): ?>
     <script>

@@ -52,7 +52,7 @@
             <p class="text-4xl mb-3">🔒</p>
             <p class="font-bold text-gray-900 mb-1">Belum ada laporan.</p>
             <p class="text-gray-400 text-sm mb-4">Buat laporan darurat dan upload bukti untuk mengisi locker ini.</p>
-            <a href="/emergency" class="inline-block bg-red-700 hover:bg-red-800 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">Buat Laporan</a>
+            <a href="/" class="inline-block bg-red-700 hover:bg-red-800 text-white px-5 py-2.5 rounded-xl font-semibold text-sm transition">Buat Laporan</a>
         </div>
         @endif
     </div>

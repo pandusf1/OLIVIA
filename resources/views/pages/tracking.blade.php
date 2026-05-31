@@ -66,56 +66,141 @@
         @endif
     </section>
 
+            @php
+                $user = auth()->user();
+                $isReporter = (auth()->check() && auth()->id() === $report->user_id)
+                           || in_array($report->id, session('my_reports', []));
+                $isAcceptedPartner = $user && $user->role === 'partner' && $report->partnerRoutings()
+                    ->where('partner_id', $user->partner_id)
+                    ->where('status', 'accepted')
+                    ->exists();
+                $hasDirectChatAccess = $isReporter || $isAcceptedPartner;
+            @endphp
+
             <section class="mt-4 rounded-lg border border-gray-200 bg-white p-5">
-                <h2 class="text-lg font-black">Bukti & Saksi</h2>
-                <p class="mt-1 text-sm text-gray-600">Tambah bukti jika aman dilakukan. Saksi bisa memakai ID laporan ini.</p>
-                <code class="-ml-3 block break-all rounded-lg bg-gray-50 p-3 text-xs text-gray-600">{{ $report->id }}</code>
-                
-                @if($report->evidences->count() > 0)
-                <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    @foreach($report->evidences as $evidence)
-                        @php
-                            $isImage = str_starts_with($evidence->file_type, 'image/');
-                            $isVideo = str_starts_with($evidence->file_type, 'video/');
-                            $isAudio = str_starts_with($evidence->file_type, 'audio/');
-                            
-                            $canView = $report->show_evidence 
-                                || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner'))
-                                || in_array($report->id, session('my_reports', []));
-                        @endphp
-                        <a href="{{ $canView ? asset('storage/' . $evidence->file_url) : '#' }}" target="{{ $canView ? '_blank' : '' }}" onclick="{{ !$canView ? "alert('Bukti hanya bisa dibuka oleh korban / mitra'); return false;" : '' }}" class="block aspect-square rounded-lg border border-gray-200 overflow-hidden relative group bg-gray-100 flex items-center justify-center">
-                            @if($isImage)
-                                <img src="{{ asset('storage/' . $evidence->file_url) }}" class="w-full h-full object-cover {{ !$canView ? 'blur-md scale-110' : '' }}" alt="Bukti">
-                            @elseif($isVideo)
-                                <video src="{{ asset('storage/' . $evidence->file_url) }}" class="w-full h-full object-cover {{ !$canView ? 'blur-md scale-110' : '' }}"></video>
-                                <div class="absolute inset-0 flex items-center justify-center bg-black/10">
-                                    <span class="text-2xl drop-shadow-md">▶️</span>
-                                </div>
-                            @elseif($isAudio)
-                                <div class="text-3xl {{ !$canView ? 'blur-sm' : '' }}">🎵</div>
-                            @else
-                                <div class="text-3xl {{ !$canView ? 'blur-sm' : '' }}">📁</div>
-                            @endif
-                            
-                            @if(!$canView)
-                                <div class="absolute inset-0 bg-white/40 flex items-center justify-center backdrop-blur-sm">
-                                    <span class="text-2xl drop-shadow-md">🔒</span>
-                                </div>
-                            @endif
-                        </a>
-                    @endforeach
-                </div>
-                @endif
-                
-                <button type="button" onclick="document.getElementById('upload-area').classList.toggle('hidden')" class="mt-4 w-full rounded-lg border border-gray-300 px-4 py-3 text-sm font-black">Tambah Bukti</button>
-                <div id="upload-area" class="hidden mt-4">
-                    <div class="border border-dashed border-gray-300 hover:border-gray-400 rounded-xl p-5 text-center transition cursor-pointer" onclick="document.getElementById('evf').click()">
-                        <p class="text-2xl mb-1">📁</p>
-                        <p class="text-gray-500 text-sm">Klik untuk pilih file</p>
-                        <p class="text-gray-400 text-xs">Bisa pilih lebih dari 1 (Foto, video, dll)</p>
+                <!-- Heading & Toolbar -->
+                <div class="flex items-center justify-between gap-3 flex-wrap border-b border-gray-100 pb-4 mb-4">
+                    <div>
+                        <h2 class="text-lg font-black text-gray-900">Aktivitas Laporan</h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Kronologi, saksi, berkas bukti, dan chat koordinasi.</p>
                     </div>
-                    <input type="file" id="evf" class="hidden" multiple accept="*/*">
-                    <div id="upload-list" class="mt-3 space-y-2"></div>
+                    
+                    <div class="flex items-center gap-2">
+                        <!-- Tombol Tambah Bukti -->
+                        <button type="button" onclick="openEvidenceModal()" class="text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition border border-gray-200">
+                            + Tambah Bukti
+                        </button>
+                        
+                        <!-- Tombol Tambah Kronologi -->
+                        <button id="btn-add-chronology" onclick="openChronologyModal()" 
+                                class="hidden text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition border border-red-100">
+                            + Tambah Kronologi
+                        </button>
+
+                        <!-- Tombol Chat -->
+                        @if($hasDirectChatAccess)
+                            <a href="/chat/report/{{ $report->id }}"
+                               class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-700 hover:bg-red-800 text-white transition shadow-sm"
+                               title="Buka Chat Laporan">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"/></svg>
+                            </a>
+                        @else
+                            <div id="chat-action" class="inline-flex items-center gap-1.5">
+                                <span id="chat-checking" class="text-[10px] text-gray-400 italic">Memeriksa lokasi...</span>
+                                <a id="chat-link" href="#" class="hidden inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-900 hover:bg-gray-700 text-white transition shadow-sm" title="Buka Chat Laporan">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"/></svg>
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- GPS Alert Messages for Saksi -->
+                <p id="chat-too-far" class="hidden text-xs text-orange-600 bg-orange-50 px-3 py-2 rounded-lg mb-3">📍 Kamu di luar radius 5 km dari lokasi kejadian. Chat hanya untuk pelapor dan warga terdekat.</p>
+                <p id="chat-no-gps" class="hidden text-xs text-gray-500 bg-gray-50 px-3 py-2 rounded-lg mb-3">📍 Tidak bisa mengambil lokasi. Chat hanya tersedia untuk pelapor dan warga dalam 5 km.</p>
+                <p id="chat-distance-note" class="hidden text-xs text-green-700 bg-green-50 px-3 py-2 rounded-lg mb-3">✓ Kamu berada dalam radius 5 km — kamu bisa ikut chat sebagai warga sekitar.</p>
+
+                <!-- ID Laporan (for saksi/warga around) -->
+                <div class="mb-4 bg-slate-50 border border-slate-200 rounded-xl p-3">
+                    <p class="text-xs font-bold text-gray-500 uppercase">ID Laporan</p>
+                    <code class="mt-1 block break-all text-xs font-mono text-gray-700 select-all cursor-pointer hover:text-black">{{ $report->id }}</code>
+                </div>
+
+                <!-- Isi Section: List Kronologi -->
+                <div>
+                    <h3 class="text-sm font-bold text-gray-900 mb-3 flex items-center gap-1.5">
+                        <span>Kronologi Kejadian</span>
+                    </h3>
+                    <div id="chronology-list" class="space-y-3">
+                        @forelse($report->chronologies as $chrono)
+                            <div class="p-4 bg-slate-50 border border-slate-100 rounded-xl">
+                                <div class="flex justify-between items-start gap-3 flex-wrap">
+                                    <span class="text-xs font-bold text-slate-800 bg-slate-200 px-2 py-0.5 rounded">
+                                        @if($chrono->role === 'Korban')
+                                            Korban ({{ $chrono->writer_name }})
+                                        @elseif($chrono->role === 'Saksi')
+                                            Saksi ({{ $chrono->writer_name }})
+                                        @else
+                                            {{ $chrono->role }} ({{ $chrono->writer_name }})
+                                        @endif
+                                    </span>
+                                    <span class="text-[10px] text-gray-400 font-medium">
+                                        {{ $chrono->created_at->format('d M Y, H:i') }}
+                                    </span>
+                                </div>
+                                <p class="text-sm text-gray-700 mt-2 leading-relaxed whitespace-pre-line">{{ $chrono->description }}</p>
+                            </div>
+                        @empty
+                            <div class="text-center py-6 text-gray-400 text-sm italic" id="chronology-empty-state">
+                                Belum ada kronologi tambahan.
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+
+                <!-- Isi Section: List Bukti -->
+                <div class="mt-6 border-t border-gray-100 pt-6">
+                    <h3 class="text-sm font-bold text-gray-900 mb-3">Bukti Kejadian</h3>
+                    
+                    @if($report->evidences->count() > 0)
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="evidence-grid">
+                            @foreach($report->evidences as $evidence)
+                                @php
+                                    $isImage = str_starts_with($evidence->file_type, 'image/');
+                                    $isVideo = str_starts_with($evidence->file_type, 'video/');
+                                    $isAudio = str_starts_with($evidence->file_type, 'audio/');
+                                    
+                                    $canView = $report->show_evidence 
+                                        || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner'))
+                                        || in_array($report->id, session('my_reports', []));
+                                @endphp
+                                <a href="{{ $canView ? asset('storage/' . $evidence->file_url) : '#' }}" target="{{ $canView ? '_blank' : '' }}" onclick="{{ !$canView ? "alert('Bukti hanya bisa dibuka oleh korban / mitra'); return false;" : '' }}" class="block aspect-square rounded-lg border border-gray-200 overflow-hidden relative group bg-gray-100 flex items-center justify-center">
+                                    @if($isImage)
+                                        <img src="{{ asset('storage/' . $evidence->file_url) }}" class="w-full h-full object-cover {{ !$canView ? 'blur-md scale-110' : '' }}" alt="Bukti">
+                                    @elseif($isVideo)
+                                        <video src="{{ asset('storage/' . $evidence->file_url) }}" class="w-full h-full object-cover {{ !$canView ? 'blur-md scale-110' : '' }}"></video>
+                                        <div class="absolute inset-0 flex items-center justify-center bg-black/10">
+                                            <span class="text-2xl drop-shadow-md">▶️</span>
+                                        </div>
+                                    @elseif($isAudio)
+                                        <div class="text-3xl {{ !$canView ? 'blur-sm' : '' }}">🎵</div>
+                                    @else
+                                        <div class="text-3xl {{ !$canView ? 'blur-sm' : '' }}">📁</div>
+                                    @endif
+                                    
+                                    @if(!$canView)
+                                        <div class="absolute inset-0 bg-white/40 flex items-center justify-center backdrop-blur-sm">
+                                            <span class="text-2xl drop-shadow-md">🔒</span>
+                                        </div>
+                                    @endif
+                                </a>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="text-center py-6 text-gray-400 text-sm italic" id="evidence-empty-state">
+                            Belum ada berkas bukti diunggah.
+                        </div>
+                    @endif
                 </div>
             </section>
 
@@ -125,7 +210,7 @@
                 <p class="text-xs font-bold uppercase tracking-widest text-green-700">Sedang Menangani</p>
                 <h2 class="mt-2 text-xl font-black text-green-950" data-field="assigned_name"></h2>
                 <p class="mt-1 text-sm text-green-800" data-field="assigned_detail"></p>
-                <a id="chat-link" href="#" class="mt-4 inline-flex w-full justify-center rounded-lg bg-green-800 px-4 py-3 text-sm font-black text-white sm:w-auto">Buka Chat Krisis</a>
+                <p class="mt-3 text-xs text-green-700">Partner sudah terhubung ke chat laporan yang sama.</p>
             </section>
 
             <section class="rounded-lg border border-gray-200 bg-white p-5">
@@ -163,8 +248,32 @@
 <script>
     const initialPayload = @json($livePayload);
     const reportId = @json($report->id);
-    const isCreator = @json((auth()->check() && auth()->id() === $report->user_id) || in_array($report->id, session('my_reports', [])));
+    const isCreator = @json($isReporter);
+    const hasDirectChatAccess = @json($hasDirectChatAccess);
     let lastPayload = null;
+
+    // Sync session my_reports dengan localStorage agar ketahanan 100% terjamin (misal habis login/logout)
+    let storedReports = JSON.parse(localStorage.getItem('safora_guest_reports') || '[]');
+    if (storedReports.includes(reportId)) {
+        if (!isCreator) {
+            // Pelapor terdeteksi di browser ini tapi session kosong (misal habis logout)
+            fetch('/tracking/active-check?ids=' + encodeURIComponent(storedReports.join(',')), {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => {
+                if (res.ok) {
+                    window.location.reload();
+                }
+            });
+        }
+    } else if (isCreator) {
+        // Tambahkan ke localStorage jika kita adalah pelapor
+        storedReports.push(reportId);
+        localStorage.setItem('safora_guest_reports', JSON.stringify(Array.from(new Set(storedReports))));
+    }
 
     let map = null;
     let marker = null;
@@ -243,8 +352,19 @@
             assigned.classList.remove('hidden');
             setText('[data-field="assigned_name"]', payload.assigned_partner.name);
             setText('[data-field="assigned_detail"]', `${payload.assigned_partner.handler_name || 'Tim partner'} - ${payload.assigned_partner.specialization}`);
+            
             const chatLink = document.getElementById('chat-link');
-            chatLink.href = `/chat/messages/${payload.assigned_partner.id}?report_id=${reportId}`;
+            if (chatLink) {
+                // Set chat URL with current user location
+                const qs = (window._userLat && window._userLng) ? `?lat=${window._userLat}&lng=${window._userLng}` : '';
+                chatLink.href = `/chat/report/${reportId}${qs}`;
+                // Show/hide based on distance check result
+                if (window._chatAllowed) {
+                    chatLink.classList.remove('hidden');
+                } else {
+                    chatLink.classList.add('hidden');
+                }
+            }
         } else {
             assigned.classList.add('hidden');
         }
@@ -259,11 +379,14 @@
                             <p class="mt-1 text-sm text-gray-500">${escapeHtml(partner.specialization)}${partner.city ? ' - ' + escapeHtml(partner.city) : ''}</p>
                             <p class="mt-1 text-xs text-gray-500">${escapeHtml(partner.distance || 'Jarak belum tersedia')} - estimasi ${escapeHtml(partner.estimated_response)}</p>
                         </div>
-                        <span class="rounded-full px-3 py-1 text-xs font-bold ${klass}">${label}</span>
+                        <div class="flex flex-col items-end gap-2">
+                            <span class="rounded-full px-3 py-1 text-xs font-bold ${klass}">${label}</span>
+                            ${partner.status === 'accepted' ? `<span id="chat-access-badge" class="text-xs text-green-700 font-semibold hidden">✓ Chat tersedia</span>` : ''}
+                        </div>
                     </div>
                 </div>
             `;
-        }).join('') || '<p class="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">Kami sedang mencari partner yang relevan.</p>';
+        }).join('') || '<p class="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">Kami sedang mencari partner yang relevan.</p>';;
 
         document.getElementById('timeline').innerHTML = (payload.timeline || []).map((event) => `
             <div class="flex gap-3">
@@ -333,6 +456,82 @@
     render(initialPayload);
     setInterval(pollLive, 4000);
 
+    const reportLat = initialPayload.report.location.latitude;
+    const reportLng = initialPayload.report.location.longitude;
+
+    function haversineKm(lat1, lon1, lat2, lon2) {
+        const R = 6371;
+        const dLat = (lat2 - lon1) * Math.PI / 180; // Wait, actually:
+        // const dLat = (lat2 - lat1) * Math.PI / 180;
+        // let's write it standardly:
+        const dLatRad = (lat2 - lat1) * Math.PI / 180;
+        const dLonRad = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLatRad/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLonRad/2)**2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    // Warga/guest: cek lokasi, tampilkan tombol hanya jika < 5km
+    if (!hasDirectChatAccess && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
+
+                // Store on window so render can use it
+                window._userLat = lat;
+                window._userLng = lng;
+
+                const checking  = document.getElementById('chat-checking');
+                const chatLink  = document.getElementById('chat-link');
+                const tooFar    = document.getElementById('chat-too-far');
+                const distNote  = document.getElementById('chat-distance-note');
+                const noGps     = document.getElementById('chat-no-gps');
+
+                if (checking) checking.classList.add('hidden');
+
+                // Set URL dengan koordinat agar server bisa verifikasi
+                if (chatLink) chatLink.href = `/chat/report/${reportId}?lat=${lat}&lng=${lng}`;
+
+                if (reportLat && reportLng) {
+                    const dist = haversineKm(lat, lng, parseFloat(reportLat), parseFloat(reportLng));
+                    if (dist <= 5.0) {
+                        window._chatAllowed = true;
+                        if (chatLink) chatLink.classList.remove('hidden');
+                        if (distNote) distNote.classList.remove('hidden');
+                    } else {
+                        window._chatAllowed = false;
+                        // Terlalu jauh — tampilkan pesan, sembunyikan tombol
+                        if (tooFar) tooFar.classList.remove('hidden');
+                    }
+                } else {
+                    // Laporan tidak punya GPS — tidak bisa verifikasi jarak
+                    window._chatAllowed = true;
+                    if (chatLink) chatLink.classList.remove('hidden');
+                    if (distNote) {
+                        distNote.textContent = '📍 Lokasi laporan tidak tersedia — tombol chat tetap bisa dicoba.';
+                        distNote.classList.remove('hidden');
+                    }
+                }
+            },
+            () => {
+                // Gagal ambil lokasi browser
+                const checking = document.getElementById('chat-checking');
+                const noGps    = document.getElementById('chat-no-gps');
+                if (checking) checking.classList.add('hidden');
+                if (noGps)    noGps.classList.remove('hidden');
+            },
+            { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+        );
+    } else if (!hasDirectChatAccess) {
+        // Browser tidak support geolocation
+        const checking = document.getElementById('chat-checking');
+        const noGps    = document.getElementById('chat-no-gps');
+        if (checking) checking.classList.add('hidden');
+        if (noGps)    noGps.classList.remove('hidden');
+    }
+
+
+    // Pelapor: push GPS location secara real-time untuk tracking
     if (isCreator) {
         pushLocation();
     }
@@ -413,6 +612,169 @@
 
         xhr.send(formData);
     }
+    function openEvidenceModal() {
+        const m = document.getElementById('evidence-modal');
+        if (!m) return;
+        document.body.style.overflow = 'hidden';
+        m.classList.remove('hidden');
+    }
+
+    function closeEvidenceModal() {
+        const m = document.getElementById('evidence-modal');
+        if (!m) return;
+        m.classList.add('hidden');
+        document.body.style.overflow = '';
+        document.getElementById('upload-list').innerHTML = '';
+    }
+
+    function openChronologyModal() {
+        const m = document.getElementById('chronology-modal');
+        if (!m) return;
+        document.body.style.overflow = 'hidden';
+        m.classList.remove('hidden');
+    }
+
+    function closeChronologyModal() {
+        const m = document.getElementById('chronology-modal');
+        if (!m) return;
+        m.classList.add('hidden');
+        document.body.style.overflow = '';
+        document.getElementById('chrono-description').value = '';
+    }
+
+    async function submitChronology(event) {
+        event.preventDefault();
+        const desc = document.getElementById('chrono-description').value.trim();
+        if (!desc) return;
+
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        const originalBtnHtml = submitBtn.innerHTML;
+
+        // Set loading state manually
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+        submitBtn.innerHTML = `
+            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block align-text-bottom" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg> Menyimpan...
+        `;
+
+        const lat = window._userLat || null;
+        const lng = window._userLng || null;
+
+        try {
+            const res = await fetch(`/tracking/${reportId}/chronology`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    description: desc,
+                    latitude: lat,
+                    longitude: lng
+                })
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                alert(data.error || 'Gagal menambahkan kronologi.');
+                return;
+            }
+
+            const emptyState = document.getElementById('chronology-empty-state');
+            if (emptyState) emptyState.remove();
+
+            const list = document.getElementById('chronology-list');
+            const item = document.createElement('div');
+            item.className = "p-4 bg-slate-50 border border-slate-100 rounded-xl fade-in";
+            item.innerHTML = `
+                <div class="flex justify-between items-start gap-3 flex-wrap">
+                    <span class="text-xs font-bold text-slate-800 bg-slate-200 px-2 py-0.5 rounded">
+                        ${data.chronology.writer_name}
+                    </span>
+                    <span class="text-[10px] text-gray-400 font-medium">
+                        ${data.chronology.created_at}
+                    </span>
+                </div>
+                <p class="text-sm text-gray-700 mt-2 leading-relaxed whitespace-pre-line">${data.chronology.description}</p>
+            `;
+            list.insertBefore(item, list.firstChild);
+
+            closeChronologyModal();
+        } catch (e) {
+            alert('Terjadi kesalahan sistem.');
+        } finally {
+            // Restore button state
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+            submitBtn.innerHTML = originalBtnHtml;
+        }
+    }
+
+    // Show "+ Tambah Kronologi" button if Korban or Trusted Contact
+    const isTrustedContact = @json($isTrustedContact);
+    if (isCreator || isTrustedContact) {
+        const btn = document.getElementById('btn-add-chronology');
+        if (btn) btn.classList.remove('hidden');
+    }
 </script>
+
+{{-- ===== EVIDENCE MODAL ===== --}}
+<div id="evidence-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center px-4 transition-all duration-300">
+    <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+        <div class="flex items-start justify-between gap-3 mb-4">
+            <div>
+                <h2 class="font-black text-xl text-gray-900 mb-1 font-unbounded">Tambah Bukti</h2>
+                <p class="text-gray-500 text-xs">Unggah berkas foto, rekaman suara, atau video untuk melengkapi laporan.</p>
+            </div>
+            <button type="button" onclick="closeEvidenceModal()" class="text-gray-400 hover:text-gray-600 transition p-2 rounded-full">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <div class="border-2 border-dashed border-gray-300 hover:border-gray-400 rounded-2xl p-8 text-center transition cursor-pointer bg-slate-50 hover:bg-slate-100/50" onclick="document.getElementById('evf').click()">
+            <p class="text-4xl mb-3">📁</p>
+            <p class="text-gray-700 font-bold text-base">Klik untuk pilih file</p>
+            <p class="text-gray-400 text-xs mt-1">Bisa pilih lebih dari 1 (Foto, video, dll)</p>
+        </div>
+        
+        <div id="upload-list" class="mt-4 space-y-2 max-h-60 overflow-y-auto"></div>
+        
+        <div class="flex justify-end gap-3 mt-5">
+            <button type="button" onclick="closeEvidenceModal()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold text-sm transition">Tutup</button>
+        </div>
+    </div>
+</div>
+
+{{-- ===== KRONOLOGI MODAL ===== --}}
+<div id="chronology-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center px-4 transition-all duration-300">
+    <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+        <div class="flex items-start justify-between gap-3 mb-4">
+            <div>
+                <h2 class="font-black text-xl text-gray-900 mb-1 font-unbounded">Tambah Kronologi</h2>
+                <p class="text-gray-500 text-xs">Berikan detail kronologi atau pemutakhiran situasi terkini untuk membantu partner krisis.</p>
+            </div>
+            <button type="button" onclick="closeChronologyModal()" class="text-gray-400 hover:text-gray-600 transition p-2 rounded-full">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <form id="chronology-form" class="no-loading" onsubmit="submitChronology(event)">
+            @csrf
+            <div class="mb-5">
+                <label class="block text-sm font-bold text-gray-900 mb-1">Catatan Kronologi / Perkembangan</label>
+                <textarea name="description" id="chrono-description" rows="4" required class="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-500 focus:bg-white resize-none" placeholder="Tulis kronologi atau situasi terbaru di sini..."></textarea>
+            </div>
+            
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="closeChronologyModal()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold text-sm transition">Batal</button>
+                <button type="submit" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold text-sm transition shadow-sm">Simpan Catatan</button>
+            </div>
+        </form>
+    </div>
+</div>
 </body>
 </html>

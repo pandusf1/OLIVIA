@@ -135,33 +135,8 @@
             @endif
         </div>
 
-        {{-- Bukti Saksi --}}
-        @if($report->witnessReports && $report->witnessReports->count() > 0)
-        <div class="bg-white border border-gray-200 rounded-2xl p-6">
-            <h2 class="font-bold text-gray-900 mb-4">Bukti dari Saksi</h2>
-            @if(!$canViewSensitive)
-            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-semibold">Bukti hanya dapat dilihat oleh mitra yang menangani kasus ini.</div>
-            @else
-            <div class="space-y-4">
-                @foreach($report->witnessReports as $w)
-                <div class="border border-gray-100 rounded-xl p-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <p class="font-semibold text-gray-900 text-sm">{{ $w->witness_name ?: 'Anonim' }}</p>
-                        @if($w->witness_phone)<p class="text-gray-400 text-xs">{{ $w->witness_phone }}</p>@endif
-                    </div>
-                    @if($w->witness_note)<p class="text-gray-500 text-sm italic mb-2">"{{ $w->witness_note }}"</p>@endif
-                    @foreach($w->evidences as $we)
-                    <div class="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2 mb-1">
-                        <div><p class="text-xs text-gray-600">{{ $we->file_type }}</p><p class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($we->uploaded_at)->format('d M Y, H:i') }}</p></div>
-                        <a href="{{ asset('storage/'.$we->file_url) }}" target="_blank" class="text-green-700 hover:text-green-800 text-xs font-semibold transition">Buka →</a>
-                    </div>
-                    @endforeach
-                </div>
-                @endforeach
-            </div>
-            @endif
-        </div>
-        @endif
+
+
 
     </div>
 </body>

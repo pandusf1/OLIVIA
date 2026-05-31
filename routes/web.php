@@ -14,10 +14,32 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminPartnerController;
 use App\Http\Controllers\UserLocationController;
 // Landing page
-Route::get('/', fn() => view('welcome'))->name('home');
+Route::get('/', function() {
+    $cookieIds = [];
+    if (request()->hasCookie('safora_my_reports')) {
+        $cookieIds = json_decode(request()->cookie('safora_my_reports'), true) ?: [];
+    }
+
+    $sessionIds = session()->get('my_reports', []);
+    $allIds = array_unique(array_merge($sessionIds, $cookieIds));
+
+    if (!empty($allIds)) {
+        session()->put('my_reports', $allIds);
+    }
+
+    $activeReport = null;
+    if (!empty($allIds)) {
+        $activeReport = \App\Models\Report::whereIn('id', $allIds)
+            ->where('status', '!=', 'Resolved')
+            ->latest()
+            ->first();
+    }
+
+    return view('welcome', compact('activeReport'));
+})->name('home');
 
 // ─── PUBLIC (tanpa login) ────────────────────────────────────────
-Route::get('/emergency', [EmergencyController::class, 'index'])->name('emergency');
+Route::get('/emergency', function() { return redirect('/'); });
 Route::post('/emergency', [EmergencyController::class, 'store']);
 
 Route::get('/tracking-search', [TrackingController::class, 'search'])->name('tracking.search');
@@ -26,9 +48,42 @@ Route::post('/tracking/{id}/location', [TrackingController::class, 'updateLocati
 Route::get('/tracking/{id}', [TrackingController::class, 'show'])->name('tracking.show');
 Route::post('/tracking/{reportId}/evidence', [EvidenceController::class, 'store'])->name('evidence.store');
 Route::post('/tracking/{id}/resolve', [TrackingController::class, 'resolve'])->name('tracking.resolve');
+Route::post('/tracking/{id}/chronology', [TrackingController::class, 'storeChronology'])->name('tracking.chronology');
 
-Route::get('/witness', [WitnessController::class, 'index'])->name('witness');
-Route::post('/witness', [WitnessController::class, 'store'])->name('witness.store');
+// Sinkronisasi laporan aktif untuk korban guest/anonim via localStorage
+Route::get('/tracking/active-check', function(\Illuminate\Http\Request $request) {
+    $idsInput = $request->input('ids', []);
+    if (is_string($idsInput)) {
+        $ids = explode(',', $idsInput);
+    } else {
+        $ids = (array) $idsInput;
+    }
+    $ids = array_filter(array_map('trim', $ids));
+
+    if (empty($ids)) {
+        return response()->json(['active_report_id' => null]);
+    }
+
+    $sessionIds = session()->get('my_reports', []);
+    $allIds = array_unique(array_merge($sessionIds, $ids));
+    session()->put('my_reports', $allIds);
+    cookie()->queue(cookie('safora_my_reports', json_encode($allIds), 60 * 24 * 30));
+
+    // Filter laporan yang belum terselesaikan
+    $active = \App\Models\Report::whereIn('id', $allIds)
+        ->where('status', '!=', 'Resolved')
+        ->latest()
+        ->first();
+
+    return response()->json([
+        'active_report_id' => $active ? $active->id : null,
+    ]);
+});
+
+// Chat berbasis laporan (public — bisa diakses pelapor, saksi <5km, atau partner)
+Route::get('/chat/report/{reportId}', [\App\Http\Controllers\ChatController::class, 'reportChat'])->name('chat.report');
+Route::get('/chat/report/{reportId}/poll', [\App\Http\Controllers\ChatController::class, 'pollMessages'])->name('chat.poll');
+Route::post('/chat/report/{reportId}/send', [\App\Http\Controllers\ChatController::class, 'sendMessage'])->name('chat.send.report');
 
 // ─── AUTH REQUIRED ────────────────────────────────────────────────
 Route::middleware(['auth', 'phone.required'])->group(function () {
@@ -99,11 +154,12 @@ Route::middleware(['auth', 'phone.required'])->group(function () {
     Route::post('/pembayaran', [\App\Http\Controllers\PembayaranMockController::class, 'pay'])->name('pembayaran.pay');
 
 
-    // Chat
+
+    // Chat threads (legacy stubs)
     Route::get('/chat/threads', [\App\Http\Controllers\ChatController::class, 'indexThreads'])->name('chat.threads');
-    Route::get('/chat/messages/{partnerId}', [\App\Http\Controllers\ChatController::class, 'messages'])->name('chat.messages');
     Route::get('/chat/start/{partnerId}', [\App\Http\Controllers\ChatController::class, 'start'])->name('chat.start');
     Route::post('/chat/send/{partnerId}', [\App\Http\Controllers\ChatController::class, 'send'])->name('chat.send');
+    Route::get('/chat/messages/{partnerId}', [\App\Http\Controllers\ChatController::class, 'messages'])->name('chat.messages');
 
 
     // Evidence locker (halaman galeri bukti user)

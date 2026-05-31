@@ -10,8 +10,14 @@
     // In many pages, $backUrl is assigned request()->headers->get('referer').
     $resolvedFallbackUrl = (isset($backUrl) && $backUrl) ? $backUrl : $fallbackUrl;
 
-    // Prevent redirecting to the same page if referer was current url
-    if (trim($resolvedFallbackUrl, '/') === trim(url()->current(), '/')) {
+    // Prevent redirecting to the same page or temporary/auth pages that can loop/error
+    $currentPath = trim(parse_url(url()->current(), PHP_URL_PATH), '/');
+    $fallbackPath = trim(parse_url($resolvedFallbackUrl, PHP_URL_PATH), '/');
+
+    if ($currentPath === $fallbackPath
+        || str_contains($fallbackPath, 'login')
+        || str_contains($fallbackPath, 'register')
+        || str_contains($fallbackPath, 'emergency')) {
         $resolvedFallbackUrl = $fallbackUrl;
     }
 

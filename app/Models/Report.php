@@ -82,6 +82,11 @@ public function timelineEvents()
     return $this->hasMany(ReportTimelineEvent::class)->latest();
 }
 
+public function chronologies()
+{
+    return $this->hasMany(ReportChronology::class)->latest();
+}
+
 public function routingPartners()
 {
     return $this->belongsToMany(Partner::class, 'report_partner_routings')

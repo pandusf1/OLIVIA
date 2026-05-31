@@ -20,12 +20,24 @@ class TrackingController extends Controller
             'handlerUser',
             'partnerRoutings.partner',
             'timelineEvents',
-            'witnessReports.evidences',
+            'chronologies',
         ])->findOrFail($id);
+
+        $isTrustedContact = false;
+        if (auth()->check() && $report->user_id) {
+            $userPhone = auth()->user()->phone;
+            if ($userPhone) {
+                $isTrustedContact = \App\Models\TrustedContact::where('user_id', $report->user_id)
+                    ->where('contact_phone', $userPhone)
+                    ->where('is_verified', true)
+                    ->exists();
+            }
+        }
 
         return view('pages.tracking', [
             'report' => $report,
             'livePayload' => $this->buildLivePayload($report),
+            'isTrustedContact' => $isTrustedContact,
         ]);
     }
 
@@ -310,5 +322,83 @@ class TrackingController extends Controller
             ['label' => 'SAPA / KDRT', 'phone' => '129'],
             ['label' => 'KPAI', 'phone' => '02131901556'],
         ];
+    }
+
+    public function storeChronology(Request $request, $reportId)
+    {
+        $report = Report::findOrFail($reportId);
+
+        $isCreator = (auth()->check() && auth()->id() === $report->user_id) 
+            || in_array($report->id, $request->session()->get('my_reports', []));
+
+        $isTrustedContact = false;
+        if (auth()->check() && $report->user_id) {
+            $userPhone = auth()->user()->phone;
+            if ($userPhone) {
+                $isTrustedContact = \App\Models\TrustedContact::where('user_id', $report->user_id)
+                    ->where('contact_phone', $userPhone)
+                    ->where('is_verified', true)
+                    ->exists();
+            }
+        }
+
+        $isWitnessWithin5Km = false;
+        $lat = $request->input('latitude');
+        $lng = $request->input('longitude');
+        if ($lat !== null && $lng !== null && $report->latitude && $report->longitude) {
+            $dist = $this->haversineKm((float)$lat, (float)$lng, (float)$report->latitude, (float)$report->longitude);
+            if ($dist <= 5.0) {
+                $isWitnessWithin5Km = true;
+            }
+        }
+
+        if (!$isCreator && !$isTrustedContact && !$isWitnessWithin5Km) {
+            return response()->json(['error' => 'Akses ditolak. Hanya korban, saksi (< 5 km), atau kontak terpercaya yang bisa menambah kronologi.'], 403);
+        }
+
+        $request->validate([
+            'description' => 'required|string',
+        ]);
+
+        $role = 'Saksi';
+        $writerName = 'anonymous';
+
+        if ($isCreator) {
+            $role = 'Korban';
+            $writerName = auth()->check() ? auth()->user()->name : 'anonymous';
+        } elseif ($isTrustedContact) {
+            $role = 'Kontak Terpercaya';
+            $writerName = auth()->user()->name;
+        } else {
+            $role = 'Saksi';
+            $writerName = auth()->check() ? auth()->user()->name : 'anonymous';
+        }
+
+        $chronology = \App\Models\ReportChronology::create([
+            'report_id' => $report->id,
+            'user_id' => auth()->id(),
+            'writer_name' => $writerName,
+            'role' => $role,
+            'description' => $request->description,
+        ]);
+
+        return response()->json([
+            'ok' => true,
+            'chronology' => [
+                'id' => $chronology->id,
+                'writer_name' => $chronology->role === 'Korban' ? "Korban ({$chronology->writer_name})" : ($chronology->role === 'Saksi' ? "Saksi ({$chronology->writer_name})" : "{$chronology->role} ({$chronology->writer_name})"),
+                'description' => $chronology->description,
+                'created_at' => $chronology->created_at->format('d M Y, H:i'),
+            ]
+        ]);
+    }
+
+    private function haversineKm(float $lat1, float $lon1, float $lat2, float $lon2): float
+    {
+        $R = 6371;
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        $a = sin($dLat / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) ** 2;
+        return $R * 2 * atan2(sqrt($a), sqrt(1 - $a));
     }
 }

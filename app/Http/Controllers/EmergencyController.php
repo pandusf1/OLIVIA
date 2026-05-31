@@ -171,8 +171,16 @@ class EmergencyController extends Controller
             return $report;
         });
 
-        // Simpan ke session untuk memastikan guest bisa dikenali sebagai pembuat laporan
-        $request->session()->push('my_reports', $report->id);
+        // Simpan ke session dan cookie 30 hari untuk ketahanan pelacakan guest/anonim
+        $cookieReports = [];
+        if ($request->hasCookie('safora_my_reports')) {
+            $cookieReports = json_decode($request->cookie('safora_my_reports'), true) ?: [];
+        }
+        $sessionReports = $request->session()->get('my_reports', []);
+        $allReports = array_unique(array_merge($cookieReports, $sessionReports, [$report->id]));
+
+        $request->session()->put('my_reports', $allReports);
+        cookie()->queue(cookie('safora_my_reports', json_encode($allReports), 60 * 24 * 30));
 
         $trackingLink = url('/tracking/' . $report->id);
         $mapsLink = $report->latitude
