@@ -59,7 +59,7 @@
                 <div class="mt-4">
                     <form action="/tracking/{{ $report->id }}/resolve" method="POST" onsubmit="return confirm('Apakah Anda yakin laporan ini telah tertangani dan Anda sudah aman?');">
                         @csrf
-                        <button type="submit" class="w-full rounded-lg bg-green-600 px-4 py-3 text-sm font-black text-white hover:bg-green-700 transition">Tandai Laporan Selesai & Beritahu Kontak</button>
+                        <button type="submit" class="w-full rounded-lg bg-green-600 px-4 py-3 text-sm font-black text-white hover:bg-green-700 transition">Laporan Selesai</button>
                     </form>
                 </div>
             @endif
@@ -136,6 +136,8 @@
                                     <span class="text-xs font-bold text-slate-800 bg-slate-200 px-2 py-0.5 rounded">
                                         @if($chrono->role === 'Korban')
                                             Korban ({{ $chrono->writer_name }})
+                                        @elseif($chrono->role === 'Partner')
+                                            Partner ({{ $chrono->writer_name }})
                                         @elseif($chrono->role === 'Saksi')
                                             Saksi ({{ $chrono->writer_name }})
                                         @else
@@ -298,6 +300,7 @@
     const reportId = @json($report->id);
     const isCreator = @json($isReporter);
     const hasDirectChatAccess = @json($hasDirectChatAccess);
+    const isLoggedIn = @json(auth()->check());
     let lastPayload = null;
 
     // Sync session my_reports dengan localStorage agar ketahanan 100% terjamin (misal habis login/logout)
@@ -317,8 +320,8 @@
                 }
             });
         }
-    } else if (isCreator) {
-        // Tambahkan ke localStorage jika kita adalah pelapor
+    } else if (isCreator && !isLoggedIn) {
+        // Tambahkan ke localStorage jika kita adalah pelapor guest/anonim
         storedReports.push(reportId);
         localStorage.setItem('safora_guest_reports', JSON.stringify(Array.from(new Set(storedReports))));
     }
@@ -363,7 +366,7 @@
         return {
             waiting: ['Menunggu', 'bg-gray-100 text-gray-700'],
             reviewing: ['Meninjau', 'bg-yellow-100 text-yellow-900'],
-            unavailable: ['Tidak tersedia', 'bg-orange-100 text-orange-800'],
+            unavailable: ['Tidak menerima', 'bg-orange-100 text-orange-800'],
             accepted: ['Menerima', 'bg-green-100 text-green-800'],
         }[status] || ['Menunggu', 'bg-gray-100 text-gray-700'];
     }
@@ -378,11 +381,14 @@
         setText('[data-field="urgency"]', payload.report.urgency_level);
         setText('[data-field="category"]', payload.report.category);
         
-        if (payload.report.incident_date) {
-            document.getElementById('incident-date-container').classList.remove('hidden');
-            setText('[data-field="incident_date"]', payload.report.incident_date);
-        } else {
-            document.getElementById('incident-date-container').classList.add('hidden');
+        const incidentDateContainer = document.getElementById('incident-date-container');
+        if (incidentDateContainer) {
+            if (payload.report.incident_date) {
+                incidentDateContainer.classList.remove('hidden');
+                setText('[data-field="incident_date"]', payload.report.incident_date);
+            } else {
+                incidentDateContainer.classList.add('hidden');
+            }
         }
 
         const maps = document.querySelector('[data-field="maps_url"]');
@@ -396,71 +402,85 @@
         }
 
         const assigned = document.getElementById('assigned-card');
-        if (payload.assigned_partner) {
-            assigned.classList.remove('hidden');
-            setText('[data-field="assigned_name"]', payload.assigned_partner.name);
-            setText('[data-field="assigned_detail"]', `${payload.assigned_partner.handler_name || 'Tim partner'} - ${payload.assigned_partner.specialization}`);
-            
-            const chatLink = document.getElementById('chat-link');
-            if (chatLink) {
-                // Set chat URL with current user location
-                const qs = (window._userLat && window._userLng) ? `?lat=${window._userLat}&lng=${window._userLng}` : '';
-                chatLink.href = `/chat/report/${reportId}${qs}`;
-                // Show/hide based on distance check result
-                if (window._chatAllowed) {
-                    chatLink.classList.remove('hidden');
-                    chatLink.classList.add('inline-flex');
-                } else {
-                    chatLink.classList.add('hidden');
-                    chatLink.classList.remove('inline-flex');
+        if (assigned) {
+            if (payload.assigned_partner) {
+                assigned.classList.remove('hidden');
+                setText('[data-field="assigned_name"]', payload.assigned_partner.name);
+                setText('[data-field="assigned_detail"]', payload.assigned_partner.specialization);
+                
+                const chatLink = document.getElementById('chat-link');
+                if (chatLink) {
+                    // Set chat URL with current user location
+                    const qs = (window._userLat && window._userLng) ? `?lat=${window._userLat}&lng=${window._userLng}` : '';
+                    chatLink.href = `/chat/report/${reportId}${qs}`;
+                    // Show/hide based on distance check result
+                    if (window._chatAllowed) {
+                        chatLink.classList.remove('hidden');
+                        chatLink.classList.add('inline-flex');
+                    } else {
+                        chatLink.classList.add('hidden');
+                        chatLink.classList.remove('inline-flex');
+                    }
                 }
+            } else {
+                assigned.classList.add('hidden');
             }
-        } else {
-            assigned.classList.add('hidden');
         }
 
-        document.getElementById('routed-partners').innerHTML = (payload.routed_partners || []).map((partner) => {
-            const [label, klass] = statusLabel(partner.status);
-            return `
-                <div class="rounded-lg border border-gray-200 p-4">
-                    <div class="flex items-start justify-between gap-3">
-                        <div>
-                            <p class="font-black">${escapeHtml(partner.name)}</p>
-                            <p class="mt-1 text-sm text-gray-500">${escapeHtml(partner.specialization)}${partner.city ? ' - ' + escapeHtml(partner.city) : ''}</p>
-                            <p class="mt-1 text-xs text-gray-500">${escapeHtml(partner.distance || 'Jarak belum tersedia')} - estimasi ${escapeHtml(partner.estimated_response)}</p>
-                        </div>
-                        <div class="flex flex-col items-end gap-2">
-                            <span class="rounded-full px-3 py-1 text-xs font-bold ${klass}">${label}</span>
-                            ${partner.status === 'accepted' ? `<span id="chat-access-badge" class="text-xs text-green-700 font-semibold hidden">✓ Chat tersedia</span>` : ''}
+        const routedPartnersEl = document.getElementById('routed-partners');
+        if (routedPartnersEl) {
+            routedPartnersEl.innerHTML = (payload.routed_partners || []).map((partner) => {
+                const [label, klass] = statusLabel(partner.status);
+                return `
+                    <div class="rounded-lg border border-gray-200 p-4">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <p class="font-black">${escapeHtml(partner.name)}</p>
+                                <p class="mt-1 text-sm text-gray-500">${escapeHtml(partner.specialization)}${partner.city ? ' - ' + escapeHtml(partner.city) : ''}</p>
+                                <p class="mt-1 text-xs text-gray-500">${escapeHtml(partner.distance || 'Jarak belum tersedia')}</p>
+                            </div>
+                            <div class="flex flex-col items-end gap-2">
+                                <span class="rounded-full px-3 py-1 text-xs font-bold ${klass}">${label}</span>
+                                ${partner.status === 'accepted' ? `<span id="chat-access-badge" class="text-xs text-green-700 font-semibold hidden">✓ Chat tersedia</span>` : ''}
+                            </div>
                         </div>
                     </div>
+                `;
+            }).join('') || '<p class="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">Kami sedang mencari partner yang relevan.</p>';
+        }
+
+        const timelineEl = document.getElementById('timeline');
+        if (timelineEl) {
+            timelineEl.innerHTML = (payload.timeline || []).map((event) => `
+                <div class="flex gap-3">
+                    <div class="mt-1 h-2.5 w-2.5 rounded-full bg-red-700"></div>
+                    <div>
+                        <p class="text-sm font-bold text-gray-900">${escapeHtml(event.message)}</p>
+                        <p class="mt-1 text-xs text-gray-400">${escapeHtml(event.time)}</p>
+                    </div>
                 </div>
-            `;
-        }).join('') || '<p class="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">Kami sedang mencari partner yang relevan.</p>';;
+            `).join('');
+        }
 
-        document.getElementById('timeline').innerHTML = (payload.timeline || []).map((event) => `
-            <div class="flex gap-3">
-                <div class="mt-1 h-2.5 w-2.5 rounded-full bg-red-700"></div>
-                <div>
-                    <p class="text-sm font-bold text-gray-900">${escapeHtml(event.message)}</p>
-                    <p class="mt-1 text-xs text-gray-400">${escapeHtml(event.time)}</p>
+        const hotlinesEl = document.getElementById('hotlines');
+        if (hotlinesEl) {
+            hotlinesEl.innerHTML = (payload.hotlines || []).map((hotline) => `
+                <a href="tel:${escapeHtml(hotline.phone)}" class="flex items-center justify-between rounded-lg border border-red-100 bg-red-50 px-4 py-3">
+                    <span class="text-sm font-bold text-red-950">${escapeHtml(hotline.label)}</span>
+                    <span class="text-lg font-black text-red-800">${escapeHtml(hotline.phone)}</span>
+                </a>
+            `).join('');
+        }
+
+        const latestMsgsEl = document.getElementById('latest-messages');
+        if (latestMsgsEl) {
+            latestMsgsEl.innerHTML = (payload.latest_messages || []).map((message) => `
+                <div class="rounded-lg bg-gray-50 p-3">
+                    <p class="text-sm text-gray-800">${escapeHtml(message.message)}</p>
+                    <p class="mt-1 text-xs text-gray-400">${escapeHtml(message.time)}</p>
                 </div>
-            </div>
-        `).join('');
-
-        document.getElementById('hotlines').innerHTML = (payload.hotlines || []).map((hotline) => `
-            <a href="tel:${escapeHtml(hotline.phone)}" class="flex items-center justify-between rounded-lg border border-red-100 bg-red-50 px-4 py-3">
-                <span class="text-sm font-bold text-red-950">${escapeHtml(hotline.label)}</span>
-                <span class="text-lg font-black text-red-800">${escapeHtml(hotline.phone)}</span>
-            </a>
-        `).join('');
-
-        document.getElementById('latest-messages').innerHTML = (payload.latest_messages || []).map((message) => `
-            <div class="rounded-lg bg-gray-50 p-3">
-                <p class="text-sm text-gray-800">${escapeHtml(message.message)}</p>
-                <p class="mt-1 text-xs text-gray-400">${escapeHtml(message.time)}</p>
-            </div>
-        `).join('') || '<p class="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">Belum ada pesan partner. Tetap pantau halaman ini.</p>';
+            `).join('') || '<p class="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">Belum ada pesan partner. Tetap pantau halaman ini.</p>';
+        }
 
         // Update Re-Alert Button UI secara dinamis
         const reAlertContainer = document.getElementById('re-alert-container');
@@ -724,7 +744,8 @@
 
     function pushLocation() {
         if (!navigator.geolocation) return;
-        watchId = navigator.geolocation.watchPosition(async (pos) => {
+
+        const updateCoords = async (pos) => {
             try {
                 await fetch(`/tracking/${reportId}/location`, {
                     method: 'POST',
@@ -739,9 +760,19 @@
                     })
                 });
             } catch (e) {}
-        }, (err) => {}, {
+        };
+
+        // Dapatkan lokasi awal dengan cepat
+        navigator.geolocation.getCurrentPosition(updateCoords, () => {}, {
             enableHighAccuracy: true,
-            maximumAge: 0
+            timeout: 5000
+        });
+
+        // Pantau perubahan lokasi secara real-time
+        watchId = navigator.geolocation.watchPosition(updateCoords, (err) => {}, {
+            enableHighAccuracy: true,
+            maximumAge: 0,
+            timeout: 10000
         });
     }
 
@@ -1333,7 +1364,7 @@
 </script>
 
 {{-- ===== EVIDENCE MODAL ===== --}}
-<div id="evidence-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center px-4 transition-all duration-300">
+<div id="evidence-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] items-center justify-center px-4 transition-all duration-300">
     <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl">
         <div class="flex items-start justify-between gap-3 mb-4">
             <div>
@@ -1361,7 +1392,7 @@
 </div>
 
 {{-- ===== KRONOLOGI MODAL ===== --}}
-<div id="chronology-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center px-4 transition-all duration-300">
+<div id="chronology-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] items-center justify-center px-4 transition-all duration-300">
     <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl">
         <div class="flex items-start justify-between gap-3 mb-4">
             <div>

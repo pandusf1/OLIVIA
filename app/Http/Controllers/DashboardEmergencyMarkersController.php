@@ -24,7 +24,10 @@ class DashboardEmergencyMarkersController extends Controller
         $markers = \App\Models\Report::query()
             ->where('report_type', 'Emergency')
             ->whereIn('status', $activeStatuses)
-            ->where('user_id', '!=', $user->id)
+            ->where(function($q) use ($user) {
+                $q->whereNull('user_id')
+                  ->orWhere('user_id', '!=', $user->id);
+            })
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
             ->with(['user'])

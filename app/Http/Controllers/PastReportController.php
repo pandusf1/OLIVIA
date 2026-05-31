@@ -110,7 +110,7 @@ class PastReportController extends Controller
                     \Illuminate\Support\Facades\Storage::disk('public')->move($tempPath, $newPath);
                     
                     $fullPath = storage_path('app/public/' . $newPath);
-                    $hash = file_exists($fullPath) ? hash_file('sha256', $fullPath) : null;
+                    $hash = file_exists($fullPath) ? Evidence::generateFastHash($fullPath, $fileName, filesize($fullPath)) : null;
                     
                     // Detect mime type
                     $mimeType = \Illuminate\Support\Facades\Storage::disk('public')->mimeType($newPath) ?: 'application/octet-stream';
@@ -136,7 +136,7 @@ class PastReportController extends Controller
                     $newPath = $file->store('evidences', 'public');
                     
                     $fullPath = storage_path('app/public/' . $newPath);
-                    $hash = file_exists($fullPath) ? hash_file('sha256', $fullPath) : null;
+                    $hash = file_exists($fullPath) ? Evidence::generateFastHash($fullPath, $file->getClientOriginalName(), $file->getSize()) : null;
                     
                     $mimeType = $file->getClientMimeType() ?: 'application/octet-stream';
 

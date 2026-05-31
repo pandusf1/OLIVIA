@@ -21,6 +21,8 @@
         .panic-pulse { animation: pulse-ring 2s infinite; }
         @keyframes fade-in { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
         .fade-in { animation: fade-in 0.35s ease both; }
+        @keyframes modalIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:scale(1)} }
+        .modal-in { animation: modalIn 0.25s ease forwards; }
     </style>
 </head>
 <body class="bg-[#f5f4f1] text-gray-900 antialiased min-h-screen">
@@ -42,17 +44,6 @@
                     <svg class="w-16 h-16 sm:w-20 sm:h-20 mb-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
                     <span class="font-unbounded text-sm sm:text-base text-red-100 font-bold mt-2 tracking-widest">DARURAT</span>
                 </button>
-
-                {{-- Countdown Area --}}
-                <div id="countdown-area" class="hidden relative z-20 w-52 h-52 sm:w-64 sm:h-64 bg-white rounded-full flex-col items-center justify-center shadow-2xl border-[6px] border-red-700">
-                    <p class="text-[10px] sm:text-xs text-gray-500 font-bold uppercase tracking-widest mb-1">MENGIRIM DALAM</p>
-                    <p id="cd-num" class="text-7xl sm:text-8xl font-black text-red-700 font-unbounded leading-none mb-1">5</p>
-                    <div class="w-2/3 bg-gray-100 rounded-full h-2 mb-4 overflow-hidden">
-                        <div id="cd-bar" class="bg-red-700 h-2 rounded-full transition-all duration-1000" style="width:100%"></div>
-                    </div>
-                    <button onclick="cancelPanic()" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-2 rounded-full font-bold text-xs uppercase transition shadow-sm border border-gray-200">BATAL</button>
-                    <div id="cd-category" class="hidden"></div>
-                </div>
             </div>
         </div>
 
@@ -138,7 +129,14 @@
                             <h2 class="font-semibold text-gray-900">Riwayat Laporan</h2>
                             <p class="text-gray-400 text-xs mt-0.5">{{ $totalReports }} laporan tercatat</p>
                         </div>
-                        <a href="{{ route('report.create') }}" class="text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition border border-red-100">+ Laporan Baru</a>
+                        <div class="flex items-center gap-2">
+                            @if($reports->count() > 7)
+                            <button type="button" onclick="openAllReportsModal()" class="hidden sm:inline-flex text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full transition border border-gray-150">
+                                Lihat Semua
+                            </button>
+                            @endif
+                            <a href="{{ route('report.create') }}" class="text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition border border-red-100">+ Laporan Baru</a>
+                        </div>
                     </div>
 
                     {{-- Pencarian Laporan --}}
@@ -148,7 +146,7 @@
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
                                     <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                                 </span>
-                                <input type="text" name="id" placeholder="Cari ID / Kode Laporan (e.g. e439d57a)..." class="w-full border border-gray-200 focus:border-gray-400 rounded-xl pl-9 pr-4 py-2.5 text-xs focus:outline-none transition bg-white" required>
+                                <input type="text" name="id" placeholder="Cari ID / Kode Laporan (cth. e439d57a)..." class="w-full border border-gray-200 focus:border-gray-400 rounded-xl pl-4 pr-4 py-2.5 text-xs focus:outline-none transition bg-white" required>
                             </div>
                             <button type="submit" class="text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-4 py-2.5 rounded-xl transition border border-gray-150 flex items-center justify-center shadow-sm">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -158,7 +156,7 @@
 
                     @if($reports->count() > 0)
                     <div class="space-y-3">
-                        @foreach($reports->take(6) as $report)
+                        @foreach($reports->take(7) as $report)
                         @php
                         $sc = [
                             'Submitted'   => ['bg'=>'bg-gray-100',    'text'=>'text-gray-600',  'dot'=>'bg-gray-400'],
@@ -207,10 +205,10 @@
                             </div>
                         </a>
                         @endforeach
-                        @if($reports->count() > 6)
-                        <button type="button" id="btn-view-all-reports" class="block w-full text-center text-xs text-gray-400 hover:text-gray-600 py-5 transition" onclick="openAllReportsModal()">
-    Lihat {{ $reports->count() - 6 }} laporan lainnya →
-</button>
+                        @if($reports->count() > 7)
+                        <button type="button" onclick="openAllReportsModal()" class="w-full mt-3 sm:hidden text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 py-2.5 rounded-xl transition border border-gray-150 text-center block">
+                            Lihat {{ $reports->count() - 7 }} laporan lainnya →
+                        </button>
                         @endif
                     </div>
                     @else
@@ -338,89 +336,61 @@
         </div>
     </div>
 
-    <div id="cat-modal" class="hidden fixed inset-0 bg-black/80 z-[100] flex-col justify-center items-center px-6 py-6 transition-all duration-300">
-        <div class="bg-white rounded-3xl w-full max-w-sm mx-auto p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div class="flex items-center gap-2 mb-3">
-                <div class="w-2.5 h-2.5 bg-red-600 rounded-full animate-pulse"></div>
-                <p class="text-red-700 text-xs font-bold uppercase tracking-widest">Laporan Aktif</p>
-            </div>
-            <h2 class="font-black text-2xl text-gray-900 mb-1 leading-tight tracking-tight">Apa yang terjadi?</h2>
-            <p class="text-gray-500 text-sm mb-6">Pilih kategori. GPS terekam otomatis.</p>
-            
-            <form id="emergency-form" class="flex flex-col h-full" onsubmit="event.preventDefault();">
-                @csrf
-                <input type="hidden" name="latitude" id="f-lat">
-                <input type="hidden" name="longitude" id="f-lng">
-                <input type="hidden" name="category" id="fallback-category" value="ambulance" disabled>
-                <input type="hidden" name="idempotency_key" value="{{ Str::uuid() }}">
-                
-                <div id="step-1">
-                <div class="grid grid-cols-2 gap-3 mb-5">
-                    @foreach([['Medis Darurat','🚑','ambulance'],['Bantuan Hukum','⚖️','legal'],['Psikososial','🧠','counselor'],['Pemadam / Rescue','🚒','pemadam']] as [$label,$icon,$val])
-                    <label class="cursor-pointer" onclick="handleCategoryTap(this)">
-                        <input type="radio" name="category" value="{{ $val }}" class="peer hidden" required>
-                        <div class="peer-checked:bg-red-50 peer-checked:border-red-500 border-2 border-gray-100 rounded-2xl p-4 text-center hover:border-gray-300 transition-all duration-200 active:scale-95 shadow-sm">
-                            <p class="text-3xl mb-2">{{ $icon }}</p>
-                            <p class="text-sm font-black text-gray-900">{{ $label }}</p>
+    {{-- EMERGENCY MODAL --}}
+    <div id="emergency-modal" class="fixed inset-0 z-[999] items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+        <div class="modal-in bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
+
+            {{-- STEP 1: Pilih Kategori --}}
+            <div id="step-category">
+                <div class="px-6 pt-6 pb-4 border-b border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold uppercase tracking-widest text-red-600 mb-0.5">Mode Darurat Safora</p>
+                            <h2 class="text-xl font-black text-gray-900">Apa yang terjadi?</h2>
                         </div>
-                    </label>
+                        <button onclick="closeEmergencyModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition text-gray-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                    <p class="text-gray-400 text-xs mt-1">Pilih kategori — laporan dikirim anonim secara otomatis.</p>
+                </div>
+                <div class="grid grid-cols-2 gap-2.5 p-5">
+                    @foreach(['Kekerasan','Kesehatan','Pelecehan','Kecelakaan','Ancaman','Lainnya'] as $cat)
+                    <button onclick="selectCategory('{{ $cat }}')"
+                        class="category-btn flex flex-col items-start gap-1 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-300 rounded-2xl px-4 py-4 text-left transition-all group">
+                        <span class="font-bold text-gray-900 text-sm group-hover:text-red-700 transition">{{ $cat }}</span>
+                        <span class="text-xs text-gray-400">
+                            @php $hints = ['Kekerasan'=>'Perlu perlindungan','Kesehatan'=>'Butuh bantuan medis','Pelecehan'=>'Butuh pendampingan','Kecelakaan'=>'Butuh respons cepat','Ancaman'=>'Merasa tidak aman','Lainnya'=>'Saya butuh bantuan']; @endphp
+                            {{ $hints[$cat] }}
+                        </span>
+                    </button>
                     @endforeach
                 </div>
-                
-                <div class="flex items-center justify-between bg-gray-50 rounded-2xl px-5 py-4 mb-4">
+                <div class="px-5 pb-5">
+                    <p class="text-center text-xs text-gray-400">Jika nyawa terancam, hubungi langsung:
+                        <a href="tel:112" class="text-red-700 font-bold">112</a> ·
+                        <a href="tel:119" class="text-red-700 font-bold">119</a> ·
+                        <a href="tel:110" class="text-red-700 font-bold">110</a>
+                    </p>
+                </div>
+            </div>
+
+            {{-- STEP 2: Kirim --}}
+            <div id="step-sending" class="hidden">
+                <div class="px-6 pt-6 pb-4 border-b border-gray-100">
                     <div>
-                        <p class="text-sm font-bold text-gray-900">Mode Anonim</p>
-                        <p class="text-[11px] text-gray-500 mt-0.5">Identitas tidak ditampilkan</p>
+                        <p class="text-xs font-bold uppercase tracking-widest text-red-600 mb-0.5">Mengirim laporan...</p>
+                        <h2 class="text-xl font-black text-gray-900" id="modal-category-label">Kategori</h2>
                     </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" id="f-anon" name="anonymous" value="1" @guest checked @endguest class="sr-only peer">
-                        <div class="w-11 h-6 bg-gray-200 peer-checked:bg-red-600 rounded-full transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
-                    </label>
                 </div>
-                
-                <div id="loc-info" class="flex items-center gap-2 mb-4 text-[11px] text-gray-400 font-medium">
-                    <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
-                    Mengambil lokasi GPS...
+                <div class="px-6 py-5 text-center">
+                    <div class="w-10 h-10 border-4 border-red-200 border-t-red-600 rounded-full animate-spin mx-auto mb-3"></div>
+                    <p id="modal-status" class="text-gray-500 text-sm">Mengambil lokasi GPS...</p>
+                    <p class="text-xs text-gray-400 mt-2">Laporan dikirim anonim — tidak perlu akun.</p>
+                    <button onclick="cancelEmergency()" class="mt-4 text-sm text-gray-400 hover:text-gray-600 underline transition">Batalkan</button>
                 </div>
-                
-                <div class="bg-red-50 rounded-2xl p-4 mb-4">
-                    <p id="auto-submit-info" class="text-sm text-red-700 font-bold text-center">Terkirim otomatis: <span id="auto-submit-cd" class="text-lg font-black">30</span>s</p>
-                </div>
-                
-                <button type="button" onclick="submitStep1()" id="btn-next-step" class="w-full bg-red-600 hover:bg-red-700 active:bg-red-800 text-white py-4 rounded-2xl font-black text-lg transition-all duration-200 shadow-[0_4px_14px_0_rgba(220,38,38,0.39)]">SELANJUTNYA</button>
-                </div>
+            </div>
 
-                <!-- STEP 2 -->
-                <div id="step-2" class="hidden flex-col h-full">
-                    <h3 class="font-bold text-lg mb-2 text-center text-gray-900 mt-2">Laporan Terkirim!</h3>
-                    <p class="text-xs text-gray-500 mb-4 text-center">Tambahkan detail opsional. Membantu partner memahami situasi lebih baik.</p>
-
-                    <textarea name="description" id="step2-desc" rows="3" placeholder="Deskripsi kejadian..." oninput="resetStep2Timer()" class="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-500 focus:bg-white mb-3 resize-none"></textarea>
-                    
-                    <div class="border border-dashed border-gray-300 rounded-xl p-4 mb-3 text-center bg-gray-50">
-                        <input type="file" id="step2-evidence" name="evidence[]" multiple class="text-xs w-full" accept="image/*,video/*,audio/*" onchange="resetStep2Timer()">
-                        <p class="text-xs text-gray-500 mt-2">Bisa pilih beberapa file sekaligus.</p>
-                    </div>
-
-                    <div class="flex items-center justify-between bg-gray-50 rounded-xl px-4 py-3 mb-4 border border-gray-200">
-                        <div>
-                            <p class="text-sm font-bold text-gray-900">Tampilkan Bukti</p>
-                            <p class="text-[10px] text-gray-500 mt-0.5">Izinkan semua orang melihat bukti ini</p>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" name="show_evidence" value="1" checked class="sr-only peer" id="step2-show-evidence">
-                            <div class="w-9 h-5 bg-gray-200 peer-checked:bg-red-600 rounded-full transition-all after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
-                        </label>
-                    </div>
-
-                    <div class="bg-red-50 rounded-xl p-3 mb-4">
-                        <p class="text-xs text-red-700 font-bold text-center">Menutup otomatis dalam: <span id="step2-cd" class="text-base font-black">60</span>s</p>
-                    </div>
-
-                    <button type="button" onclick="submitStep2()" id="btn-final-submit" class="w-full bg-gray-900 hover:bg-black text-white py-4 rounded-xl font-bold transition-all text-lg mt-auto shadow-[0_4px_14px_0_rgba(17,24,39,0.39)]">KIRIM LAPORAN</button>
-                </div>
-                <button onclick="closeCatModal()" class="w-full mt-2 text-gray-500 hover:text-gray-900 font-bold text-sm py-3 transition-colors">Kembali</button>
-            </form>
         </div>
     </div>
 
@@ -530,9 +500,15 @@
             p=>{
                 lat=p.coords.latitude;
                 lng=p.coords.longitude;
-                document.getElementById('f-lat').value=lat;
-                document.getElementById('f-lng').value=lng;
-                document.getElementById('loc-info').innerHTML='<div class="w-2 h-2 bg-green-500 rounded-full"></div><span class="text-green-600">Lokasi: '+lat.toFixed(4)+', '+lng.toFixed(4)+'</span>';
+                const latEl = document.getElementById('f-lat');
+                const lngEl = document.getElementById('f-lng');
+                if(latEl) latEl.value=lat;
+                if(lngEl) lngEl.value=lng;
+                
+                const locInfoEl = document.getElementById('loc-info');
+                if(locInfoEl) {
+                    locInfoEl.innerHTML='<div class="w-2 h-2 bg-green-500 rounded-full"></div><span class="text-green-600">Lokasi: '+lat.toFixed(4)+', '+lng.toFixed(4)+'</span>';
+                }
                 
                 initMap(lat, lng);
 
@@ -555,7 +531,12 @@
                     }
                 @endif
             },
-            ()=>{document.getElementById('loc-info').innerHTML='<div class="w-2 h-2 bg-red-400 rounded-full"></div><span class="text-red-500">GPS tidak tersedia.</span>';},
+            ()=>{
+                const locInfoEl = document.getElementById('loc-info');
+                if(locInfoEl) {
+                    locInfoEl.innerHTML='<div class="w-2 h-2 bg-red-400 rounded-full"></div><span class="text-red-500">GPS tidak tersedia.</span>';
+                }
+            },
             { enableHighAccuracy: true, maximumAge: 10000, timeout: 10000 }
         );
     }
@@ -1065,174 +1046,120 @@
 
 
 
-    let autoSubmitInterval = null;
-    let step2Interval = null;
-    let isEmergencySubmitting = false;
-    let currentReportId = null;
-    let step2Cd = 60;
+    // ─── Emergency Modal Logic ───────────────────────────────────────────────────
+    const csrf = '{{ csrf_token() }}';
+    const isLoggedIn = true;
+    window.hasActiveReport = false;
+    let locationPayload = { latitude: null, longitude: null };
+    let locationPromise = Promise.resolve();
+    let isSubmitting = false;
+    let selectedCategory = null;
 
-    function handleCategoryTap(el) {
-        document.getElementById('fallback-category').disabled=true;
-        const radio = el.querySelector('input[type="radio"]');
-        if (radio) radio.checked = true;
+    function openEmergencyModal() {
+        const modal = document.getElementById('emergency-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.getElementById('step-category').classList.remove('hidden');
+        document.getElementById('step-sending').classList.add('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeEmergencyModal() {
+        cancelEmergency();
+        const modal = document.getElementById('emergency-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = '';
+    }
+
+    function selectCategory(cat) {
+        selectedCategory = cat;
+        requestLocation();
+
+        // Switch to step 2
+        document.getElementById('step-category').classList.add('hidden');
+        document.getElementById('step-sending').classList.remove('hidden');
+        document.getElementById('modal-category-label').textContent = cat;
+        document.getElementById('modal-status').textContent = 'Mengambil lokasi GPS...';
+
+        submitEmergency();
+    }
+
+    function requestLocation() {
+        if (!navigator.geolocation) return;
+        locationPromise = new Promise((resolve) => {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => { locationPayload = { latitude: pos.coords.latitude, longitude: pos.coords.longitude }; resolve(); },
+                () => { locationPayload = { latitude: null, longitude: null }; resolve(); },
+                { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 }
+            );
+        });
+    }
+
+    function cancelEmergency() {
+        isSubmitting = false;
+        selectedCategory = null;
+        locationPayload = { latitude: null, longitude: null };
+        document.getElementById('step-sending').classList.add('hidden');
+        document.getElementById('step-category').classList.remove('hidden');
+    }
+
+    async function submitEmergency() {
+        if (isSubmitting) return;
+        isSubmitting = true;
+
+        document.getElementById('modal-status').textContent = 'Mengirim laporan ke partner terdekat...';
+
+        await Promise.race([
+            locationPromise,
+            new Promise(r => setTimeout(r, 1000))
+        ]);
+
+        const payload = {
+            category: selectedCategory || 'Lainnya',
+            description: null,
+            latitude: locationPayload.latitude || lat,
+            longitude: locationPayload.longitude || lng,
+            anonymous: 1,
+        };
+
+        try {
+            const res = await fetch('/emergency', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrf,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!res.ok) {
+                let errMsg = 'Gagal terhubung. Coba lagi atau hubungi 112.';
+                try {
+                    const errData = await res.json();
+                    if (errData && errData.error) errMsg = errData.error;
+                } catch(ex) {}
+                throw new Error(errMsg);
+            }
+
+            const data = await res.json();
+            document.body.style.overflow = '';
+            window.location.href = data.tracking_url;
+        } catch (e) {
+            document.getElementById('modal-status').textContent = e.message;
+            isSubmitting = false;
+            alert(e.message);
+            closeEmergencyModal();
+        }
     }
 
     function startPanic(){
-        openCatModal();
+        openEmergencyModal();
     }
 
-    async function submitStep1() {
-        if (isEmergencySubmitting) return;
-        isEmergencySubmitting = true;
-        
-        if (autoSubmitInterval) clearInterval(autoSubmitInterval);
-
-        const form = document.getElementById('emergency-form');
-        const submitBtn = document.getElementById('btn-next-step');
-        if(submitBtn) {
-            submitBtn.innerHTML = 'MEMPROSES...';
-            submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
-            submitBtn.disabled = true;
-        }
-
-        const radios = form.querySelectorAll('input[name="category"]');
-        let checked = false;
-        radios.forEach(r => {
-            if(r.checked) checked = true;
-            r.required = false;
-        });
-        if (!checked) {
-            document.getElementById('fallback-category').disabled = false;
-                            document.getElementById('fallback-category').value = 'ambulance';
-        }
-
-        const formData = new FormData(form);
-        try {
-            const response = await fetch('/emergency', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
-            const data = await response.json();
-            
-            if (data.ok && data.report_id) {
-                currentReportId = data.report_id;
-                // Move to step 2
-                document.getElementById('step-1').classList.add('hidden');
-                document.getElementById('step-2').classList.remove('hidden');
-                document.getElementById('step-2').classList.add('flex');
-                
-                // Start step 2 countdown
-                startStep2Timer();
-            }
-        } catch (e) {
-            console.error(e);
-            HTMLFormElement.prototype.submit.call(form); // fallback
-        }
-    }
-    
-    function startStep2Timer() {
-        if (step2Interval) clearInterval(step2Interval);
-        step2Cd = 60;
-        document.getElementById('step2-cd').textContent = step2Cd;
-        step2Interval = setInterval(() => {
-            step2Cd--;
-            document.getElementById('step2-cd').textContent = step2Cd;
-            if (step2Cd <= 0) {
-                clearInterval(step2Interval);
-                submitStep2();
-            }
-        }, 1000);
-    }
-    
-    function resetStep2Timer() {
-        if (step2Interval) {
-            step2Cd = 60;
-            document.getElementById('step2-cd').textContent = step2Cd;
-        }
-    }
-
-    async function submitStep2() {
-        if (step2Interval) clearInterval(step2Interval);
-        const submitBtn = document.getElementById('btn-final-submit');
-        submitBtn.innerHTML = 'MENYIMPAN...';
-        submitBtn.disabled = true;
-        
-        const desc = document.getElementById('step2-desc').value;
-        const showEvidence = document.getElementById('step2-show-evidence').checked ? '1' : '0';
-        const fileInput = document.getElementById('step2-evidence');
-        
-        const formData = new FormData();
-        formData.append('_token', '{{ csrf_token() }}');
-        formData.append('description', desc);
-        formData.append('show_evidence', showEvidence);
-        
-        if (fileInput.files.length > 0) {
-            for (let i = 0; i < fileInput.files.length; i++) {
-                formData.append('evidence[]', fileInput.files[i]);
-            }
-        }
-        
-        try {
-            await fetch(`/tracking/${currentReportId}/evidence`, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
-        } catch (e) {
-            console.error(e);
-        }
-        
-        window.location.href = `/tracking/${currentReportId}`;
-    }
-
-    function openCatModal(){
-        const modal = document.getElementById('cat-modal');
-        modal.classList.add('flex');
-        modal.classList.remove('hidden');
-        document.body.style.overflow='hidden';
-
-        // Reset state
-        isEmergencySubmitting = false;
-        document.getElementById('step-1').classList.remove('hidden');
-        document.getElementById('step-2').classList.add('hidden');
-        document.getElementById('step-2').classList.remove('flex');
-        
-        const submitBtn = document.getElementById('btn-next-step');
-        if(submitBtn) {
-            submitBtn.innerHTML = 'SELANJUTNYA';
-            submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
-            submitBtn.disabled = false;
-        }
-
-        let cd = 30;
-        document.getElementById('auto-submit-info').classList.remove('hidden');
-        document.getElementById('auto-submit-cd').textContent = cd;
-        if(autoSubmitInterval) clearInterval(autoSubmitInterval);
-        if(step2Interval) clearInterval(step2Interval);
-        
-        autoSubmitInterval = setInterval(() => {
-            cd--;
-            document.getElementById('auto-submit-cd').textContent = cd;
-            if (cd <= 0) {
-                clearInterval(autoSubmitInterval);
-                submitStep1();
-            }
-        }, 1000);
-    }
-    function closeCatModal(){
-        const modal = document.getElementById('cat-modal');
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
-        document.body.style.overflow='';
-        if (autoSubmitInterval) clearInterval(autoSubmitInterval);
-        if (step2Interval) clearInterval(step2Interval);
-    }
-    document.getElementById('cat-modal').addEventListener('click',function(e){if(e.target===this)closeCatModal();});
+    // Removed backdrop click listener to prevent closing when clicking outside the popup
 
     // ===== EDIT LAPORAN MODAL FUNCTIONS =====
     function openEditReportModal(btn) {

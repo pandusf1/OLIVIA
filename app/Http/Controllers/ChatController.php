@@ -80,21 +80,21 @@ class ChatController extends Controller
             || ($reporterUuid && (string) $msg->sender_id === (string) $reporterUuid);
 
         if ($isReporter) {
-            if ($msg->sender_type === 'user') {
+            if ($msg->sender_type === 'user' || $msg->sender_type === 'partner_user') {
                 $user = \App\Models\User::find($msg->sender_id);
-                $name = $user ? $user->name : 'anonymous';
+                $name = $user ? $user->name : 'anonim';
                 return "Korban ({$name})";
             }
-            return 'anonymous (korban)';
+            return 'Korban (anonim)';
         }
 
         // Warga/saksi biasa (non-reporter)
         if ($msg->sender_type === 'anonymous' || !$msg->sender_id) {
-            return 'anonymous';
+            return 'Saksi (anonim)';
         }
 
         $user = \App\Models\User::find($msg->sender_id);
-        return $user ? $user->name : 'anonymous';
+        return $user ? "Saksi ({$user->name})" : 'Saksi (anonim)';
     }
 
     /**
@@ -172,7 +172,7 @@ class ChatController extends Controller
             $currentSenderType = 'user';
             $currentSenderId   = $user->id;
             $isReporter        = $report->user_id && (string) $user->id === (string) $report->user_id;
-            $currentName       = $isReporter ? "Korban ({$user->name})" : $user->name;
+            $currentName       = $isReporter ? "Korban ({$user->name})" : "Saksi ({$user->name})";
         } else {
             $currentSenderType = 'anonymous';
             if (!session()->has('anonymous_chat_uuid')) {
@@ -181,7 +181,7 @@ class ChatController extends Controller
             $currentSenderId   = session()->get('anonymous_chat_uuid');
             
             $isGuestReporter = in_array($report->id, session()->get('my_reports', []));
-            $currentName       = $isGuestReporter ? 'anonymous (korban)' : 'anonymous';
+            $currentName       = $isGuestReporter ? 'Korban (anonim)' : 'Saksi (anonim)';
         }
 
         return view('pages.chat', [

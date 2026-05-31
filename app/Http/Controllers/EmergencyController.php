@@ -217,6 +217,24 @@ class EmergencyController extends Controller
             ? "https://maps.google.com/?q={$report->latitude},{$report->longitude}"
             : 'Lokasi tidak tersedia';
 
+        // Persiapkan objek response
+        if ($request->expectsJson()) {
+            $response = response()->json([
+                'ok' => true,
+                'report_id' => $report->id,
+                'tracking_url' => $trackingLink,
+            ]);
+        } else {
+            $response = redirect('/tracking/' . $report->id);
+        }
+
+        // Kirim response dan tutup koneksi ke browser seketika jika FastCGI tersedia
+        if (function_exists('fastcgi_finish_request')) {
+            $response->send();
+            fastcgi_finish_request();
+        }
+
+        // --- SELURUH PROSES BERAT DIJALANKAN DI BACKGROUND ---
         foreach ($partners as $partner) {
             if ($partner->phone) {
                 $partnerMessage =
@@ -283,15 +301,7 @@ class EmergencyController extends Controller
             'tracking_url' => $trackingLink,
         ]);
 
-        if ($request->expectsJson()) {
-            return response()->json([
-                'ok' => true,
-                'report_id' => $report->id,
-                'tracking_url' => $trackingLink,
-            ]);
-        }
-
-        return redirect('/tracking/' . $report->id);
+        return $response;
     }
 
     private function timeline(Report $report, string $type, string $message, array $metadata = []): void

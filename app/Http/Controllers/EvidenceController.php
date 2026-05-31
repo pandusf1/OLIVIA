@@ -57,11 +57,11 @@ class EvidenceController extends Controller
             foreach ($files as $file) {
                 try {
                     $path = null;
-                    $hash = hash_file('sha256', $file->getRealPath());
+                    $hash = Evidence::generateFastHash($file->getRealPath(), $file->getClientOriginalName(), $file->getSize());
 
                     try {
                         $path = $file->store('evidences', 'public');
-                    } catch (\Exception $storeEx) {
+                    } catch (\Throwable $storeEx) {
                         $fileData = file_get_contents($file->getRealPath());
                         $mimeType = $file->getClientMimeType();
                         $base64 = base64_encode($fileData);

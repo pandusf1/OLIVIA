@@ -96,6 +96,79 @@ class Partner extends Model
             return collect();
         }
 
+        $normalized = strtolower(trim((string) $category));
+        $normalized = str_replace(['_', '-'], ' ', $normalized);
+        $normalized = preg_replace('/\s+/', ' ', $normalized);
+
+        if ($normalized === 'lainnya') {
+            // Get all active partners of the four types
+            $query = self::query()
+                ->whereIn('partner_type', ['ambulance', 'legal', 'counselor', 'pemadam']);
+
+            if (Schema::hasColumn('partners', 'is_active')) {
+                $query->where('is_active', true);
+            }
+
+            $allPartners = $query->get();
+
+            // Calculate distance for all partners
+            if ($latitude !== null && $longitude !== null) {
+                $allPartners = $allPartners->map(function ($partner) use ($latitude, $longitude) {
+                    $partner->distance_km = ($partner->latitude !== null && $partner->longitude !== null)
+                        ? self::haversineKm($latitude, $longitude, (float) $partner->latitude, (float) $partner->longitude)
+                        : PHP_FLOAT_MAX;
+                    return $partner;
+                });
+            } else {
+                $allPartners = $allPartners->map(function ($partner) {
+                    $partner->distance_km = PHP_FLOAT_MAX;
+                    return $partner;
+                });
+            }
+
+            // Group all partners by type
+            $grouped = $allPartners->groupBy('partner_type');
+
+            $selectedPartners = collect();
+            $types = ['ambulance', 'legal', 'counselor', 'pemadam'];
+
+            // 1. For each type, get the closest (verified desc, distance_km asc) partner
+            foreach ($types as $type) {
+                $partnersOfType = $grouped->get($type, collect());
+                if ($partnersOfType->isNotEmpty()) {
+                    $closest = $partnersOfType->sortBy([
+                        ['verified', 'desc'],
+                        ['distance_km', 'asc'],
+                    ])->first();
+                    $selectedPartners->push($closest);
+                }
+            }
+
+            // 2. We need to backfill up to $limit partners from the remaining pool
+            $selectedIds = $selectedPartners->pluck('id')->toArray();
+            $remainingPool = $allPartners->reject(function ($partner) use ($selectedIds) {
+                return in_array($partner->id, $selectedIds);
+            });
+
+            $needed = $limit - $selectedPartners->count();
+            if ($needed > 0 && $remainingPool->isNotEmpty()) {
+                $backfill = $remainingPool->sortBy([
+                    ['verified', 'desc'],
+                    ['distance_km', 'asc'],
+                ])->take($needed);
+
+                foreach ($backfill as $partner) {
+                    $selectedPartners->push($partner);
+                }
+            }
+
+            // Finally, sort the limit partners by verified desc and distance_km asc
+            return $selectedPartners->sortBy([
+                ['verified', 'desc'],
+                ['distance_km', 'asc'],
+            ])->values();
+        }
+
         $query = self::query()
             ->whereIn('partner_type', $partnerTypes)
             ->orderByDesc('verified');

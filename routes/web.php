@@ -23,16 +23,32 @@ Route::get('/', function() {
     $sessionIds = session()->get('my_reports', []);
     $allIds = array_unique(array_merge($sessionIds, $cookieIds));
 
+    if (auth()->check()) {
+        $userReportIds = \App\Models\Report::where('user_id', auth()->id())
+            ->pluck('id')
+            ->toArray();
+        $allIds = array_unique(array_merge($allIds, $userReportIds));
+    }
+
     if (!empty($allIds)) {
         session()->put('my_reports', $allIds);
     }
 
     $activeReport = null;
     if (!empty($allIds)) {
+        // Prioritaskan laporan guest/anonim (user_id IS NULL)
         $activeReport = \App\Models\Report::whereIn('id', $allIds)
             ->where('status', '!=', 'Resolved')
+            ->whereNull('user_id')
             ->latest()
             ->first();
+
+        if (!$activeReport) {
+            $activeReport = \App\Models\Report::whereIn('id', $allIds)
+                ->where('status', '!=', 'Resolved')
+                ->latest()
+                ->first();
+        }
     }
 
     return view('welcome', compact('activeReport'));
@@ -92,20 +108,36 @@ Route::get('/tracking/active-check', function(\Illuminate\Http\Request $request)
     }
     $ids = array_filter(array_map('trim', $ids));
 
-    if (empty($ids)) {
+    $sessionIds = session()->get('my_reports', []);
+    $allIds = array_unique(array_merge($sessionIds, $ids));
+
+    if (auth()->check()) {
+        $userReportIds = \App\Models\Report::where('user_id', auth()->id())
+            ->pluck('id')
+            ->toArray();
+        $allIds = array_unique(array_merge($allIds, $userReportIds));
+    }
+
+    if (empty($allIds)) {
         return response()->json(['active_report_id' => null]);
     }
 
-    $sessionIds = session()->get('my_reports', []);
-    $allIds = array_unique(array_merge($sessionIds, $ids));
     session()->put('my_reports', $allIds);
     cookie()->queue(cookie('safora_my_reports', json_encode($allIds), 60 * 24 * 30));
 
-    // Filter laporan yang belum terselesaikan
+    // Prioritaskan laporan guest/anonim (user_id IS NULL)
     $active = \App\Models\Report::whereIn('id', $allIds)
         ->where('status', '!=', 'Resolved')
+        ->whereNull('user_id')
         ->latest()
         ->first();
+
+    if (!$active) {
+        $active = \App\Models\Report::whereIn('id', $allIds)
+            ->where('status', '!=', 'Resolved')
+            ->latest()
+            ->first();
+    }
 
     return response()->json([
         'active_report_id' => $active ? $active->id : null,

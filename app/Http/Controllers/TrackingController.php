@@ -98,11 +98,176 @@ class TrackingController extends Controller
             'longitude' => 'required|numeric|between:-180,180',
         ]);
 
+        $wasNull = ($report->latitude === null || $report->longitude === null);
+
         $report->latitude = $request->input('latitude');
         $report->longitude = $request->input('longitude');
+        
+        if ($wasNull) {
+            $report->location_verified_at = now();
+        }
+        
         $report->save();
 
+        if ($wasNull) {
+            // Log timeline event
+            $report->timelineEvents()->create([
+                'report_id' => $report->id,
+                'event_type' => 'gps_verified',
+                'event_message' => 'Lokasi GPS berhasil diterima sehingga partner dapat melihat area kejadian lebih cepat.',
+                'actor_type' => 'system',
+            ]);
+
+            $trackingLink = url('/tracking/' . $report->id);
+            $mapsLink = "https://maps.google.com/?q={$report->latitude},{$report->longitude}";
+
+            // Recalculate distance for existing routed partners
+            foreach ($report->partnerRoutings as $routing) {
+                if ($routing->partner) {
+                    $dist = Partner::distanceKm((float) $report->latitude, (float) $report->longitude, (float) $routing->partner->latitude, (float) $routing->partner->longitude);
+                    $routing->update(['distance_km' => $dist]);
+                }
+            }
+
+            // Route to nearest partners if none exists and not unknown_emergency
+            $partners = $report->routingPartners;
+            if ($partners->isEmpty() && strtolower((string) $report->category) !== 'unknown_emergency') {
+                $partners = Partner::routeMultipleByCategory(
+                    $report->category,
+                    5,
+                    (float) $report->latitude,
+                    (float) $report->longitude
+                );
+                
+                // Filter within 10 km
+                $partners = $partners->filter(function($p) use ($report) {
+                    $dist = Partner::distanceKm((float) $report->latitude, (float) $report->longitude, (float) $p->latitude, (float) $p->longitude);
+                    return $dist <= 10.0;
+                });
+
+                if ($partners->isNotEmpty()) {
+                    $report->update([
+                        'status' => 'Routed',
+                        'routed_partner_id' => $partners->first()->id,
+                    ]);
+
+                    foreach ($partners as $partner) {
+                        \App\Models\ReportPartnerRouting::create([
+                            'report_id' => $report->id,
+                            'partner_id' => $partner->id,
+                            'status' => 'pending',
+                            'routed_at' => now(),
+                            'distance_km' => Partner::distanceKm((float) $report->latitude, (float) $report->longitude, (float) $partner->latitude, (float) $partner->longitude),
+                            'estimated_response_minutes' => $partner->partner_type === 'ambulance' ? 5 : 8,
+                        ]);
+                    }
+                }
+            }
+
+            // Alert via WhatsApp torouted partners
+            foreach ($partners as $partner) {
+                if ($partner->phone) {
+                    $partnerMessage =
+                        "🚨 *Safora - Laporan Darurat Baru (GPS Terdeteksi)*\n\n" .
+                        "Kategori: *{$report->category}*\n\n" .
+                        "📍 Lokasi:\n{$mapsLink}\n\n" .
+                        "🔗 Tracking:\n{$trackingLink}\n\n" .
+                        "Buka dashboard Safora untuk menerima laporan ini.";
+                    try {
+                        FonnteService::send($partner->phone, $partnerMessage);
+                    } catch (\Exception $e) {}
+                }
+            }
+
+            // Alert to admin / test phone
+            if (env('ADMIN_PHONE')) {
+                $testMsg = "🚨 *Safora - Laporan Darurat Baru (GPS Updated)*\n\nKategori: *{$report->category}*\n📍 Lokasi:\n{$mapsLink}\n🔗 Tracking:\n{$trackingLink}";
+                try { FonnteService::send(env('ADMIN_PHONE'), $testMsg); } catch(\Exception $e){}
+            }
+
+            // Alert to nearest users within 10 km
+            $this->notifyNearestUsersFromTracking($report, $trackingLink, $mapsLink, 3);
+        }
+
         return response()->json(['ok' => true]);
+    }
+
+    private function notifyNearestUsersFromTracking(Report $report, string $trackingLink, string $mapsLink, int $limit = 3): void
+    {
+        $fromUserId = $report->user_id;
+
+        $message =
+            "🚨 *ALERT DARURAT — Safora*\n\n" .
+            "Ada korban meminta pertolongan!\n\n" .
+            "Kategori: *{$report->category}*\n\n" .
+            "📍 Lokasi:\n{$mapsLink}\n\n" .
+            "🔗 Pantau status:\n{$trackingLink}\n\n" .
+            "_Pesan ini dikirim otomatis oleh Safora._";
+
+        $targetsQuery = \App\Models\UserLocation::query()
+            ->whereHas('user', function ($q) {
+                $q->where('role', 'user')->where('receive_nearby_alerts', true);
+            });
+            
+        if ($fromUserId) {
+            $targetsQuery->where('user_id', '!=', $fromUserId);
+        }
+            
+        $targets = $targetsQuery->get();
+        if ($targets->isEmpty()) {
+            return;
+        }
+
+        $lat = (float) $report->latitude;
+        $lng = (float) $report->longitude;
+
+        $targetsWithDistance = $targets
+            ->map(function ($loc) use ($lat, $lng) {
+                $distanceKm = $this->haversineKm($lat, $lng, (float) $loc->latitude, (float) $loc->longitude);
+                return [
+                    'user_id' => $loc->user_id,
+                    'distance_km' => $distanceKm,
+                ];
+            })
+            ->filter(function ($t) {
+                return $t['distance_km'] <= 10.0;
+            })
+            ->sortBy('distance_km')
+            ->take($limit)
+            ->values();
+
+        foreach ($targetsWithDistance as $t) {
+            $user = \App\Models\User::query()->where('id', $t['user_id'])->where('role', 'user')->first();
+            if (!$user || !$user->phone) {
+                continue;
+            }
+
+            try {
+                FonnteService::send($user->phone, $message);
+                
+                $user->nearby_alert_count += 1;
+                if ($user->nearby_alert_count >= $user->next_nearby_alert_threshold) {
+                    $settingUrl = url('/settings');
+                    $noticeMsg = "ℹ️ *Info Safora*\nAnda telah menerima beberapa alert korban terdekat. Jika Anda merasa terganggu, Anda bisa menonaktifkan fitur ini di pengaturan aplikasi.\n\nAtur di sini: {$settingUrl}";
+                    FonnteService::send($user->phone, $noticeMsg);
+                    
+                    $user->nearby_alert_count = 0;
+                    $user->next_nearby_alert_threshold += 3;
+                }
+                $user->save();
+            } catch (\Throwable $e) {
+                \Log::error('notifyNearestUsersFromTracking Fonnte send failed', [
+                    'target_user_id' => $user->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            \App\Models\ReportUserRouting::create([
+                'report_id' => $report->id,
+                'target_user_id' => $user->id,
+                'routed_at' => now(),
+            ]);
+        }
     }
 
     public function resolve(Request $request, $id)
@@ -261,11 +426,13 @@ class TrackingController extends Controller
             ->count();
 
         $humanMessage = $this->humanStatusMessage($report, $pendingCount, $reviewingCount);
-        $eta = $assignedPartner
-            ? 'Partner sudah terhubung'
-            : ($pendingRoutings->min('estimated_response_minutes')
-                ? $pendingRoutings->min('estimated_response_minutes') . '-' . ($pendingRoutings->min('estimated_response_minutes') + 3) . ' menit'
-                : '3-5 menit');
+        $eta = ($report->status === 'Resolved')
+            ? 'Selesai'
+            : ($assignedPartner
+                ? 'Partner sudah terhubung'
+                : ($pendingRoutings->min('estimated_response_minutes')
+                    ? $pendingRoutings->min('estimated_response_minutes') . '-' . ($pendingRoutings->min('estimated_response_minutes') + 3) . ' menit'
+                    : '3-5 menit'));
 
         $latestMessages = collect();
         if ($assignedPartner && $report->user_id) {
@@ -397,6 +564,13 @@ class TrackingController extends Controller
 
     private function humanStatusMessage(Report $report, int $pendingCount, int $reviewingCount): string
     {
+        if ($report->status === 'Resolved') {
+            if ($report->handler_partner_id && $report->assignedPartner) {
+                return 'Kasus ini telah selesai ditangani oleh ' . $report->assignedPartner->partner_name . '. Terima kasih atas kerja sama Anda.';
+            }
+            return 'Kasus ini telah selesai ditangani. Terima kasih atas kerja sama Anda.';
+        }
+
         if ($report->handler_partner_id && $report->assignedPartner) {
             return 'Laporan Anda sekarang ditangani oleh ' . $report->assignedPartner->partner_name . '. Chat krisis sudah terbuka untuk koordinasi.';
         }
@@ -501,8 +675,10 @@ class TrackingController extends Controller
             }
         }
 
-        if (!$isCreator && !$isTrustedContact && !$isWitnessWithin5Km) {
-            return response()->json(['error' => 'Akses ditolak. Hanya korban, saksi (< 5 km), atau kontak terpercaya yang bisa menambah kronologi.'], 403);
+        $isPartner = auth()->check() && auth()->user()->role === 'partner';
+
+        if (!$isCreator && !$isTrustedContact && !$isWitnessWithin5Km && !$isPartner) {
+            return response()->json(['error' => 'Akses ditolak. Hanya korban, saksi (< 5 km), partner, atau kontak terpercaya yang bisa menambah kronologi.'], 403);
         }
 
         $request->validate([
@@ -512,7 +688,11 @@ class TrackingController extends Controller
         $role = 'Saksi';
         $writerName = 'anonymous';
 
-        if ($isCreator) {
+        if (auth()->check() && auth()->user()->role === 'partner') {
+            $role = 'Partner';
+            $partner = \App\Models\Partner::find(auth()->user()->partner_id);
+            $writerName = $partner ? $partner->partner_name : auth()->user()->name;
+        } elseif ($isCreator) {
             $role = 'Korban';
             $writerName = auth()->check() ? auth()->user()->name : 'anonymous';
         } elseif ($isTrustedContact) {
