@@ -31,8 +31,6 @@
     <div class="max-w-6xl mx-auto px-6 py-10 fade-in">
 
 
-
-
         {{-- ===== BIG EMERGENCY BUTTON ===== --}}
         <div class="flex justify-center mb-10 mt-6 fade-in">
             <div class="relative flex flex-col items-center">
@@ -46,7 +44,7 @@
                 </button>
 
                 {{-- Countdown Area --}}
-                <div id="countdown-area" class="hidden relative z-20 w-52 h-52 sm:w-64 sm:h-64 bg-white rounded-full flex flex-col items-center justify-center shadow-2xl border-[6px] border-red-700">
+                <div id="countdown-area" class="hidden relative z-20 w-52 h-52 sm:w-64 sm:h-64 bg-white rounded-full flex-col items-center justify-center shadow-2xl border-[6px] border-red-700">
                     <p class="text-[10px] sm:text-xs text-gray-500 font-bold uppercase tracking-widest mb-1">MENGIRIM DALAM</p>
                     <p id="cd-num" class="text-7xl sm:text-8xl font-black text-red-700 font-unbounded leading-none mb-1">5</p>
                     <div class="w-2/3 bg-gray-100 rounded-full h-2 mb-4 overflow-hidden">
@@ -192,7 +190,7 @@
                             </div>
                             <div class="flex items-center gap-3 flex-shrink-0">
                                 @if(in_array($report->status, ['Submitted', 'Routed', 'Viewed']))
-                                    <div class="flex items-center gap-1.5 report-action-buttons hidden sm:flex" data-time="{{ $report->created_at->timestamp }}">
+                                    <div class="items-center gap-1.5 report-action-buttons hidden sm:flex" data-time="{{ $report->created_at->timestamp }}">
                                         <button type="button" data-id="{{ $report->id }}" data-category="{{ $report->category }}" data-desc="{{ $report->description }}" onclick="event.preventDefault(); event.stopPropagation(); openEditReportModal(this)" class="text-xs bg-white hover:bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-200 transition font-medium">Edit</button>
                                         <form action="{{ route('report.destroy', $report->id) }}" method="POST" onsubmit="return confirm('Hapus laporan ini?');" onclick="event.stopPropagation();" class="inline">
                                             @csrf
@@ -231,7 +229,7 @@
     </div>
 
     {{-- ===== KATEGORI MODAL ===== --}}
-    <div id="all-partners-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center px-4">
+    <div id="all-partners-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center px-4">
         <div class="bg-white rounded-2xl w-full max-w-lg p-5 shadow-2xl max-h-[85vh] overflow-hidden flex flex-col">
             <div class="flex items-start justify-between gap-3 mb-3">
                 <div class="min-w-0">
@@ -270,7 +268,7 @@
     </div>
 
     {{-- ===== ALL REPORTS MODAL ===== --}}
-    <div id="all-reports-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center px-4">
+    <div id="all-reports-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center px-4">
         <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-hidden flex flex-col">
             {{-- Header --}}
             <div class="flex items-start justify-between gap-3 p-5 border-b border-gray-100">
@@ -340,7 +338,7 @@
         </div>
     </div>
 
-    <div id="cat-modal" class="hidden fixed inset-0 bg-black/80 z-[100] flex flex-col justify-center items-center px-6 py-6 transition-all duration-300">
+    <div id="cat-modal" class="hidden fixed inset-0 bg-black/80 z-[100] flex-col justify-center items-center px-6 py-6 transition-all duration-300">
         <div class="bg-white rounded-3xl w-full max-w-sm mx-auto p-5 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div class="flex items-center gap-2 mb-3">
                 <div class="w-2.5 h-2.5 bg-red-600 rounded-full animate-pulse"></div>
@@ -427,7 +425,7 @@
     </div>
 
     {{-- ===== EDIT LAPORAN MODAL ===== --}}
-    <div id="edit-report-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[110] flex items-center justify-center px-4 transition-all duration-300">
+    <div id="edit-report-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[110] items-center justify-center px-4 transition-all duration-300">
         <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl">
             <div class="flex items-start justify-between gap-3 mb-4">
                 <div>
@@ -515,12 +513,14 @@
         const m = document.getElementById('all-partners-modal');
         if(!m) return;
         document.body.style.overflow = 'hidden';
+        m.classList.add('flex');
         m.classList.remove('hidden');
     }
 
     function closeAllPartnersModal(){
         const m = document.getElementById('all-partners-modal');
         if(!m) return;
+        m.classList.remove('flex');
         m.classList.add('hidden');
         document.body.style.overflow = '';
     }
@@ -1191,7 +1191,9 @@
     }
 
     function openCatModal(){
-        document.getElementById('cat-modal').classList.remove('hidden');
+        const modal = document.getElementById('cat-modal');
+        modal.classList.add('flex');
+        modal.classList.remove('hidden');
         document.body.style.overflow='hidden';
 
         // Reset state
@@ -1223,7 +1225,9 @@
         }, 1000);
     }
     function closeCatModal(){
-        document.getElementById('cat-modal').classList.add('hidden');
+        const modal = document.getElementById('cat-modal');
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
         document.body.style.overflow='';
         if (autoSubmitInterval) clearInterval(autoSubmitInterval);
         if (step2Interval) clearInterval(step2Interval);
@@ -1253,10 +1257,13 @@
         descInput.value = description || '';
 
         document.body.style.overflow = 'hidden';
+        modal.classList.add('flex');
         modal.classList.remove('hidden');
     }
     function closeEditReportModal() {
-        document.getElementById('edit-report-modal').classList.add('hidden');
+        const modal = document.getElementById('edit-report-modal');
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
         document.body.style.overflow = '';
     }
     document.getElementById('edit-report-modal').addEventListener('click', function(e) { if(e.target === this) closeEditReportModal(); });
@@ -1292,6 +1299,7 @@
         const modal = document.getElementById('all-reports-modal');
         if (!modal) return;
         document.body.style.overflow = 'hidden';
+        modal.classList.add('flex');
         modal.classList.remove('hidden');
         _arPage = 1;
         document.getElementById('all-reports-list').innerHTML = '';
@@ -1301,6 +1309,7 @@
     function closeAllReportsModal() {
         const modal = document.getElementById('all-reports-modal');
         if (!modal) return;
+        modal.classList.remove('flex');
         modal.classList.add('hidden');
         document.body.style.overflow = '';
     }

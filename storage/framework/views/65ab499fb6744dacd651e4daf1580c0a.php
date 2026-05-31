@@ -44,7 +44,7 @@
     </nav>
 
     
-    <section class="sm:pt-12 min-h-screen flex items-center bg-[#faf9f7] relative overflow-hidden">
+    <section class="sm:pt-12 pt-11 min-h-screen flex items-center bg-[#faf9f7] relative overflow-hidden">
 
         <div class="max-w-xl md:max-w-5xl mx-auto px-5 w-full flex flex-col items-center text-center pt-10 pb-8">
 
@@ -73,7 +73,7 @@
             </div>
 
             
-            <p class="flex items-center gap-1.5 text-gray-500 text-sm mb-10 fade-up d2">
+            <p class="flex items-center gap-1.5 text-gray-500 text-sm mb-1 fade-up d2">
                 <span class="w-2 h-2 bg-green-400 rounded-full inline-block"></span>
                 Anonim & guest — tanpa perlu daftar
             </p>
@@ -89,8 +89,8 @@
                 
                 
                 <a href="#cara-kerja" class="group bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 rounded-2xl p-4 md:p-5 text-left transition-all">
-                    <div class="w-10 h-10 md:w-12 md:h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-3">
-                        <svg class="w-5 h-5 md:w-6 md:h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-1">
+                        <svg class="w-6 h-6 md:w-6 md:h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     </div>
                     <p class="font-bold text-gray-900 text-sm mb-1">Cara kerja</p>
                     <p class="text-gray-500 text-xs leading-relaxed">Pelajari alur Safora</p>
@@ -98,8 +98,8 @@
 
                 
                 <a href="/tracking-search" class="group bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 rounded-2xl p-4 md:p-5 text-left transition-all">
-                    <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-3">
-                        <svg class="w-5 h-5 md:w-6 md:h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    <div class="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-1">
+                        <svg class="w-6 h-6 md:w-6 md:h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                     </div>
                     <p class="font-bold text-gray-900 text-sm mb-1">Cek laporan</p>
                     <p class="text-gray-500 text-xs leading-relaxed">Lacak status laporanmu</p>
@@ -111,7 +111,7 @@
     </section>
 
     
-    <div id="emergency-modal" class="fixed inset-0 z-[999] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm hidden" onclick="if(event.target===this)closeEmergencyModal()">
+    <div id="emergency-modal" class="fixed inset-0 z-[999] items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm hidden" onclick="if(event.target===this)closeEmergencyModal()">
         <div class="modal-in bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
 
             
@@ -341,7 +341,9 @@ let isSubmitting = false;
 let selectedCategory = null;
 
 function openEmergencyModal() {
-    document.getElementById('emergency-modal').classList.remove('hidden');
+    const modal = document.getElementById('emergency-modal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
     document.getElementById('step-category').classList.remove('hidden');
     document.getElementById('step-sending').classList.add('hidden');
     document.body.style.overflow = 'hidden';
@@ -349,7 +351,9 @@ function openEmergencyModal() {
 
 function closeEmergencyModal() {
     cancelEmergency();
-    document.getElementById('emergency-modal').classList.add('hidden');
+    const modal = document.getElementById('emergency-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
     document.body.style.overflow = '';
 }
 

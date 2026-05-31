@@ -89,13 +89,13 @@
                     <div class="flex items-center gap-2">
                         <!-- Tombol Tambah Bukti -->
                         <button type="button" onclick="openEvidenceModal()" class="text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition border border-gray-200">
-                            + Tambah Bukti
+                            + Bukti
                         </button>
                         
                         <!-- Tombol Tambah Kronologi -->
                         <button id="btn-add-chronology" onclick="openChronologyModal()" 
                                 class="hidden text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition border border-red-100">
-                            + Tambah Kronologi
+                            + Kronologi
                         </button>
 
                         <!-- Tombol Chat -->

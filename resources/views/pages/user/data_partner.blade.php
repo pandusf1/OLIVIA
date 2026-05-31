@@ -174,7 +174,7 @@
                                     <p class="font-semibold text-gray-900">{{ $pl->service_name }}</p>
                                 </div>
                                 <div class="text-right shrink-0">
-                                    <p class="font-black text-gray-900 font-semibold">Rp {{ number_format($pl->price, 0, ',', '.') }}</p>
+                                    <p class="font-black text-gray-900">Rp {{ number_format($pl->price, 0, ',', '.') }}</p>
                                 </div>
                             </div>
                         @endforeach
