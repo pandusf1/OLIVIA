@@ -93,7 +93,7 @@
                         
                         <!-- Tombol Tambah Kronologi -->
                         <button id="btn-add-chronology" onclick="openChronologyModal()" 
-                                class="hidden text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition border border-red-100">
+                                class="{{ ($isReporter || $isTrustedContact) ? '' : 'hidden' }} text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition border border-red-100">
                             + Kronologi
                         </button>
 
