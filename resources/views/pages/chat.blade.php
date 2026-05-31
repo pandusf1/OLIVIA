@@ -32,7 +32,7 @@
         <div class="absolute left-6 top-1/2 -translate-y-1/2 z-10">
             <a href="/tracking/{{ $report->id }}{{ ($userLat && $userLng) ? '?lat=' . $userLat . '&lng=' . $userLng : '' }}" class="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 transition text-sm font-semibold">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-                Laporan
+                <span class="hidden sm:inline">Laporan</span>
             </a>
         </div>
         <div class="max-w-2xl mx-auto pl-24 pr-4 md:px-4 h-14 flex items-center justify-between gap-3">

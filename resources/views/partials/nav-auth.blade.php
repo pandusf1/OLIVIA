@@ -17,7 +17,8 @@
     if ($currentPath === $fallbackPath
         || str_contains($fallbackPath, 'login')
         || str_contains($fallbackPath, 'register')
-        || str_contains($fallbackPath, 'emergency')) {
+        || str_contains($fallbackPath, 'emergency')
+        || str_contains($fallbackPath, 'chat')) {
         $resolvedFallbackUrl = $fallbackUrl;
     }
 

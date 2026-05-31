@@ -85,7 +85,7 @@ class ChatController extends Controller
                 $name = $user ? $user->name : 'anonymous';
                 return "Korban ({$name})";
             }
-            return 'Korban (anonymous)';
+            return 'anonymous (korban)';
         }
 
         // Warga/saksi biasa (non-reporter)
@@ -177,7 +177,7 @@ class ChatController extends Controller
             $currentSenderId   = session()->get('anonymous_chat_uuid');
             
             $isGuestReporter = in_array($report->id, session()->get('my_reports', []));
-            $currentName       = $isGuestReporter ? 'Korban (anonymous)' : 'anonymous';
+            $currentName       = $isGuestReporter ? 'anonymous (korban)' : 'anonymous';
         }
 
         return view('pages.chat', [

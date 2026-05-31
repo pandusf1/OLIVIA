@@ -117,9 +117,7 @@
                 </div>
 
                 <!-- GPS Alert Messages for Saksi -->
-                <p id="chat-too-far" class="hidden text-xs text-orange-600 bg-orange-50 px-3 py-2 rounded-lg mb-3">📍 Kamu di luar radius 5 km dari lokasi kejadian. Chat hanya untuk pelapor dan warga terdekat.</p>
                 <p id="chat-no-gps" class="hidden text-xs text-gray-500 bg-gray-50 px-3 py-2 rounded-lg mb-3">📍 Tidak bisa mengambil lokasi. Chat hanya tersedia untuk pelapor dan warga dalam 5 km.</p>
-                <p id="chat-distance-note" class="hidden text-xs text-green-700 bg-green-50 px-3 py-2 rounded-lg mb-3">✓ Kamu berada dalam radius 5 km — kamu bisa ikut chat sebagai warga sekitar.</p>
 
                 <!-- ID Laporan (for saksi/warga around) -->
                 <div class="mb-4 bg-slate-50 border border-slate-200 rounded-xl p-3">
@@ -505,6 +503,10 @@
                             chatLink.classList.add('inline-flex');
                         }
                         if (distNote) distNote.classList.remove('hidden');
+                        
+                        // Tampilkan tombol Tambah Kronologi jika saksi di bawah 5 km
+                        const chronoBtn = document.getElementById('btn-add-chronology');
+                        if (chronoBtn) chronoBtn.classList.remove('hidden');
                     } else {
                         window._chatAllowed = false;
                         // Terlalu jauh — tampilkan pesan, sembunyikan tombol
