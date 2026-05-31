@@ -48,15 +48,39 @@ Route::post('/tracking/{id}/location', [TrackingController::class, 'updateLocati
 Route::get('/tracking/{id}', [TrackingController::class, 'show'])->name('tracking.show');
 Route::post('/tracking/{reportId}/evidence', [EvidenceController::class, 'store'])->name('evidence.store');
 Route::delete('/evidence/{id}', [EvidenceController::class, 'destroy'])->name('evidence.destroy');
-Route::get('/storage/evidences/{filename}', function ($filename) {
+Route::get('/evidences/view/{filename}', function ($filename) {
+    // 1. Check storage_path
     $path = storage_path('app/public/evidences/' . $filename);
-    if (!file_exists($path)) {
-        abort(404);
+    if (file_exists($path) && !is_dir($path)) {
+        return response()->file($path);
     }
-    return response()->file($path);
-});
+    
+    // 2. Check /tmp/evidences/
+    $path = '/tmp/evidences/' . $filename;
+    if (file_exists($path) && !is_dir($path)) {
+        return response()->file($path);
+    }
+    
+    // 3. Check /tmp/
+    $path = '/tmp/' . $filename;
+    if (file_exists($path) && !is_dir($path)) {
+        return response()->file($path);
+    }
+    
+    // 4. Try checking base name
+    $filenameOnly = basename($filename);
+    $path = storage_path('app/public/evidences/' . $filenameOnly);
+    if (file_exists($path) && !is_dir($path)) {
+        return response()->file($path);
+    }
+    
+    abort(404);
+})->name('evidences.view');
+
 Route::post('/tracking/{id}/resolve', [TrackingController::class, 'resolve'])->name('tracking.resolve');
 Route::post('/tracking/{id}/chronology', [TrackingController::class, 'storeChronology'])->name('tracking.chronology');
+Route::post('/tracking/{id}/re-alert', [TrackingController::class, 'reAlert'])->name('tracking.re-alert');
+
 
 // Sinkronisasi laporan aktif untuk korban guest/anonim via localStorage
 Route::get('/tracking/active-check', function(\Illuminate\Http\Request $request) {

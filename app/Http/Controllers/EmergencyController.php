@@ -81,10 +81,17 @@ class EmergencyController extends Controller
                 $request->latitude ? (float) $request->latitude : null,
                 $request->longitude ? (float) $request->longitude : null
             );
+
+            // Filter to only partners within 10 km if location is available
+            if ($request->latitude && $request->longitude) {
+                $partners = $partners->filter(function($p) use ($request) {
+                    $dist = Partner::distanceKm((float) $request->latitude, (float) $request->longitude, (float) $p->latitude, (float) $p->longitude);
+                    return $dist <= 10.0;
+                });
+            }
         }
         $firstPartner = $partners->first();
-        $expiryMinutes = (int) env('REPORT_ROUTING_EXPIRY_MINUTES', 180);
-        $expiresAt = now()->addMinutes(max(1, $expiryMinutes));
+        $expiresAt = null; // No static expiration for emergency reports
 
 
         $urgency = $this->determineUrgency($request->category);
@@ -386,7 +393,7 @@ class EmergencyController extends Controller
                 ];
             })
             ->filter(function ($t) {
-                return $t['distance_km'] <= 15;
+                return $t['distance_km'] <= 10.0;
             })
             ->sortBy('distance_km')
             ->take($limit)

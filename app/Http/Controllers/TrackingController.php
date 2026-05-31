@@ -10,9 +10,36 @@ use App\Services\FonnteService;
 
 class TrackingController extends Controller
 {
+    private function resolveReport($id, array $relations = [])
+    {
+        $id = trim($id);
+        $id = ltrim($id, '#');
+        $id = trim($id);
+
+        $report = null;
+
+        if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $id)) {
+            $report = Report::where('id', $id)->first();
+        }
+
+        if (!$report) {
+            $report = Report::whereRaw("CAST(id AS text) LIKE ?", [strtolower($id) . '%'])->first();
+        }
+
+        if (!$report) {
+            abort(404, 'Laporan tidak ditemukan.');
+        }
+
+        if (!empty($relations)) {
+            $report->load($relations);
+        }
+
+        return $report;
+    }
+
     public function show($id)
     {
-        $report = Report::with([
+        $report = $this->resolveReport($id, [
             'evidences',
             'statusLogs',
             'partner',
@@ -21,7 +48,7 @@ class TrackingController extends Controller
             'partnerRoutings.partner',
             'timelineEvents',
             'chronologies',
-        ])->findOrFail($id);
+        ]);
 
         $isTrustedContact = false;
         if (auth()->check() && $report->user_id) {
@@ -43,13 +70,13 @@ class TrackingController extends Controller
 
     public function live($id)
     {
-        $report = Report::with([
+        $report = $this->resolveReport($id, [
             'evidences',
             'assignedPartner',
             'handlerUser',
             'partnerRoutings.partner',
             'timelineEvents',
-        ])->findOrFail($id);
+        ]);
 
         return response()->json($this->buildLivePayload($report));
     }
@@ -142,6 +169,86 @@ class TrackingController extends Controller
         return view('pages.tracking_search');
     }
 
+    public function reAlert(Request $request, $id)
+    {
+        $report = Report::findOrFail($id);
+
+        // Perbolehkan re-alert jika pengguna login adalah pembuat atau report ID ada di session my_reports
+        $isCreator = (auth()->check() && auth()->id() === $report->user_id) 
+            || in_array($report->id, $request->session()->get('my_reports', []));
+
+        if (!$isCreator) {
+            return response()->json(['error' => 'Akses ditolak.'], 403);
+        }
+
+        $retryCountKey = "report_{$report->id}_retry_count";
+        $retryCount = (int) \Illuminate\Support\Facades\Cache::store('database')->get($retryCountKey, 0);
+
+        if ($retryCount < 3) {
+            return response()->json(['error' => 'Fitur alert ulang belum aktif.'], 400);
+        }
+
+        $lastManualAlertAtKey = "report_{$report->id}_last_manual_alert_at";
+        $lastManualAlertAt = \Illuminate\Support\Facades\Cache::store('database')->get($lastManualAlertAtKey);
+
+        if ($lastManualAlertAt) {
+            $diff = now()->diffInSeconds(\Carbon\Carbon::parse($lastManualAlertAt));
+            if ($diff < 600) {
+                $cooldownSeconds = 600 - $diff;
+                return response()->json([
+                    'error' => "Mohon tunggu {$cooldownSeconds} detik sebelum mengirimkan alert ulang.",
+                    'cooldown_seconds' => $cooldownSeconds
+                ], 429);
+            }
+        }
+
+        // Simpan waktu manual alert baru
+        \Illuminate\Support\Facades\Cache::store('database')->put($lastManualAlertAtKey, now()->toDateTimeString(), now()->addDays(7));
+
+        // Dapatkan semua partner yang pending
+        $pendingRoutings = $report->partnerRoutings()->where('status', 'pending')->get();
+
+        $mapsLink = $report->latitude
+            ? "https://maps.google.com/?q={$report->latitude},{$report->longitude}"
+            : 'Lokasi tidak tersedia';
+        $trackingLink = url('/tracking/' . $report->id);
+
+        foreach ($pendingRoutings as $routing) {
+            $partner = $routing->partner;
+            if ($partner && $partner->phone) {
+                $partnerMessage =
+                    "🚨 *ALERT PENGINGAT MANUAL DARURAT*\n\n" .
+                    "Korban mengirim ulang alert manual karena belum menerima bantuan!\n" .
+                    "Kategori: *{$report->category}*\n\n" .
+                    "📍 Lokasi:\n{$mapsLink}\n\n" .
+                    "🔗 Tracking:\n{$trackingLink}\n\n" .
+                    "Mohon segera buka dashboard Safora dan terima laporan ini.";
+
+                try {
+                    FonnteService::send($partner->phone, $partnerMessage);
+                } catch (\Exception $e) {
+                    \Log::error("Failed to send manual re-alert WA to partner", [
+                        'partner_id' => $partner->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+        }
+
+        // Tambahkan event ke timeline
+        $report->timelineEvents()->create([
+            'event_type' => 'partner_manual_alert',
+            'event_message' => 'Pelapor mengirimkan ulang alert WhatsApp ke partner secara manual.',
+            'actor_type' => auth()->check() ? 'user' : 'system',
+            'actor_id' => auth()->id(),
+        ]);
+
+        return response()->json([
+            'ok' => true,
+            'cooldown_seconds' => 600
+        ]);
+    }
+
     private function buildLivePayload(Report $report): array
     {
         $assignedPartner = $report->assignedPartner;
@@ -172,6 +279,19 @@ class TrackingController extends Controller
                 : collect();
         }
 
+        $retryCountKey = "report_{$report->id}_retry_count";
+        $retryCount = (int) \Illuminate\Support\Facades\Cache::store('database')->get($retryCountKey, 0);
+
+        $lastManualAlertAtKey = "report_{$report->id}_last_manual_alert_at";
+        $lastManualAlertAt = \Illuminate\Support\Facades\Cache::store('database')->get($lastManualAlertAtKey);
+        $cooldownSeconds = 0;
+        if ($lastManualAlertAt) {
+            $diff = now()->diffInSeconds(\Carbon\Carbon::parse($lastManualAlertAt));
+            if ($diff < 600) {
+                $cooldownSeconds = 600 - $diff;
+            }
+        }
+
         return [
             'report' => [
                 'id' => $report->id,
@@ -196,9 +316,9 @@ class TrackingController extends Controller
             'human_message' => $humanMessage,
             'eta' => $eta,
             'next_instruction' => $this->nextInstruction($report),
-            'escalation_message' => $report->escalated_at
-                ? 'Admin Safora sudah diberi peringatan karena belum ada partner yang menerima dalam batas awal.'
-                : 'Jika belum ada partner menerima dalam 3 menit, sistem akan mencoba ulang dan memberi peringatan ke admin.',
+            'escalation_message' => $retryCount >= 3
+                ? 'Sistem selesai mengirim ulang alert pengingat otomatis. Anda kini dapat mengirim ulang alert secara manual jika diperlukan.'
+                : 'Jika belum ada partner menerima dalam 5 menit, sistem akan mencoba ulang alert WhatsApp secara bertahap s.d. 3 kali.',
             'assigned_partner' => $assignedPartner ? [
                 'id' => $assignedPartner->id,
                 'name' => $assignedPartner->partner_name,
@@ -235,6 +355,30 @@ class TrackingController extends Controller
                 'time' => optional($message->created_at)->format('H:i'),
             ]),
             'hotlines' => $this->hotlines(),
+            'retry_count' => $retryCount,
+            'cooldown_seconds' => $cooldownSeconds,
+            'chronologies' => $report->chronologies()->orderBy('created_at', 'asc')->get()->map(function ($chrono) {
+                return [
+                    'id' => $chrono->id,
+                    'role' => $chrono->role,
+                    'writer_name' => $chrono->writer_name,
+                    'description' => $chrono->description,
+                    'created_at' => $chrono->created_at->format('d M Y, H:i'),
+                ];
+            }),
+            'evidences' => $report->evidences()->orderBy('uploaded_at', 'asc')->get()->map(function ($ev) {
+                return [
+                    'id' => $ev->id,
+                    'file_url' => str_starts_with($ev->file_url, 'data:') ? $ev->file_url : url('/evidences/view/' . basename($ev->file_url)),
+                    'file_type' => $ev->file_type,
+                    'file_hash' => $ev->file_hash,
+                    'uploaded_at' => $ev->uploaded_at->format('d M Y, H:i'),
+                    'uploader_role' => $ev->uploader_role ?? 'Saksi',
+                ];
+            }),
+            'can_view_evidence' => (bool) ($report->show_evidence 
+                || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner')) 
+                || in_array($report->id, session()->get('my_reports', []))),
         ];
     }
 

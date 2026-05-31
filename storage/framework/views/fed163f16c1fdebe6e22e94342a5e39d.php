@@ -187,7 +187,7 @@
                                                         || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner'))
                                                         || in_array($report->id, session('my_reports', []));
                                                         
-                                                    $evidenceUrl = str_starts_with($evidence->file_url, 'data:') ? $evidence->file_url : asset('storage/' . $evidence->file_url);
+                                                    $evidenceUrl = str_starts_with($evidence->file_url, 'data:') ? $evidence->file_url : url('/evidences/view/' . basename($evidence->file_url));
                                                     
                                                     $cardBg = 'bg-blue-50/50 border-blue-150';
                                                     $badgeBg = 'bg-blue-100 text-blue-800';
@@ -267,9 +267,17 @@
                         <h2 class="text-lg font-black">Diteruskan ke Partner</h2>
                         <p class="text-sm text-gray-500">Status ini diperbarui otomatis setiap beberapa detik.</p>
                     </div>
-                    <span id="live-dot" class="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">Live</span>
                 </div>
                 <div id="routed-partners" class="space-y-3"></div>
+
+                <?php if((auth()->check() && auth()->id() === $report->user_id) || in_array($report->id, session('my_reports', []))): ?>
+                    <div id="re-alert-container" class="mt-4 hidden animate-pulse">
+                        <button id="btn-re-alert" onclick="triggerReAlert()" class="w-full rounded-xl bg-red-600 hover:bg-red-700 text-white font-black py-3.5 px-4 text-sm flex items-center justify-center gap-2 transition duration-300 shadow-md transform active:scale-95">
+                            <span>🚨 Kirim Ulang Alert ke Partner</span>
+                            <span id="re-alert-countdown" class="hidden font-mono bg-red-800 px-2 py-0.5 rounded text-xs"></span>
+                        </button>
+                    </div>
+                <?php endif; ?>
             </section>
 
             <section class="rounded-lg border border-gray-200 bg-white p-5">
@@ -283,11 +291,6 @@
                 <h2 class="text-lg font-black text-red-800">Nomor Darurat</h2>
                 <p class="mt-1 text-sm text-gray-600">Jika kondisi memburuk, hubungi bantuan resmi sekarang. Safora berjalan paralel.</p>
                 <div id="hotlines" class="mt-4 grid gap-2"></div>
-            </section>
-
-            <section class="rounded-lg border border-gray-200 bg-white p-5">
-                <h2 class="text-lg font-black">Pesan Partner</h2>
-                <div id="latest-messages" class="mt-4 space-y-3"></div>
             </section>
         </aside>
     </div>
@@ -461,6 +464,248 @@
                 <p class="mt-1 text-xs text-gray-400">${escapeHtml(message.time)}</p>
             </div>
         `).join('') || '<p class="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">Belum ada pesan partner. Tetap pantau halaman ini.</p>';
+
+        // Update Re-Alert Button UI secara dinamis
+        const reAlertContainer = document.getElementById('re-alert-container');
+        if (reAlertContainer && isCreator) {
+            if (payload.retry_count >= 3 && payload.report.status !== 'Resolved' && !payload.assigned_partner) {
+                reAlertContainer.classList.remove('hidden');
+                
+                const btnReAlert = document.getElementById('btn-re-alert');
+                const btnCountdown = document.getElementById('re-alert-countdown');
+                
+                if (payload.cooldown_seconds > 0) {
+                    btnReAlert.disabled = true;
+                    btnReAlert.classList.remove('bg-red-600', 'hover:bg-red-700');
+                    btnReAlert.classList.add('bg-gray-400', 'cursor-not-allowed');
+                    btnCountdown.classList.remove('hidden');
+                    
+                    startCountdownTimer(payload.cooldown_seconds);
+                } else {
+                    // Check jika timer client-side tidak aktif baru aktifkan tombol
+                    if (!window._countdownActive) {
+                        btnReAlert.disabled = false;
+                        btnReAlert.classList.add('bg-red-600', 'hover:bg-red-700');
+                        btnReAlert.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                    }
+                }
+            } else {
+                reAlertContainer.classList.add('hidden');
+            }
+        }
+        // Update Chronology List secara dinamis & real-time
+        const chronologyList = document.getElementById('chronology-list');
+        if (chronologyList && payload.chronologies) {
+            if (payload.chronologies.length > 0) {
+                chronologyList.innerHTML = payload.chronologies.map(chrono => {
+                    let roleLabel = `${chrono.role} (${chrono.writer_name})`;
+                    if (chrono.role === 'Korban') {
+                        roleLabel = `Korban (${chrono.writer_name})`;
+                    } else if (chrono.role === 'Saksi') {
+                        roleLabel = `Saksi (${chrono.writer_name})`;
+                    }
+                    return `
+                        <div class="p-4 bg-slate-50 border border-slate-100 rounded-xl">
+                            <div class="flex justify-between items-start gap-3 flex-wrap">
+                                <span class="text-xs font-bold text-slate-800 bg-slate-200 px-2 py-0.5 rounded">
+                                    ${escapeHtml(roleLabel)}
+                                </span>
+                                <span class="text-[10px] text-gray-400 font-medium">
+                                    ${escapeHtml(chrono.created_at)}
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-700 mt-2 leading-relaxed whitespace-pre-line">${escapeHtml(chrono.description)}</p>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                chronologyList.innerHTML = `
+                    <div class="text-center py-6 text-gray-400 text-sm italic" id="chronology-empty-state">
+                        Belum ada kronologi tambahan.
+                    </div>
+                `;
+            }
+        }
+
+        // Update Evidence List secara dinamis & real-time
+        const evidenceListContainer = document.getElementById('evidence-list-container');
+        if (evidenceListContainer && payload.evidences) {
+            if (payload.evidences.length > 0) {
+                const roles = ['Korban', 'Saksi', 'Mitra'];
+                const grouped = { Korban: [], Saksi: [], Mitra: [] };
+                payload.evidences.forEach(ev => {
+                    const role = ev.uploader_role || 'Saksi';
+                    if (!grouped[role]) grouped[role] = [];
+                    grouped[role].push(ev);
+                });
+
+                let html = '';
+                roles.forEach(role => {
+                    const list = grouped[role];
+                    if (list && list.length > 0) {
+                        html += `
+                            <div class="bg-slate-50/50 border border-slate-100 rounded-xl p-4 mb-3" id="evidence-group-${role}">
+                                <h4 class="text-xs font-bold text-slate-800 bg-slate-200 px-2 py-1 rounded inline-block mb-3">
+                                    Bukti dari ${role}
+                                </h4>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="evidence-grid-${role}">
+                        `;
+
+                        list.forEach(ev => {
+                            const isImage = (ev.file_type || '').startsWith('image/');
+                            const isVideo = (ev.file_type || '').startsWith('video/');
+                            const isAudio = (ev.file_type || '').startsWith('audio/');
+                            const canView = payload.can_view_evidence;
+                            const evidenceUrl = ev.file_url;
+
+                            let cardBg = 'bg-blue-50/50 border-blue-150';
+                            let badgeBg = 'bg-blue-100 text-blue-800';
+                            let badgeLabel = 'BERKAS';
+                            let svgIcon = '';
+
+                            if (isImage) {
+                                cardBg = 'bg-rose-50/50 border-rose-150';
+                                badgeBg = 'bg-rose-100 text-rose-800';
+                                badgeLabel = 'FOTO';
+                                svgIcon = `<svg class="w-10 h-10 text-rose-500 group-hover:scale-110 transition-transform duration-300 ${!canView ? 'blur-[3px]' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>`;
+                            } else if (isVideo) {
+                                cardBg = 'bg-amber-50/50 border-amber-150';
+                                badgeBg = 'bg-amber-100 text-amber-800';
+                                badgeLabel = 'VIDEO';
+                                svgIcon = `<svg class="w-10 h-10 text-amber-500 group-hover:scale-110 transition-transform duration-300 ${!canView ? 'blur-[3px]' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>`;
+                            } else if (isAudio) {
+                                cardBg = 'bg-emerald-50/50 border-emerald-150';
+                                badgeBg = 'bg-emerald-100 text-emerald-800';
+                                badgeLabel = 'REKAMAN';
+                                svgIcon = `<svg class="w-10 h-10 text-emerald-500 group-hover:scale-110 transition-transform duration-300 ${!canView ? 'blur-[3px]' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>`;
+                            } else {
+                                svgIcon = `<svg class="w-10 h-10 text-blue-500 group-hover:scale-110 transition-transform duration-300 ${!canView ? 'blur-[3px]' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>`;
+                            }
+
+                            html += `
+                                <a href="${canView ? evidenceUrl : '#'}" target="${canView ? '_blank' : ''}" onclick="${!canView ? "alert('Bukti hanya bisa dibuka oleh korban / mitra'); return false;" : ''}" class="aspect-square rounded-2xl border ${cardBg} p-4 relative group flex flex-col items-center justify-center transition-all duration-300 hover:scale-[1.03] hover:shadow-md">
+                                    ${svgIcon}
+                                    <span class="mt-3 text-[10px] font-bold tracking-widest uppercase ${badgeBg} px-2 py-0.5 rounded-full">${badgeLabel}</span>
+                                    ${!canView ? `
+                                        <div class="absolute inset-0 bg-white/60 backdrop-blur-[4px] rounded-2xl flex items-center justify-center">
+                                            <div class="bg-white/80 p-2 rounded-full shadow-sm border border-gray-100 flex items-center justify-center">
+                                                <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                                </svg>
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                </a>
+                            `;
+                        });
+
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+
+                evidenceListContainer.innerHTML = html;
+            } else {
+                evidenceListContainer.innerHTML = `
+                    <div class="text-center py-6 text-gray-400 text-sm italic" id="evidence-empty-state">
+                        Belum ada berkas bukti diunggah.
+                    </div>
+                `;
+            }
+        }
+    }
+
+    let countdownInterval = null;
+    function startCountdownTimer(seconds) {
+        if (window._countdownActive) return;
+        window._countdownActive = true;
+        
+        if (countdownInterval) clearInterval(countdownInterval);
+        
+        let remaining = seconds;
+        const countdownSpan = document.getElementById('re-alert-countdown');
+        const btnReAlert = document.getElementById('btn-re-alert');
+        
+        if (!countdownSpan) {
+            window._countdownActive = false;
+            return;
+        }
+        
+        countdownSpan.classList.remove('hidden');
+        if (btnReAlert) {
+            btnReAlert.disabled = true;
+            btnReAlert.classList.remove('bg-red-600', 'hover:bg-red-700');
+            btnReAlert.classList.add('bg-gray-400', 'cursor-not-allowed');
+        }
+        
+        function updateDisplay() {
+            const minutes = Math.floor(remaining / 60);
+            const secs = remaining % 60;
+            countdownSpan.textContent = `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+        
+        updateDisplay();
+        
+        countdownInterval = setInterval(() => {
+            remaining--;
+            if (remaining <= 0) {
+                clearInterval(countdownInterval);
+                window._countdownActive = false;
+                countdownSpan.classList.add('hidden');
+                if (btnReAlert) {
+                    btnReAlert.disabled = false;
+                    btnReAlert.classList.add('bg-red-600', 'hover:bg-red-700');
+                    btnReAlert.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                }
+            } else {
+                updateDisplay();
+            }
+        }, 1000);
+    }
+
+    async function triggerReAlert() {
+        const btnReAlert = document.getElementById('btn-re-alert');
+        if (!btnReAlert || btnReAlert.disabled) return;
+        
+        if (!confirm('Apakah Anda yakin ingin mengirim ulang alert WhatsApp ke partner terdekat?')) return;
+        
+        btnReAlert.disabled = true;
+        const originalContent = btnReAlert.innerHTML;
+        btnReAlert.innerHTML = `
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>Mengirimkan Alert...</span>
+        `;
+        
+        try {
+            const response = await fetch(`/tracking/${reportId}/re-alert`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
+                    'Accept': 'application/json'
+                }
+            });
+            
+            const data = await response.json();
+            if (response.ok && data.ok) {
+                alert('Alert WhatsApp berhasil dikirim ulang ke partner!');
+                startCountdownTimer(600);
+                pollLive();
+            } else {
+                alert(data.error || 'Gagal mengirim ulang alert.');
+                btnReAlert.innerHTML = originalContent;
+                btnReAlert.disabled = false;
+            }
+        } catch (error) {
+            alert('Terjadi kesalahan sistem saat menghubungi partner.');
+            btnReAlert.innerHTML = originalContent;
+            btnReAlert.disabled = false;
+        }
     }
 
     async function pollLive() {

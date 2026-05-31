@@ -8,7 +8,12 @@
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
     @php
-        $backUrl = request()->headers->get('referer') ?: (auth()->check() ? route('dashboard') : '/');
+        $referer = request()->headers->get('referer');
+        if ($referer && (str_contains($referer, '/tracking/') || str_contains($referer, '/tracking-search'))) {
+            $backUrl = auth()->check() ? route('dashboard') : '/';
+        } else {
+            $backUrl = $referer ?: (auth()->check() ? route('dashboard') : '/');
+        }
         $backLabel = 'Kembali';
         $showBrand = false;
     @endphp

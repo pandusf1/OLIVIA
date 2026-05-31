@@ -33,54 +33,127 @@ class ExpireReportRoutings extends Command
             }
         }
 
-        $escalatedReports = Report::query()
+        $emergencyReports = Report::query()
             ->where('report_type', 'Emergency')
             ->whereNull('handler_partner_id')
-            ->whereNull('escalated_at')
-            ->where('created_at', '<=', now()->subMinutes((int) env('REPORT_ESCALATION_MINUTES', 3)))
             ->whereIn('status', ['Submitted', 'Routed', 'Viewed'])
             ->get();
 
-        foreach ($escalatedReports as $report) {
-            $report->update([
-                'escalated_at' => now(),
-                'last_activity_at' => now(),
-            ]);
+        $escalatedReportsCount = 0;
+        foreach ($emergencyReports as $report) {
+            $retryCountKey = "report_{$report->id}_retry_count";
+            $lastRetryAtKey = "report_{$report->id}_last_retry_at";
 
-            ReportPartnerRouting::query()
-                ->where('report_id', $report->id)
-                ->whereIn('status', ['pending', 'expired'])
-                ->update([
-                    'status' => 'pending',
-                    'expires_at' => now()->addMinutes(max(3, (int) env('REPORT_ROUTING_EXPIRY_MINUTES', 3))),
-                    'routed_at' => now(),
-                ]);
+            $retryCount = (int) \Illuminate\Support\Facades\Cache::store('database')->get($retryCountKey, 0);
+            $lastRetryAt = \Illuminate\Support\Facades\Cache::store('database')->get($lastRetryAtKey);
 
-            ReportTimelineEvent::create([
-                'report_id' => $report->id,
-                'event_type' => 'escalated',
-                'event_message' => 'Belum ada partner yang menerima dalam batas awal. Safora sedang mencoba ulang dan memberi peringatan ke admin.',
-                'actor_type' => 'system',
-            ]);
-
-            try {
-                AuditLog::log('escalate_unhandled_report', 'report', $report->id);
-            } catch (\Exception $e) {
-                // Audit tidak boleh menggagalkan scheduler.
+            if ($retryCount >= 3) {
+                continue;
             }
 
-            try {
-                FonnteService::send(
-                    env('ADMIN_PHONE', '6285124019353'),
-                    "Safora: laporan darurat belum tertangani lebih dari 3 menit.\nKategori: {$report->category}\nTracking: " . url('/tracking/' . $report->id)
-                );
-            } catch (\Exception $e) {
-                // Notifikasi eksternal tidak boleh menggagalkan scheduler.
+            $shouldRetry = false;
+            if ($retryCount === 0) {
+                // Percobaan pertama setelah 5 menit laporan dibuat
+                if ($report->created_at->lte(now()->subMinutes(5))) {
+                    $shouldRetry = true;
+                }
+            } else {
+                // Percobaan berikutnya setelah 5 menit dari percobaan terakhir
+                if ($lastRetryAt && \Carbon\Carbon::parse($lastRetryAt)->lte(now()->subMinutes(5))) {
+                    $shouldRetry = true;
+                }
+            }
+
+            if ($shouldRetry) {
+                $newRetryCount = $retryCount + 1;
+                \Illuminate\Support\Facades\Cache::store('database')->put($retryCountKey, $newRetryCount, now()->addDays(7));
+                \Illuminate\Support\Facades\Cache::store('database')->put($lastRetryAtKey, now()->toDateTimeString(), now()->addDays(7));
+
+                // Pastikan status routing tetap pending dan expires_at = null (tidak expired statis)
+                ReportPartnerRouting::query()
+                    ->where('report_id', $report->id)
+                    ->whereIn('status', ['pending', 'expired'])
+                    ->update([
+                        'status' => 'pending',
+                        'expires_at' => null,
+                        'routed_at' => now(),
+                    ]);
+
+                // Hubungi partner-partner terhubung
+                $pendingRoutings = ReportPartnerRouting::query()
+                    ->where('report_id', $report->id)
+                    ->where('status', 'pending')
+                    ->get();
+
+                $mapsLink = $report->latitude
+                    ? "https://maps.google.com/?q={$report->latitude},{$report->longitude}"
+                    : 'Lokasi tidak tersedia';
+                $trackingLink = url('/tracking/' . $report->id);
+
+                foreach ($pendingRoutings as $routing) {
+                    $partner = $routing->partner;
+                    if ($partner && $partner->phone) {
+                        $partnerMessage =
+                            "🚨 *ALERT PENGINGAT (Mencari Bantuan - Percobaan {$newRetryCount}/3)*\n\n" .
+                            "Laporan darurat belum di-acc oleh partner mana pun!\n" .
+                            "Kategori: *{$report->category}*\n\n" .
+                            "📍 Lokasi:\n{$mapsLink}\n\n" .
+                            "🔗 Tracking:\n{$trackingLink}\n\n" .
+                            "Mohon segera buka dashboard Safora dan terima laporan ini jika berada di dekat lokasi.";
+
+                        try {
+                            FonnteService::send($partner->phone, $partnerMessage);
+                        } catch (\Exception $e) {
+                            \Log::error("Failed to send scheduler retry WA to partner", [
+                                'partner_id' => $partner->id,
+                                'error' => $e->getMessage()
+                            ]);
+                        }
+                    }
+                }
+
+                // Juga update waktu aktivitas terakhir di laporan
+                $report->update([
+                    'last_activity_at' => now(),
+                    'escalated_at' => now(), // Menandai ada aktivitas eskalasi scheduler
+                ]);
+
+                // Kirim notifikasi ke Admin
+                if (env('ADMIN_PHONE') || env('ADMIN_PHONE') === '6285124019353') {
+                    $adminMessage =
+                        "🚨 *ALERT PENGINGAT ADMIN (Percobaan {$newRetryCount}/3)*\n\n" .
+                        "Laporan darurat belum di-acc partner selama " . ($newRetryCount * 5) . " menit.\n" .
+                        "Kategori: *{$report->category}*\n" .
+                        "📍 Lokasi:\n{$mapsLink}\n\n" .
+                        "🔗 Tracking:\n{$trackingLink}";
+
+                    try {
+                        FonnteService::send(env('ADMIN_PHONE', '6285124019353'), $adminMessage);
+                    } catch (\Exception $e) {
+                        // ignore admin WA send error
+                    }
+                }
+
+                // Tambahkan event ke timeline
+                ReportTimelineEvent::create([
+                    'report_id' => $report->id,
+                    'event_type' => 'partner_retry_alert',
+                    'event_message' => "Sistem mengirimkan ulang alert WhatsApp pengingat ke partner terdekat (Percobaan ke-{$newRetryCount} dari 3).",
+                    'actor_type' => 'system',
+                ]);
+
+                try {
+                    AuditLog::log('escalate_retry_report', 'report', $report->id);
+                } catch (\Exception $e) {
+                    // skip audit log error
+                }
+
+                $escalatedReportsCount++;
             }
         }
 
         $this->info($expiredRoutings->count() . ' routing laporan ditandai expired.');
-        $this->info($escalatedReports->count() . ' laporan darurat dieskalasi.');
+        $this->info($escalatedReportsCount . ' laporan darurat dikirim ulang alert pengingat.');
 
         return self::SUCCESS;
     }

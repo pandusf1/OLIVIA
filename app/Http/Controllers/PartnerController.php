@@ -109,11 +109,27 @@ class PartnerController extends Controller
 
     public function show($id)
     {
-        $report = Report::with([
+        $idClean = trim($id);
+        $idClean = ltrim($idClean, '#');
+        $idClean = trim($idClean);
+
+        $report = null;
+        if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $idClean)) {
+            $report = Report::where('id', $idClean)->first();
+        }
+        if (!$report) {
+            $report = Report::whereRaw("CAST(id AS text) LIKE ?", [strtolower($idClean) . '%'])->first();
+        }
+
+        if (!$report) {
+            abort(404, 'Laporan tidak ditemukan.');
+        }
+
+        $report->load([
             'evidences',
             'statusLogs',
             'witnessReports.evidences',
-        ])->findOrFail($id);
+        ]);
 
         $partnerId = auth()->user()->partner_id;
         $routing = $report->partnerRoutings()

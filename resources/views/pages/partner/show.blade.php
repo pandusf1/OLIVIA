@@ -7,7 +7,7 @@
     <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');*{font-family:'Inter',sans-serif;}</style>
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
-    @php $backUrl = route('partner.index'); $backLabel = 'Dashboard Mitra'; @endphp
+    @php $backUrl = route('partner.index'); $backLabel = 'Kembali'; @endphp
     @include('partials.nav-auth')
 
     <div class="max-w-3xl mx-auto px-6 py-10">
@@ -43,7 +43,7 @@
             
             @if($isHandling)
             <div class="mt-6 flex flex-wrap gap-3">
-                <a href="/chat/messages/{{ auth()->user()->partner_id }}?report_id={{ $report->id }}" class="bg-gray-900 hover:bg-gray-700 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition text-center">💬 Lanjut Chat</a>
+                <a href="/chat/report/{{ $report->id }}" class="bg-gray-900 hover:bg-gray-700 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition text-center">💬 Lanjut Chat</a>
                 @if($report->status !== 'Resolved')
                 <form method="POST" action="{{ route('partner.status', $report->id) }}" class="inline-block">
                     @csrf
@@ -126,7 +126,7 @@
                         <p class="text-xs text-gray-400 font-mono">{{ substr($ev->file_hash,0,28) }}...</p>
                         <p class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($ev->uploaded_at)->format('d M Y, H:i') }}</p>
                     </div>
-                    <a href="{{ str_starts_with($ev->file_url, 'data:') ? $ev->file_url : asset('storage/'.$ev->file_url) }}" target="_blank" class="text-red-700 hover:text-red-800 text-sm font-semibold transition">Buka →</a>
+                    <a href="{{ str_starts_with($ev->file_url, 'data:') ? $ev->file_url : url('/evidences/view/' . basename($ev->file_url)) }}" target="_blank" class="text-red-700 hover:text-red-800 text-sm font-semibold transition">Buka →</a>
                 </div>
                 @endforeach
             </div>

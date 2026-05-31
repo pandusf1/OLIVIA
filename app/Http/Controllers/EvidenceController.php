@@ -82,7 +82,7 @@ class EvidenceController extends Controller
 
                     $uploaded[] = [
                         'id' => $evidence->id,
-                        'file_url' => str_starts_with($evidence->file_url, 'data:') ? $evidence->file_url : asset('storage/' . $evidence->file_url),
+                        'file_url' => str_starts_with($evidence->file_url, 'data:') ? $evidence->file_url : url('/evidences/view/' . basename($evidence->file_url)),
                         'file_type' => $evidence->file_type,
                         'uploader_role' => $evidence->uploader_role,
                     ];

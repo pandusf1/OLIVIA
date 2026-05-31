@@ -75,7 +75,7 @@
             
             <p class="flex items-center gap-1.5 text-gray-500 text-sm mb-1 fade-up d2">
                 <span class="w-2 h-2 bg-green-400 rounded-full inline-block"></span>
-                Anonim & guest — tanpa perlu daftar
+                Anonim
             </p>
 
             
@@ -111,7 +111,7 @@
     </section>
 
     
-    <div id="emergency-modal" class="fixed inset-0 z-[999] items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm hidden" onclick="if(event.target===this)closeEmergencyModal()">
+    <div id="emergency-modal" class="fixed inset-0 z-[999] items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm hidden">
         <div class="modal-in bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
 
             
@@ -335,12 +335,18 @@
 // ─── Emergency Modal Logic ───────────────────────────────────────────────────
 
 const csrf = document.querySelector('meta[name="csrf-token"]').content;
+const isLoggedIn = <?php echo json_encode(auth()->check(), 15, 512) ?>;
+window.hasActiveReport = <?php echo json_encode($activeReport !== null, 15, 512) ?>;
 let locationPayload = { latitude: null, longitude: null };
 let locationPromise = Promise.resolve();
 let isSubmitting = false;
 let selectedCategory = null;
 
 function openEmergencyModal() {
+    if (!isLoggedIn && window.hasActiveReport) {
+        alert("Tidak bisa membuat laporan baru. Mohon login untuk membuat lebih dari 1 laporan.");
+        return;
+    }
     const modal = document.getElementById('emergency-modal');
     modal.classList.remove('hidden');
     modal.classList.add('flex');
@@ -420,14 +426,23 @@ async function submitEmergency() {
             body: JSON.stringify(payload),
         });
 
-        if (!res.ok) throw new Error('Gagal');
+        if (!res.ok) {
+            let errMsg = 'Gagal terhubung. Coba lagi atau hubungi 112.';
+            try {
+                const errData = await res.json();
+                if (errData && errData.error) errMsg = errData.error;
+            } catch(ex) {}
+            throw new Error(errMsg);
+        }
 
         const data = await res.json();
         document.body.style.overflow = '';
         window.location.href = data.tracking_url;
     } catch (e) {
-        document.getElementById('modal-status').textContent = 'Gagal terhubung. Coba lagi atau hubungi 112.';
+        document.getElementById('modal-status').textContent = e.message;
         isSubmitting = false;
+        alert(e.message);
+        closeEmergencyModal();
     }
 }
 
@@ -444,6 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(res => res.json())
         .then(data => {
             if (data.active_report_id) {
+                window.hasActiveReport = true;
                 // Gambar ulang gelembung jika belum ada di DOM (misal session kosong habis logout)
                 if (!document.getElementById('floating-report-bubble')) {
                     const bubble = document.createElement('div');
@@ -467,6 +483,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     document.body.appendChild(bubble);
                 }
             } else {
+                window.hasActiveReport = false;
                 // Laporan sudah resolved / tidak aktif, bersihkan localStorage & hapus bubble
                 localStorage.removeItem('safora_guest_reports');
                 const existingBubble = document.getElementById('floating-report-bubble');
