@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Safora — Suara & Perlindungan</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
         * { font-family: 'Inter', sans-serif; }
@@ -15,7 +15,7 @@
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased">
 
-    {{-- NAV --}}
+    
     <nav class="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200">
         <div class="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
             <div class="flex items-center gap-2">
@@ -30,22 +30,22 @@
             <div class="flex items-center gap-6">
                 <a href="#cara-kerja" class="text-gray-600 hover:text-gray-900 text-sm transition hidden md:block">Cara Kerja</a>
                 <a href="/tracking-search" class="text-gray-600 hover:text-gray-900 text-sm transition hidden md:block">Cek Laporan</a>
-                @auth
-                <a href="{{ route('dashboard') }}" class="text-gray-600 hover:text-gray-900 text-sm transition">Dashboard</a>
-                @else
-                <a href="{{ route('login') }}" class="text-gray-600 hover:text-gray-900 text-sm transition">Masuk</a>
-                <a href="{{ route('register') }}" class="bg-gray-900 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded-lg font-semibold transition">Daftar</a>
-                @endauth
+                <?php if(auth()->guard()->check()): ?>
+                <a href="<?php echo e(route('dashboard')); ?>" class="text-gray-600 hover:text-gray-900 text-sm transition">Dashboard</a>
+                <?php else: ?>
+                <a href="<?php echo e(route('login')); ?>" class="text-gray-600 hover:text-gray-900 text-sm transition">Masuk</a>
+                <a href="<?php echo e(route('register')); ?>" class="bg-gray-900 hover:bg-gray-700 text-white text-sm px-4 py-2 rounded-lg font-semibold transition">Daftar</a>
+                <?php endif; ?>
             </div>
         </div>
     </nav>
 
-    {{-- HERO --}}
+    
     <section class="sm:pt-12 min-h-screen flex items-center bg-[#faf9f7] relative overflow-hidden">
 
         <div class="max-w-xl md:max-w-5xl mx-auto px-5 w-full flex flex-col items-center text-center pt-10 pb-8">
 
-            {{-- Headline --}}
+            
             <h1 class="text-4xl md:text-6xl font-black text-gray-900 leading-tight mb-3 fade-up d1">
                 Saat dunia diam,<br>
                 <span class="text-red-700">Safora</span> jadi suaramu.
@@ -56,9 +56,9 @@
                 ambulans, atau psikolog — bahkan tanpa akun.
             </p>
 
-            {{-- Emergency Button --}}
+            
             <div class="relative flex items-center justify-center mb-5 fade-up d2">
-                {{-- Halo rings --}}
+                
                 <div class="absolute w-64 h-64 md:w-80 md:h-80 bg-red-100 rounded-full animate-ping opacity-25" style="animation-duration: 2.5s;"></div>
                 <div class="absolute w-52 h-52 md:w-64 md:h-64 bg-red-200 rounded-full animate-pulse opacity-20 pointer-events-none"></div>
 
@@ -69,22 +69,22 @@
                 </a>
             </div>
 
-            {{-- Status indicator --}}
+            
             <p class="flex items-center gap-1.5 text-gray-500 text-sm mb-10 fade-up d2">
                 <span class="w-2 h-2 bg-green-400 rounded-full inline-block"></span>
                 Anonim & guest — tanpa perlu daftar
             </p>
 
-            {{-- Divider --}}
+            
             <div class="w-full flex items-center gap-4 mb-6 fade-up d3">
                 <div class="flex-1 h-px bg-gray-200"></div>
                 <div class="flex-1 h-px bg-gray-200"></div>
             </div>
 
-            {{-- Service Cards --}}
+            
             <div class="w-full grid grid-cols-2 md:grid-cols-4 gap-3 fade-up md:hidden">
                 
-                {{-- Cara Kerja --}}
+                
                 <a href="#cara-kerja" class="group bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 rounded-2xl p-4 md:p-5 text-left transition-all">
                     <div class="w-10 h-10 md:w-12 md:h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-3">
                         <svg class="w-5 h-5 md:w-6 md:h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -93,7 +93,7 @@
                     <p class="text-gray-500 text-xs leading-relaxed">Pelajari alur Safora</p>
                 </a>
 
-                {{-- Cek Laporan --}}
+                
                 <a href="/tracking-search" class="group bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300 rounded-2xl p-4 md:p-5 text-left transition-all">
                     <div class="w-10 h-10 md:w-12 md:h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-3">
                         <svg class="w-5 h-5 md:w-6 md:h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
@@ -110,7 +110,7 @@
 
 
 
-    {{-- MENGAPA --}}
+    
     <section class="bg-white py-20 px-6">
         <div class="max-w-6xl mx-auto">
             <p class="text-xs font-semibold uppercase tracking-widest text-red-600 mb-4">MENGAPA Safora</p>
@@ -141,7 +141,7 @@
         </div>
     </section>
 
-    {{-- CARA KERJA --}}
+    
     <section id="cara-kerja" class="bg-[#faf9f7] py-20 px-6">
         <div class="max-w-6xl mx-auto">
             <p class="text-xs font-semibold uppercase tracking-widest text-red-600 mb-4">CARA KERJA</p>
@@ -166,7 +166,7 @@
         </div>
     </section>
 
-    {{-- FITUR --}}
+    
     <section class="bg-white py-20 px-6">
         <div class="max-w-6xl mx-auto">
             <p class="text-xs font-semibold uppercase tracking-widest text-red-600 mb-4">FITUR UTAMA</p>
@@ -218,7 +218,7 @@
         </div>
     </section>
 
-    {{-- CTA --}}
+    
     <section class=" py-20 px-6">
         <div class="max-w-3xl mx-auto text-center">
             <h2 class="text-4xl font-black mb-4">Siap ketika kamu butuhkan.</h2>
@@ -229,7 +229,7 @@
         </div>
     </section>
 
-    {{-- FOOTER --}}
+    
     <footer class="bg-white border-t border-gray-200 py-8 px-6">
         <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between">
             <div class="flex items-center gap-1">
@@ -247,3 +247,4 @@
 <script>
   document.getElementById("year").textContent = new Date().getFullYear();
 </script>
+<?php /**PATH D:\CODING\olivia_final\resources\views/welcome.blade.php ENDPATH**/ ?>
