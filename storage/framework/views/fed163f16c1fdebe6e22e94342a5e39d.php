@@ -162,45 +162,62 @@
                 <div class="mt-6 border-t border-gray-100 pt-6">
                     <h3 class="text-sm font-bold text-gray-900 mb-3">Bukti Kejadian</h3>
                     
-                    <?php if($report->evidences->count() > 0): ?>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="evidence-grid">
-                            <?php $__currentLoopData = $report->evidences; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $evidence): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                                <?php
-                                    $isImage = str_starts_with($evidence->file_type, 'image/');
-                                    $isVideo = str_starts_with($evidence->file_type, 'video/');
-                                    $isAudio = str_starts_with($evidence->file_type, 'audio/');
-                                    
-                                    $canView = $report->show_evidence 
-                                        || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner'))
-                                        || in_array($report->id, session('my_reports', []));
-                                ?>
-                                <a href="<?php echo e($canView ? asset('storage/' . $evidence->file_url) : '#'); ?>" target="<?php echo e($canView ? '_blank' : ''); ?>" onclick="<?php echo e(!$canView ? "alert('Bukti hanya bisa dibuka oleh korban / mitra'); return false;" : ''); ?>" class="aspect-square rounded-lg border border-gray-200 overflow-hidden relative group bg-gray-100 flex items-center justify-center">
-                                    <?php if($isImage): ?>
-                                        <img src="<?php echo e(asset('storage/' . $evidence->file_url)); ?>" class="w-full h-full object-cover <?php echo e(!$canView ? 'blur-md scale-110' : ''); ?>" alt="Bukti">
-                                    <?php elseif($isVideo): ?>
-                                        <video src="<?php echo e(asset('storage/' . $evidence->file_url)); ?>" class="w-full h-full object-cover <?php echo e(!$canView ? 'blur-md scale-110' : ''); ?>"></video>
-                                        <div class="absolute inset-0 flex items-center justify-center bg-black/10">
-                                            <span class="text-2xl drop-shadow-md">▶️</span>
+                    <div id="evidence-list-container" class="space-y-6">
+                        <?php if($report->evidences->count() > 0): ?>
+                            <?php
+                                $groupedEvidences = $report->evidences->groupBy('uploader_role');
+                                $groupOrder = ['Korban', 'Saksi', 'Mitra'];
+                            ?>
+                            
+                            <?php $__currentLoopData = $groupOrder; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $role): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                <?php if($groupedEvidences->has($role) && $groupedEvidences->get($role)->count() > 0): ?>
+                                    <div class="bg-slate-50/50 border border-slate-100 rounded-xl p-4" id="evidence-group-<?php echo e($role); ?>">
+                                        <h4 class="text-xs font-bold text-slate-800 bg-slate-200 px-2 py-1 rounded inline-block mb-3">
+                                            Bukti dari <?php echo e($role); ?>
+
+                                        </h4>
+                                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="evidence-grid-<?php echo e($role); ?>">
+                                            <?php $__currentLoopData = $groupedEvidences->get($role); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $evidence): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                <?php
+                                                    $isImage = str_starts_with($evidence->file_type, 'image/');
+                                                    $isVideo = str_starts_with($evidence->file_type, 'video/');
+                                                    $isAudio = str_starts_with($evidence->file_type, 'audio/');
+                                                    
+                                                    $canView = $report->show_evidence 
+                                                        || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner'))
+                                                        || in_array($report->id, session('my_reports', []));
+                                                ?>
+                                                <a href="<?php echo e($canView ? asset('storage/' . $evidence->file_url) : '#'); ?>" target="<?php echo e($canView ? '_blank' : ''); ?>" onclick="<?php echo e(!$canView ? "alert('Bukti hanya bisa dibuka oleh korban / mitra'); return false;" : ''); ?>" class="aspect-square rounded-lg border border-gray-200 overflow-hidden relative group bg-gray-100 flex items-center justify-center">
+                                                    <?php if($isImage): ?>
+                                                        <img src="<?php echo e(asset('storage/' . $evidence->file_url)); ?>" class="w-full h-full object-cover <?php echo e(!$canView ? 'blur-md scale-110' : ''); ?>" alt="Bukti">
+                                                    <?php elseif($isVideo): ?>
+                                                        <video src="<?php echo e(asset('storage/' . $evidence->file_url)); ?>" class="w-full h-full object-cover <?php echo e(!$canView ? 'blur-md scale-110' : ''); ?>"></video>
+                                                        <div class="absolute inset-0 flex items-center justify-center bg-black/10">
+                                                            <span class="text-2xl drop-shadow-md">▶️</span>
+                                                        </div>
+                                                    <?php elseif($isAudio): ?>
+                                                        <div class="text-3xl <?php echo e(!$canView ? 'blur-sm' : ''); ?>">🎵</div>
+                                                    <?php else: ?>
+                                                        <div class="text-3xl <?php echo e(!$canView ? 'blur-sm' : ''); ?>">📁</div>
+                                                    <?php endif; ?>
+                                                    
+                                                    <?php if(!$canView): ?>
+                                                        <div class="absolute inset-0 bg-white/40 flex items-center justify-center backdrop-blur-sm">
+                                                            <span class="text-2xl drop-shadow-md">🔒</span>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </a>
+                                            <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                         </div>
-                                    <?php elseif($isAudio): ?>
-                                        <div class="text-3xl <?php echo e(!$canView ? 'blur-sm' : ''); ?>">🎵</div>
-                                    <?php else: ?>
-                                        <div class="text-3xl <?php echo e(!$canView ? 'blur-sm' : ''); ?>">📁</div>
-                                    <?php endif; ?>
-                                    
-                                    <?php if(!$canView): ?>
-                                        <div class="absolute inset-0 bg-white/40 flex items-center justify-center backdrop-blur-sm">
-                                            <span class="text-2xl drop-shadow-md">🔒</span>
-                                        </div>
-                                    <?php endif; ?>
-                                </a>
+                                    </div>
+                                <?php endif; ?>
                             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                        </div>
-                    <?php else: ?>
-                        <div class="text-center py-6 text-gray-400 text-sm italic" id="evidence-empty-state">
-                            Belum ada berkas bukti diunggah.
-                        </div>
-                    <?php endif; ?>
+                        <?php else: ?>
+                            <div class="text-center py-6 text-gray-400 text-sm italic" id="evidence-empty-state">
+                                Belum ada berkas bukti diunggah.
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </section>
 
@@ -548,24 +565,31 @@
         pushLocation();
     }
 
-    const fileInput = document.getElementById('evf');
-    const uploadList = document.getElementById('upload-list');
+    const activeUploads = {};
+    let uploadedEvidenceIdsInSession = [];
+    let uploadedEvidencesInSession = [];
+    const canViewEvidence = <?php echo json_encode($report->show_evidence || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner')) || in_array($report->id, session('my_reports', []))) ?>;
 
-    if (fileInput) {
-        fileInput.addEventListener('change', function() {
-            Array.from(this.files).forEach(file => {
-                uploadFile(file);
+    document.addEventListener('DOMContentLoaded', () => {
+        const fileInput = document.getElementById('evf');
+        if (fileInput) {
+            fileInput.addEventListener('change', function() {
+                Array.from(this.files).forEach(file => {
+                    uploadFile(file);
+                });
+                this.value = '';
             });
-            this.value = '';
-        });
-    }
+        }
+    });
 
     function uploadFile(file) {
+        const uploadList = document.getElementById('upload-list');
+        if (!uploadList) return;
         const uniqueId = Math.random().toString(36).substring(2, 15);
         
         const item = document.createElement('div');
         item.id = `upload-${uniqueId}`;
-        item.className = "flex items-center justify-between bg-white border border-gray-100 p-3 rounded-xl shadow-sm";
+        item.className = "flex items-center justify-between bg-white border border-gray-100 p-3 rounded-xl shadow-sm mb-2";
         item.innerHTML = `
             <div class="flex-1 min-w-0 mr-3">
                 <p class="text-sm font-semibold text-gray-800 truncate">${file.name}</p>
@@ -574,11 +598,14 @@
                 </div>
                 <div class="flex items-center gap-1 mt-1">
                     <svg class="w-3 h-3 text-green-500 hidden" id="check-${uniqueId}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                    <p class="text-[10px] text-gray-500" id="text-${uniqueId}">Uploading 0%</p>
+                    <p class="text-[10px] text-gray-500" id="text-${uniqueId}">Menyiapkan...</p>
                 </div>
             </div>
-            <div class="text-gray-400 p-1" id="loading-${uniqueId}">
-                <svg class="animate-spin w-4 h-4 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <div class="flex items-center gap-2" id="action-${uniqueId}">
+                <!-- Cancel button during upload -->
+                <button type="button" onclick="cancelUpload('${uniqueId}')" class="text-red-500 hover:text-red-700 transition p-1" title="Batalkan Upload">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
             </div>
         `;
         uploadList.appendChild(item);
@@ -588,43 +615,300 @@
         formData.append('_token', '<?php echo e(csrf_token()); ?>');
 
         const xhr = new XMLHttpRequest();
+        activeUploads[uniqueId] = xhr;
+
         xhr.open('POST', '/tracking/<?php echo e($report->id); ?>/evidence', true);
         xhr.setRequestHeader('Accept', 'application/json');
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
 
         xhr.upload.onprogress = function(e) {
             if (e.lengthComputable) {
                 const percent = Math.round((e.loaded / e.total) * 100);
-                document.getElementById(`progress-${uniqueId}`).style.width = percent + '%';
-                document.getElementById(`text-${uniqueId}`).innerText = `Uploading ${percent}%`;
+                const bar = document.getElementById(`progress-${uniqueId}`);
+                if (bar) bar.style.width = percent + '%';
+                const txt = document.getElementById(`text-${uniqueId}`);
+                if (txt) txt.innerText = `Mengunggah ${percent}%`;
             }
         };
 
         xhr.onload = function() {
+            delete activeUploads[uniqueId];
             if (xhr.status === 200) {
-                document.getElementById(`text-${uniqueId}`).innerText = 'Selesai';
-                document.getElementById(`text-${uniqueId}`).classList.replace('text-gray-500', 'text-green-600');
-                document.getElementById(`progress-container-${uniqueId}`).classList.add('hidden');
-                document.getElementById(`check-${uniqueId}`).classList.remove('hidden');
-                document.getElementById(`loading-${uniqueId}`).classList.add('hidden');
-                setTimeout(() => window.location.reload(), 1000);
+                let res = {};
+                try {
+                    res = JSON.parse(xhr.responseText);
+                } catch(e) {}
+
+                const txt = document.getElementById(`text-${uniqueId}`);
+                if (txt) {
+                    txt.innerText = 'Selesai';
+                    txt.classList.replace('text-gray-500', 'text-green-600');
+                }
+                const pContainer = document.getElementById(`progress-container-${uniqueId}`);
+                if (pContainer) pContainer.classList.add('hidden');
+                const chk = document.getElementById(`check-${uniqueId}`);
+                if (chk) chk.classList.remove('hidden');
+
+                // Show delete button
+                if (res.evidences && res.evidences.length > 0) {
+                    const evidenceObj = res.evidences[0];
+                    const evidenceId = evidenceObj.id;
+                    uploadedEvidenceIdsInSession.push(evidenceId);
+                    uploadedEvidencesInSession.push(evidenceObj);
+                    
+                    const actionContainer = document.getElementById(`action-${uniqueId}`);
+                    if (actionContainer) {
+                        actionContainer.innerHTML = `
+                            <button type="button" onclick="deleteUploadedEvidence('${uniqueId}', '${evidenceId}')" class="text-red-600 hover:text-red-800 transition p-1" title="Hapus Bukti">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        `;
+                    }
+                } else {
+                    const actionContainer = document.getElementById(`action-${uniqueId}`);
+                    if (actionContainer) actionContainer.innerHTML = '';
+                }
             } else {
-                document.getElementById(`text-${uniqueId}`).innerText = 'Gagal upload';
-                document.getElementById(`text-${uniqueId}`).classList.add('text-red-500');
-                document.getElementById(`progress-${uniqueId}`).classList.replace('bg-green-500', 'bg-red-500');
-                document.getElementById(`loading-${uniqueId}`).classList.add('hidden');
+                const txt = document.getElementById(`text-${uniqueId}`);
+                if (txt) {
+                    txt.innerText = 'Gagal upload';
+                    txt.classList.add('text-red-500');
+                }
+                const bar = document.getElementById(`progress-${uniqueId}`);
+                if (bar) bar.classList.replace('bg-green-500', 'bg-red-500');
+                
+                // Show remove button for failed item
+                const actionContainer = document.getElementById(`action-${uniqueId}`);
+                if (actionContainer) {
+                    actionContainer.innerHTML = `
+                        <button type="button" onclick="removeFailedItem('${uniqueId}')" class="text-red-500 hover:text-red-700 transition p-1" title="Hapus dari daftar">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        </button>
+                    `;
+                }
             }
         };
 
         xhr.onerror = function() {
-            document.getElementById(`text-${uniqueId}`).innerText = 'Gagal koneksi';
-            document.getElementById(`text-${uniqueId}`).classList.add('text-red-500');
-            document.getElementById(`progress-${uniqueId}`).classList.replace('bg-green-500', 'bg-red-500');
-            document.getElementById(`loading-${uniqueId}`).classList.add('hidden');
+            delete activeUploads[uniqueId];
+            const txt = document.getElementById(`text-${uniqueId}`);
+            if (txt) {
+                txt.innerText = 'Gagal koneksi';
+                txt.classList.add('text-red-500');
+            }
+            const bar = document.getElementById(`progress-${uniqueId}`);
+            if (bar) bar.classList.replace('bg-green-500', 'bg-red-500');
+            
+            // Show remove button for failed connection
+            const actionContainer = document.getElementById(`action-${uniqueId}`);
+            if (actionContainer) {
+                actionContainer.innerHTML = `
+                    <button type="button" onclick="removeFailedItem('${uniqueId}')" class="text-red-500 hover:text-red-700 transition p-1" title="Hapus dari daftar">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                `;
+            }
         };
 
         xhr.send(formData);
     }
+
+    function cancelUpload(uniqueId) {
+        if (activeUploads[uniqueId]) {
+            activeUploads[uniqueId].abort();
+            delete activeUploads[uniqueId];
+        }
+        const item = document.getElementById(`upload-${uniqueId}`);
+        if (item) {
+            item.classList.add('opacity-50');
+            item.querySelector(`#text-${uniqueId}`).innerText = 'Dibatalkan';
+            item.querySelector(`#text-${uniqueId}`).classList.add('text-red-500');
+            const pBar = item.querySelector(`#progress-${uniqueId}`);
+            if (pBar) pBar.classList.replace('bg-green-500', 'bg-red-500');
+            const action = item.querySelector(`#action-${uniqueId}`);
+            if (action) action.innerHTML = '';
+            setTimeout(() => item.remove(), 1500);
+        }
+    }
+
+    function removeFailedItem(uniqueId) {
+        const item = document.getElementById(`upload-${uniqueId}`);
+        if (item) item.remove();
+    }
+
+    async function deleteUploadedEvidence(uniqueId, evidenceId) {
+        const item = document.getElementById(`upload-${uniqueId}`);
+        if (item) {
+            item.classList.add('opacity-50');
+            item.querySelector(`#text-${uniqueId}`).innerText = 'Menghapus...';
+            item.querySelector(`#text-${uniqueId}`).classList.replace('text-green-600', 'text-gray-500');
+        }
+
+        try {
+            const res = await fetch(`/evidence/${evidenceId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
+                    'Accept': 'application/json'
+                }
+            });
+            if (res.ok) {
+                uploadedEvidenceIdsInSession = uploadedEvidenceIdsInSession.filter(id => id !== evidenceId && id != evidenceId);
+                uploadedEvidencesInSession = uploadedEvidencesInSession.filter(ev => ev.id !== evidenceId && ev.id != evidenceId);
+                if (item) {
+                    item.querySelector(`#text-${uniqueId}`).innerText = 'Terhapus';
+                    item.querySelector(`#text-${uniqueId}`).classList.add('text-red-500');
+                    setTimeout(() => item.remove(), 1000);
+                }
+            } else {
+                alert('Gagal menghapus file.');
+                if (item) {
+                    item.classList.remove('opacity-50');
+                    item.querySelector(`#text-${uniqueId}`).innerText = 'Selesai';
+                    item.querySelector(`#text-${uniqueId}`).classList.replace('text-gray-500', 'text-green-600');
+                }
+            }
+        } catch(e) {
+            alert('Kesalahan koneksi saat menghapus.');
+            if (item) {
+                item.classList.remove('opacity-50');
+                item.querySelector(`#text-${uniqueId}`).innerText = 'Selesai';
+            }
+        }
+    }
+
+    function getOrCreateEvidenceGroup(role) {
+        let group = document.getElementById(`evidence-group-${role}`);
+        if (group) return group;
+
+        group = document.createElement('div');
+        group.id = `evidence-group-${role}`;
+        group.className = "bg-slate-50/50 border border-slate-100 rounded-xl p-4 fade-in";
+        group.innerHTML = `
+            <h4 class="text-xs font-bold text-slate-800 bg-slate-200 px-2 py-1 rounded inline-block mb-3">
+                Bukti dari ${role}
+            </h4>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="evidence-grid-${role}"></div>
+        `;
+
+        const container = document.getElementById('evidence-list-container');
+        const emptyState = document.getElementById('evidence-empty-state');
+        if (emptyState) emptyState.remove();
+
+        if (role === 'Korban') {
+            container.insertBefore(group, container.firstChild);
+        } else if (role === 'Saksi') {
+            const korbanGroup = document.getElementById('evidence-group-Korban');
+            if (korbanGroup) {
+                korbanGroup.parentNode.insertBefore(group, korbanGroup.nextSibling);
+            } else {
+                container.insertBefore(group, container.firstChild);
+            }
+        } else if (role === 'Mitra') {
+            container.appendChild(group);
+        }
+
+        return group;
+    }
+
+    function insertEvidenceDOM(evidence) {
+        const role = evidence.uploader_role || 'Saksi';
+        getOrCreateEvidenceGroup(role);
+        const grid = document.getElementById(`evidence-grid-${role}`);
+        if (!grid) return;
+
+        const isImage = evidence.file_type && evidence.file_type.startsWith('image/');
+        const isVideo = evidence.file_type && evidence.file_type.startsWith('video/');
+        const isAudio = evidence.file_type && evidence.file_type.startsWith('audio/');
+
+        const href = canViewEvidence ? evidence.file_url : '#';
+        const target = canViewEvidence ? '_blank' : '';
+
+        const a = document.createElement('a');
+        a.href = href;
+        a.target = target;
+        if (!canViewEvidence) {
+            a.setAttribute('onclick', "alert('Bukti hanya bisa dibuka oleh korban / mitra'); return false;");
+        }
+        a.className = "aspect-square rounded-lg border border-gray-200 overflow-hidden relative group bg-gray-100 flex items-center justify-center fade-in";
+
+        let mediaContent = '';
+        const blurClass = !canViewEvidence ? 'blur-md scale-110' : '';
+
+        if (isImage) {
+            mediaContent = `<img src="${evidence.file_url}" class="w-full h-full object-cover ${blurClass}" alt="Bukti">`;
+        } else if (isVideo) {
+            mediaContent = `
+                <video src="${evidence.file_url}" class="w-full h-full object-cover ${blurClass}"></video>
+                <div class="absolute inset-0 flex items-center justify-center bg-black/10">
+                    <span class="text-2xl drop-shadow-md">▶️</span>
+                </div>
+            `;
+        } else if (isAudio) {
+            mediaContent = `<div class="text-3xl ${!canViewEvidence ? 'blur-sm' : ''}">🎵</div>`;
+        } else {
+            mediaContent = `<div class="text-3xl ${!canViewEvidence ? 'blur-sm' : ''}">📁</div>`;
+        }
+
+        let lockContent = '';
+        if (!canViewEvidence) {
+            lockContent = `
+                <div class="absolute inset-0 bg-white/40 flex items-center justify-center backdrop-blur-sm">
+                    <span class="text-2xl drop-shadow-md">🔒</span>
+                </div>
+            `;
+        }
+
+        a.innerHTML = mediaContent + lockContent;
+        grid.appendChild(a);
+    }
+
+    function saveEvidenceSession() {
+        if (uploadedEvidencesInSession.length > 0) {
+            uploadedEvidencesInSession.forEach(evidence => {
+                insertEvidenceDOM(evidence);
+            });
+        }
+        uploadedEvidenceIdsInSession = [];
+        uploadedEvidencesInSession = [];
+        closeEvidenceModal();
+    }
+
+    async function cancelEvidenceSession() {
+        const idsToDiscard = [...uploadedEvidenceIdsInSession];
+        uploadedEvidenceIdsInSession = [];
+        uploadedEvidencesInSession = [];
+        
+        for (const uniqueId in activeUploads) {
+            if (activeUploads[uniqueId]) {
+                activeUploads[uniqueId].abort();
+            }
+        }
+        
+        if (idsToDiscard.length > 0) {
+            const list = document.getElementById('upload-list');
+            if (list) list.innerHTML = '<div class="text-xs text-red-500 font-semibold italic text-center py-2 animate-pulse">Membatalkan & menghapus seluruh berkas...</div>';
+            
+            try {
+                await Promise.all(idsToDiscard.map(id => 
+                    fetch(`/evidence/${id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': '<?php echo e(csrf_token()); ?>',
+                            'Accept': 'application/json'
+                        }
+                    })
+                ));
+            } catch(e) {
+                console.error('Error discarding session uploads:', e);
+            }
+        }
+        closeEvidenceModal();
+    }
+
     function openEvidenceModal() {
+        uploadedEvidenceIdsInSession = [];
+        uploadedEvidencesInSession = [];
         const m = document.getElementById('evidence-modal');
         if (!m) return;
         document.body.style.overflow = 'hidden';
@@ -746,11 +1030,12 @@
                 <h2 class="font-black text-xl text-gray-900 mb-1 font-unbounded">Tambah Bukti</h2>
                 <p class="text-gray-500 text-xs">Unggah berkas foto, rekaman suara, atau video untuk melengkapi laporan.</p>
             </div>
-            <button type="button" onclick="closeEvidenceModal()" class="text-gray-400 hover:text-gray-600 transition p-2 rounded-full">
+            <button type="button" onclick="cancelEvidenceSession()" class="text-gray-400 hover:text-gray-600 transition p-2 rounded-full">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
         </div>
 
+        <input type="file" id="evf" multiple class="hidden" accept="image/*,video/*,audio/*">
         <div class="border-2 border-dashed border-gray-300 hover:border-gray-400 rounded-2xl p-8 text-center transition cursor-pointer bg-slate-50 hover:bg-slate-100/50" onclick="document.getElementById('evf').click()">
             <p class="text-4xl mb-3">📁</p>
             <p class="text-gray-700 font-bold text-base">Klik untuk pilih file</p>
@@ -759,8 +1044,8 @@
         
         <div id="upload-list" class="mt-4 space-y-2 max-h-60 overflow-y-auto"></div>
         
-        <div class="flex justify-end gap-3 mt-5">
-            <button type="button" onclick="closeEvidenceModal()" class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold text-sm transition">Tutup</button>
+        <div class="flex flex-col gap-2 mt-5">
+            <button type="button" onclick="saveEvidenceSession()" class="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold text-sm transition">Simpan Bukti</button>
         </div>
     </div>
 </div>

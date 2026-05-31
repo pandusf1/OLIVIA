@@ -47,6 +47,7 @@ Route::get('/tracking/{id}/live', [TrackingController::class, 'live'])->name('tr
 Route::post('/tracking/{id}/location', [TrackingController::class, 'updateLocation'])->name('tracking.location');
 Route::get('/tracking/{id}', [TrackingController::class, 'show'])->name('tracking.show');
 Route::post('/tracking/{reportId}/evidence', [EvidenceController::class, 'store'])->name('evidence.store');
+Route::delete('/evidence/{id}', [EvidenceController::class, 'destroy'])->name('evidence.destroy');
 Route::post('/tracking/{id}/resolve', [TrackingController::class, 'resolve'])->name('tracking.resolve');
 Route::post('/tracking/{id}/chronology', [TrackingController::class, 'storeChronology'])->name('tracking.chronology');
 

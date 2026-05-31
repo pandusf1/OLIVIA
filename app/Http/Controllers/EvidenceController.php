@@ -34,6 +34,7 @@ class EvidenceController extends Controller
             $report->save();
         }
 
+        $uploaded = [];
         if ($request->hasFile('evidence')) {
             $request->validate([
                 'evidence' => 'required|array',
@@ -42,11 +43,22 @@ class EvidenceController extends Controller
 
             $files = $request->file('evidence');
             
+            // Determine uploader role
+            $isCreator = (auth()->check() && auth()->id() === $report->user_id) 
+                || in_array($reportId, session()->get('my_reports', []));
+            
+            $uploaderRole = 'Saksi';
+            if ($isCreator) {
+                $uploaderRole = 'Korban';
+            } elseif (auth()->check() && auth()->user()->role === 'partner') {
+                $uploaderRole = 'Mitra';
+            }
+
             foreach ($files as $file) {
                 $path = $file->store('evidences', 'public');
                 $hash = hash_file('sha256', $file->getRealPath());
 
-                Evidence::create([
+                $evidence = Evidence::create([
                     'report_id'   => $reportId,
                     'file_url'    => $path,
                     'file_type'   => $file->getClientMimeType(),
@@ -55,14 +67,44 @@ class EvidenceController extends Controller
                     'uploaded_at' => now(),
                     'uploaded_ip' => $request->ip(),
                     'device_info' => $request->userAgent(),
+                    'uploader_role' => $uploaderRole,
                 ]);
+
+                $uploaded[] = [
+                    'id' => $evidence->id,
+                    'file_url' => asset('storage/' . $evidence->file_url),
+                    'file_type' => $evidence->file_type,
+                    'uploader_role' => $evidence->uploader_role,
+                ];
             }
         }
 
-        if ($request->expectsJson()) {
-            return response()->json(['ok' => true]);
+        if ($request->expectsJson() || $request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return response()->json(['ok' => true, 'evidences' => $uploaded]);
         }
 
         return back()->with('success', 'Bukti berhasil diupload dan diamankan dengan SHA-256.');
+    }
+
+    public function destroy($id)
+    {
+        $evidence = Evidence::findOrFail($id);
+        $report = Report::findOrFail($evidence->report_id);
+
+        $isCreator = (auth()->check() && auth()->id() === $report->user_id) 
+            || in_array($report->id, session()->get('my_reports', []));
+
+        if (!$isCreator) {
+            return response()->json(['error' => 'Akses ditolak.'], 403);
+        }
+
+        // Delete from public storage
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($evidence->file_url)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($evidence->file_url);
+        }
+
+        $evidence->delete();
+
+        return response()->json(['ok' => true]);
     }
 }
