@@ -126,7 +126,11 @@ class ChatController extends Controller
         // Buat/ambil thread untuk laporan ini
         $thread = ChatThread::firstOrCreate(
             ['report_id' => $report->id],
-            ['id' => (string) Str::uuid(), 'last_message_at' => now()]
+            [
+                'id' => (string) Str::uuid(),
+                'user_id' => $report->user_id,
+                'last_message_at' => now()
+            ]
         );
 
         $rawMessages = $thread->messages()->orderBy('created_at', 'asc')->get();
@@ -233,7 +237,11 @@ class ChatController extends Controller
 
         $thread = ChatThread::firstOrCreate(
             ['report_id' => $report->id],
-            ['id' => (string) Str::uuid(), 'last_message_at' => now()]
+            [
+                'id' => (string) Str::uuid(),
+                'user_id' => $report->user_id,
+                'last_message_at' => now()
+            ]
         );
 
         ChatMessage::create([
@@ -309,14 +317,27 @@ class ChatController extends Controller
         $isPartner = $user && $user->role === 'partner';
         
         if ($isPartner) {
-            $threads = ChatThread::with(['partner', 'user'])
-                ->where('partner_id', $user->partner_id)
+            $threads = ChatThread::with(['partner', 'user', 'report'])
+                ->where(function($query) use ($user) {
+                    $query->where('partner_id', $user->partner_id)
+                          ->orWhereHas('report', function($q) use ($user) {
+                              $q->whereHas('partnerRoutings', function($pq) use ($user) {
+                                  $pq->where('partner_id', $user->partner_id)
+                                     ->where('status', 'accepted');
+                              });
+                          });
+                })
                 ->orderBy('last_message_at', 'desc')
                 ->get();
             $viewerType = 'partner';
         } else {
-            $threads = ChatThread::with(['partner', 'user'])
-                ->where('user_id', $user->id)
+            $threads = ChatThread::with(['partner', 'user', 'report'])
+                ->where(function($query) use ($user) {
+                    $query->where('user_id', $user->id)
+                          ->orWhereHas('report', function($q) use ($user) {
+                              $q->where('user_id', $user->id);
+                          });
+                })
                 ->orderBy('last_message_at', 'desc')
                 ->get();
             $viewerType = 'user';
@@ -353,8 +374,16 @@ class ChatController extends Controller
         $isPartner = $user && $user->role === 'partner';
         
         if ($isPartner) {
-            $threads = ChatThread::with(['partner', 'user'])
-                ->where('partner_id', $user->partner_id)
+            $threads = ChatThread::with(['partner', 'user', 'report'])
+                ->where(function($query) use ($user) {
+                    $query->where('partner_id', $user->partner_id)
+                          ->orWhereHas('report', function($q) use ($user) {
+                              $q->whereHas('partnerRoutings', function($pq) use ($user) {
+                                  $pq->where('partner_id', $user->partner_id)
+                                     ->where('status', 'accepted');
+                              });
+                          });
+                })
                 ->orderBy('last_message_at', 'desc')
                 ->get();
                 
@@ -369,8 +398,13 @@ class ChatController extends Controller
             $partner = Partner::find($user->partner_id);
             $viewerType = 'partner';
         } else {
-            $threads = ChatThread::with(['partner', 'user'])
-                ->where('user_id', $user->id)
+            $threads = ChatThread::with(['partner', 'user', 'report'])
+                ->where(function($query) use ($user) {
+                    $query->where('user_id', $user->id)
+                          ->orWhereHas('report', function($q) use ($user) {
+                              $q->where('user_id', $user->id);
+                          });
+                })
                 ->orderBy('last_message_at', 'desc')
                 ->get();
                 

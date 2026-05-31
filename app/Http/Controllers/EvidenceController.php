@@ -56,8 +56,17 @@ class EvidenceController extends Controller
 
             foreach ($files as $file) {
                 try {
-                    $path = $file->store('evidences', 'public');
+                    $path = null;
                     $hash = hash_file('sha256', $file->getRealPath());
+
+                    try {
+                        $path = $file->store('evidences', 'public');
+                    } catch (\Exception $storeEx) {
+                        $fileData = file_get_contents($file->getRealPath());
+                        $mimeType = $file->getClientMimeType();
+                        $base64 = base64_encode($fileData);
+                        $path = 'data:' . $mimeType . ';base64,' . $base64;
+                    }
 
                     $evidence = Evidence::create([
                         'report_id'   => $reportId,
@@ -73,7 +82,7 @@ class EvidenceController extends Controller
 
                     $uploaded[] = [
                         'id' => $evidence->id,
-                        'file_url' => asset('storage/' . $evidence->file_url),
+                        'file_url' => str_starts_with($evidence->file_url, 'data:') ? $evidence->file_url : asset('storage/' . $evidence->file_url),
                         'file_type' => $evidence->file_type,
                         'uploader_role' => $evidence->uploader_role,
                     ];

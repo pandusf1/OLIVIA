@@ -39,7 +39,12 @@
                     @foreach($threads as $t)
                         @php
                             $active = (string) $partnerId === (string) $t->partner_id;
-                            $threadHref = route('chat.messages', ['partnerId' => $t->partner_id]) . ($t->report_context_id ? '?report_id=' . $t->report_context_id : '');
+                            $threadHref = '#';
+                            if ($t->report_id) {
+                                $threadHref = route('chat.report', ['reportId' => $t->report_id]);
+                            } elseif ($t->partner_id) {
+                                $threadHref = route('chat.messages', ['partnerId' => $t->partner_id]);
+                            }
                             $threadName = $viewerType === 'partner'
                                 ? ($t->user?->name ?? 'Pelapor')
                                 : ($t->partner?->partner_name ?? 'Partner');
@@ -50,7 +55,7 @@
                         <a href="{{ $threadHref }}"
                            data-chat-link
                            data-partner-id="{{ $t->partner_id }}"
-                           data-report-id="{{ $t->report_context_id ?? '' }}"
+                           data-report-id="{{ $t->report_id ?? '' }}"
                            data-user-id="{{ $t->user_id }}"
                            data-partner-name="{{ $threadName }}"
                            data-partner-type="{{ $threadType }}"

@@ -40,7 +40,7 @@
                             <p class="text-xs text-gray-400 font-mono">{{ substr($ev->file_hash,0,32) }}...</p>
                             <p class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($ev->uploaded_at)->format('d M Y, H:i') }}</p>
                         </div>
-                        <a href="{{ asset('storage/'.$ev->file_url) }}" target="_blank" class="text-red-700 hover:text-red-800 text-xs font-semibold transition">Buka →</a>
+                        <a href="{{ str_starts_with($ev->file_url, 'data:') ? $ev->file_url : asset('storage/'.$ev->file_url) }}" target="_blank" class="text-red-700 hover:text-red-800 text-xs font-semibold transition">Buka →</a>
                     </div>
                     @endforeach
                 </div>

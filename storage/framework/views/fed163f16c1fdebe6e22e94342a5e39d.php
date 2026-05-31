@@ -186,24 +186,55 @@
                                                     $canView = $report->show_evidence 
                                                         || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner'))
                                                         || in_array($report->id, session('my_reports', []));
+                                                        
+                                                    $evidenceUrl = str_starts_with($evidence->file_url, 'data:') ? $evidence->file_url : asset('storage/' . $evidence->file_url);
+                                                    
+                                                    $cardBg = 'bg-blue-50/50 border-blue-150';
+                                                    $badgeBg = 'bg-blue-100 text-blue-800';
+                                                    $badgeLabel = 'BERKAS';
+                                                    
+                                                    if ($isImage) {
+                                                        $cardBg = 'bg-rose-50/50 border-rose-150';
+                                                        $badgeBg = 'bg-rose-100 text-rose-800';
+                                                        $badgeLabel = 'FOTO';
+                                                    } elseif ($isVideo) {
+                                                        $cardBg = 'bg-amber-50/50 border-amber-150';
+                                                        $badgeBg = 'bg-amber-100 text-amber-800';
+                                                        $badgeLabel = 'VIDEO';
+                                                    } elseif ($isAudio) {
+                                                        $cardBg = 'bg-emerald-50/50 border-emerald-150';
+                                                        $badgeBg = 'bg-emerald-100 text-emerald-800';
+                                                        $badgeLabel = 'REKAMAN';
+                                                    }
                                                 ?>
-                                                <a href="<?php echo e($canView ? asset('storage/' . $evidence->file_url) : '#'); ?>" target="<?php echo e($canView ? '_blank' : ''); ?>" onclick="<?php echo e(!$canView ? "alert('Bukti hanya bisa dibuka oleh korban / mitra'); return false;" : ''); ?>" class="aspect-square rounded-lg border border-gray-200 overflow-hidden relative group bg-gray-100 flex items-center justify-center">
+                                                <a href="<?php echo e($canView ? $evidenceUrl : '#'); ?>" target="<?php echo e($canView ? '_blank' : ''); ?>" onclick="<?php echo e(!$canView ? "alert('Bukti hanya bisa dibuka oleh korban / mitra'); return false;" : ''); ?>" class="aspect-square rounded-2xl border <?php echo e($cardBg); ?> p-4 relative group flex flex-col items-center justify-center transition-all duration-300 hover:scale-[1.03] hover:shadow-md">
                                                     <?php if($isImage): ?>
-                                                        <img src="<?php echo e(asset('storage/' . $evidence->file_url)); ?>" class="w-full h-full object-cover <?php echo e(!$canView ? 'blur-md scale-110' : ''); ?>" alt="Bukti">
+                                                        <svg class="w-10 h-10 text-rose-500 group-hover:scale-110 transition-transform duration-300 <?php echo e(!$canView ? 'blur-[3px]' : ''); ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                                        </svg>
                                                     <?php elseif($isVideo): ?>
-                                                        <video src="<?php echo e(asset('storage/' . $evidence->file_url)); ?>" class="w-full h-full object-cover <?php echo e(!$canView ? 'blur-md scale-110' : ''); ?>"></video>
-                                                        <div class="absolute inset-0 flex items-center justify-center bg-black/10">
-                                                            <span class="text-2xl drop-shadow-md">▶️</span>
-                                                        </div>
+                                                        <svg class="w-10 h-10 text-amber-500 group-hover:scale-110 transition-transform duration-300 <?php echo e(!$canView ? 'blur-[3px]' : ''); ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                                                        </svg>
                                                     <?php elseif($isAudio): ?>
-                                                        <div class="text-3xl <?php echo e(!$canView ? 'blur-sm' : ''); ?>">🎵</div>
+                                                        <svg class="w-10 h-10 text-emerald-500 group-hover:scale-110 transition-transform duration-300 <?php echo e(!$canView ? 'blur-[3px]' : ''); ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                                                        </svg>
                                                     <?php else: ?>
-                                                        <div class="text-3xl <?php echo e(!$canView ? 'blur-sm' : ''); ?>">📁</div>
+                                                        <svg class="w-10 h-10 text-blue-500 group-hover:scale-110 transition-transform duration-300 <?php echo e(!$canView ? 'blur-[3px]' : ''); ?>" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                                        </svg>
                                                     <?php endif; ?>
                                                     
+                                                    <span class="mt-3 text-[10px] font-bold tracking-widest uppercase <?php echo e($badgeBg); ?> px-2 py-0.5 rounded-full"><?php echo e($badgeLabel); ?></span>
+                                                    
                                                     <?php if(!$canView): ?>
-                                                        <div class="absolute inset-0 bg-white/40 flex items-center justify-center backdrop-blur-sm">
-                                                            <span class="text-2xl drop-shadow-md">🔒</span>
+                                                        <div class="absolute inset-0 bg-white/60 backdrop-blur-[4px] rounded-2xl flex items-center justify-center">
+                                                            <div class="bg-white/80 p-2 rounded-full shadow-sm border border-gray-100 flex items-center justify-center">
+                                                                <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                                                </svg>
+                                                            </div>
                                                         </div>
                                                     <?php endif; ?>
                                                 </a>
@@ -835,36 +866,68 @@
         if (!canViewEvidence) {
             a.setAttribute('onclick', "alert('Bukti hanya bisa dibuka oleh korban / mitra'); return false;");
         }
-        a.className = "aspect-square rounded-lg border border-gray-200 overflow-hidden relative group bg-gray-100 flex items-center justify-center fade-in";
 
-        let mediaContent = '';
-        const blurClass = !canViewEvidence ? 'blur-md scale-110' : '';
+        let cardBg = 'bg-blue-50/50 border-blue-150';
+        let badgeBg = 'bg-blue-100 text-blue-800';
+        let badgeLabel = 'BERKAS';
+        let svgIcon = '';
+        let blurClass = !canViewEvidence ? 'blur-[3px]' : '';
 
         if (isImage) {
-            mediaContent = `<img src="${evidence.file_url}" class="w-full h-full object-cover ${blurClass}" alt="Bukti">`;
+            cardBg = 'bg-rose-50/50 border-rose-150';
+            badgeBg = 'bg-rose-100 text-rose-800';
+            badgeLabel = 'FOTO';
+            svgIcon = `
+                <svg class="w-10 h-10 text-rose-500 group-hover:scale-110 transition-transform duration-300 ${blurClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            `;
         } else if (isVideo) {
-            mediaContent = `
-                <video src="${evidence.file_url}" class="w-full h-full object-cover ${blurClass}"></video>
-                <div class="absolute inset-0 flex items-center justify-center bg-black/10">
-                    <span class="text-2xl drop-shadow-md">▶️</span>
-                </div>
+            cardBg = 'bg-amber-50/50 border-amber-150';
+            badgeBg = 'bg-amber-100 text-amber-800';
+            badgeLabel = 'VIDEO';
+            svgIcon = `
+                <svg class="w-10 h-10 text-amber-500 group-hover:scale-110 transition-transform duration-300 ${blurClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
             `;
         } else if (isAudio) {
-            mediaContent = `<div class="text-3xl ${!canViewEvidence ? 'blur-sm' : ''}">🎵</div>`;
+            cardBg = 'bg-emerald-50/50 border-emerald-150';
+            badgeBg = 'bg-emerald-100 text-emerald-800';
+            badgeLabel = 'REKAMAN';
+            svgIcon = `
+                <svg class="w-10 h-10 text-emerald-500 group-hover:scale-110 transition-transform duration-300 ${blurClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                </svg>
+            `;
         } else {
-            mediaContent = `<div class="text-3xl ${!canViewEvidence ? 'blur-sm' : ''}">📁</div>`;
+            svgIcon = `
+                <svg class="w-10 h-10 text-blue-500 group-hover:scale-110 transition-transform duration-300 ${blurClass}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+            `;
         }
+
+        a.className = `aspect-square rounded-2xl border ${cardBg} p-4 relative group flex flex-col items-center justify-center transition-all duration-300 hover:scale-[1.03] hover:shadow-md fade-in`;
 
         let lockContent = '';
         if (!canViewEvidence) {
             lockContent = `
-                <div class="absolute inset-0 bg-white/40 flex items-center justify-center backdrop-blur-sm">
-                    <span class="text-2xl drop-shadow-md">🔒</span>
+                <div class="absolute inset-0 bg-white/60 backdrop-blur-[4px] rounded-2xl flex items-center justify-center">
+                    <div class="bg-white/80 p-2 rounded-full shadow-sm border border-gray-100 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </div>
                 </div>
             `;
         }
 
-        a.innerHTML = mediaContent + lockContent;
+        a.innerHTML = `
+            ${svgIcon}
+            <span class="mt-3 text-[10px] font-bold tracking-widest uppercase ${badgeBg} px-2 py-0.5 rounded-full">${badgeLabel}</span>
+            ${lockContent}
+        `;
         grid.appendChild(a);
     }
 
