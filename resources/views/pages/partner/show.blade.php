@@ -16,8 +16,18 @@
 
         @php
         $sc=['Submitted'=>'bg-gray-100 text-gray-600','Routed'=>'bg-blue-50 text-blue-700','Viewed'=>'bg-yellow-50 text-yellow-700','In Progress'=>'bg-orange-50 text-orange-700','Resolved'=>'bg-green-50 text-green-700'];
-        $stages=[['Submitted','Terkirim'],['Routed','Diteruskan'],['Viewed','Dilihat'],['In Progress','Ditangani'],['Resolved','Selesai']];
+        $stages=[['Submitted','Diajukan'],['Routed','Diteruskan'],['Viewed','Ditinjau'],['In Progress','Diproses'],['Resolved','Selesai']];
         $ci=array_search($report->status,array_column($stages,0));
+        $statusIndo = match($report->status) {
+            'Submitted' => 'Diajukan',
+            'Routed' => 'Diteruskan',
+            'Viewed' => 'Ditinjau',
+            'Assigned' => 'Diterima',
+            'In Progress' => 'Diproses',
+            'Resolved' => 'Selesai',
+            'Rejected' => 'Ditolak',
+            default => $report->status
+        };
         @endphp
 
         {{-- Header --}}
@@ -38,7 +48,7 @@
                     </div>
                     @endif
                 </div>
-                <span class="px-3 py-1.5 rounded-full text-sm font-semibold {{ $sc[$report->status]??'bg-gray-100 text-gray-600' }} whitespace-nowrap">{{ $report->status }}</span>
+                <span class="px-3 py-1.5 rounded-full text-sm font-semibold {{ $sc[$report->status]??'bg-gray-100 text-gray-600' }} whitespace-nowrap">{{ $statusIndo }}</span>
             </div>
             
             @if($isHandling)
@@ -68,8 +78,8 @@
             <form action="/partner/report/{{ $report->id }}/status" method="POST" class="flex gap-3">
                 @csrf
                 <select name="status" class="flex-1 border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-2.5 text-sm focus:outline-none bg-white">
-                    @foreach(['Submitted','Routed','Viewed','In Progress','Resolved'] as $s)
-                    <option value="{{ $s }}" {{ $report->status===$s?'selected':'' }}>{{ $s }}</option>
+                    @foreach(['Submitted' => 'Diajukan', 'Routed' => 'Diteruskan', 'Viewed' => 'Ditinjau', 'In Progress' => 'Diproses', 'Resolved' => 'Selesai'] as $val => $lbl)
+                    <option value="{{ $val }}" {{ $report->status===$val?'selected':'' }}>{{ $lbl }}</option>
                     @endforeach
                 </select>
                 <button type="submit" class="bg-gray-900 hover:bg-gray-700 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition">Update</button>
@@ -101,10 +111,22 @@
 
             <div class="space-y-3 border-t border-gray-100 pt-4">
                 @foreach($report->statusLogs as $log)
+                @php
+                    $logStatusIndo = match($log->new_status) {
+                        'Submitted' => 'Diajukan',
+                        'Routed' => 'Diteruskan',
+                        'Viewed' => 'Ditinjau',
+                        'Assigned' => 'Diterima',
+                        'In Progress' => 'Diproses',
+                        'Resolved' => 'Selesai',
+                        'Rejected' => 'Ditolak',
+                        default => $log->new_status
+                    };
+                @endphp
                 <div class="flex items-start gap-3">
                     <div class="w-2 h-2 bg-red-500 rounded-full mt-1.5 flex-shrink-0"></div>
                     <div>
-                        <p class="text-sm font-semibold text-gray-900">{{ $log->new_status }}</p>
+                        <p class="text-sm font-semibold text-gray-900">{{ $logStatusIndo }}</p>
                         <p class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($log->changed_at)->format('d/m/Y, H:i:s') }}</p>
                     </div>
                 </div>

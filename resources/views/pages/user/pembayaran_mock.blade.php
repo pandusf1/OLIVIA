@@ -29,7 +29,7 @@
     {{-- STEP 1: DETAIL LAYANAN --}}
     <div id="step-detail" class="fade-in">
 
-        {{-- Partner info mini --}}
+        {{-- Mitra info mini --}}
         <div class="flex items-center gap-3 mb-6">
             <div class="w-10 h-10 rounded-xl bg-gray-100 border border-gray-200 overflow-hidden flex-shrink-0">
                 @if(!empty($priceList->partner->image_url))
@@ -39,8 +39,17 @@
                 @endif
             </div>
             <div>
-                <p class="font-semibold text-gray-900 text-sm">{{ $priceList->partner->partner_name ?? 'Partner' }}</p>
-                <p class="text-xs text-gray-400">{{ $priceList->partner->partner_type ?? '' }}</p>
+                <p class="font-semibold text-gray-900 text-sm">{{ $priceList->partner->partner_name ?? 'Mitra' }}</p>
+                @php
+                    $typeLabel = match($priceList->partner->partner_type ?? '') {
+                        'ambulance' => 'Medis Darurat',
+                        'legal' => 'Bantuan Hukum',
+                        'counselor' => 'Psikososial',
+                        'pemadam' => 'Pemadam / Rescue',
+                        default => 'Mitra Krisis'
+                    };
+                @endphp
+                <p class="text-xs text-gray-400">{{ $typeLabel }}</p>
             </div>
         </div>
 
@@ -115,7 +124,7 @@
         </div>
         <p class="font-black text-2xl text-gray-900 mb-2">Pembayaran Berhasil!</p>
         <p class="text-gray-500 text-sm mb-1">{{ $priceList->service_name }}</p>
-        <p class="text-gray-400 text-xs mb-8">Kamu sekarang terhubung dengan partner.</p>
+        <p class="text-gray-450 text-xs mb-8">Kamu sekarang terhubung dengan mitra.</p>
 
         <div class="w-full bg-green-50 border border-green-200 rounded-2xl px-5 py-4 mb-6 text-left">
             <div class="flex justify-between items-center text-sm mb-2">
@@ -123,7 +132,7 @@
                 <span class="font-semibold text-gray-900">{{ $priceList->service_name }}</span>
             </div>
             <div class="flex justify-between items-center text-sm mb-2">
-                <span class="text-gray-500">Partner</span>
+                <span class="text-gray-500">Mitra</span>
                 <span class="font-semibold text-gray-900">{{ $priceList->partner->partner_name ?? '-' }}</span>
             </div>
             <div class="flex justify-between items-center text-sm">

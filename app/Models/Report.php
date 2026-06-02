@@ -99,8 +99,25 @@ public function assignedPartner()
     return $this->belongsTo(Partner::class, 'handler_partner_id');
 }
 
-public function handlerUser()
-{
-    return $this->belongsTo(User::class, 'handler_user_id');
-}
+    public function handlerUser()
+    {
+        return $this->belongsTo(User::class, 'handler_user_id');
+    }
+
+    /**
+     * Map database statuses to professional 1-word Indonesian status labels.
+     */
+    public function getStatusLabelIndonesianAttribute(): string
+    {
+        return match ($this->status) {
+            'Submitted' => 'Diajukan',
+            'Routed' => 'Diteruskan',
+            'Viewed' => 'Ditinjau',
+            'Assigned' => 'Diterima',
+            'In Progress' => 'Diproses',
+            'Resolved' => 'Selesai',
+            'Rejected' => 'Ditolak',
+            default => $this->status ?? 'Diajukan',
+        };
+    }
 }

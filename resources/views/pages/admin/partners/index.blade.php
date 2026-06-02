@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safora — Partner Management</title>
+    <title>Safora — Manajemen Mitra</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -23,27 +23,37 @@
     <div class="flex items-center justify-between mb-8">
         <div>
             <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">
-                ADMIN PANEL
+                PANEL ADMIN
             </p>
 
             <h1 class="text-3xl font-black">
-                Partner Management
+                Manajemen Mitra
             </h1>
 
             <p class="text-gray-400 text-sm mt-1">
-                Kelola semua partner terverifikasi Safora.
+                Kelola semua mitra terverifikasi Safora.
             </p>
         </div>
 
         <a href="{{ route('admin.partners.create') }}"
            class="bg-gray-900 text-white px-5 py-3 rounded-xl text-sm font-bold hover:bg-black transition">
-            + Tambah Partner
+            + Tambah Mitra
         </a>
     </div>
 
     <div class="space-y-3">
 
         @foreach($partners as $partner)
+        @php
+            $typeLabel = match($partner->partner_type) {
+                'ambulance' => 'Medis Darurat',
+                'legal' => 'Bantuan Hukum',
+                'counselor' => 'Psikososial',
+                'pemadam' => 'Pemadam / Rescue',
+                'police' => 'Kepolisian',
+                default => 'Mitra Krisis'
+            };
+        @endphp
 
         <div class="bg-white border border-gray-200 rounded-2xl p-5 flex items-center justify-between">
 
@@ -55,16 +65,16 @@
                     </h2>
 
                     <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
-                        {{ $partner->partner_type }}
+                        {{ $typeLabel }}
                     </span>
 
                     @if($partner->verified)
                         <span class="text-xs px-2 py-1 rounded-full bg-green-50 text-green-700">
-                            Verified
+                            Terverifikasi
                         </span>
                     @else
                         <span class="text-xs px-2 py-1 rounded-full bg-red-50 text-red-700">
-                            Unverified
+                            Belum Terverifikasi
                         </span>
                     @endif
 

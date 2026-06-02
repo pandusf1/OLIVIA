@@ -136,8 +136,8 @@
                                     <span class="text-xs font-bold text-slate-800 bg-slate-200 px-2 py-0.5 rounded">
                                         @if($chrono->role === 'Korban')
                                             Korban ({{ $chrono->writer_name }})
-                                        @elseif($chrono->role === 'Partner')
-                                            Partner ({{ $chrono->writer_name }})
+                                        @elseif($chrono->role === 'Partner' || $chrono->role === 'Mitra')
+                                            Mitra ({{ $chrono->writer_name }})
                                         @elseif($chrono->role === 'Saksi')
                                             Saksi ({{ $chrono->writer_name }})
                                         @else
@@ -257,13 +257,13 @@
                 <p class="text-xs font-bold uppercase tracking-widest text-green-700">Sedang Menangani</p>
                 <h2 class="mt-2 text-xl font-black text-green-950" data-field="assigned_name"></h2>
                 <p class="mt-1 text-sm text-green-800" data-field="assigned_detail"></p>
-                <p class="mt-3 text-xs text-green-700">Partner sudah terhubung ke chat laporan yang sama.</p>
+                <p class="mt-3 text-xs text-green-700">Mitra sudah terhubung ke chat laporan yang sama.</p>
             </section>
 
             <section class="rounded-lg border border-gray-200 bg-white p-5">
                 <div class="mb-4 flex items-center justify-between gap-3">
                     <div>
-                        <h2 class="text-lg font-black">Diteruskan ke Partner</h2>
+                        <h2 class="text-lg font-black">Diteruskan ke Mitra</h2>
                         <p class="text-sm text-gray-500">Status ini diperbarui otomatis setiap beberapa detik.</p>
                     </div>
                 </div>
@@ -272,7 +272,7 @@
                 @if((auth()->check() && auth()->id() === $report->user_id) || in_array($report->id, session('my_reports', [])))
                     <div id="re-alert-container" class="mt-4 hidden animate-pulse">
                         <button id="btn-re-alert" onclick="triggerReAlert()" class="w-full rounded-xl bg-red-600 hover:bg-red-700 text-white font-black py-3.5 px-4 text-sm flex items-center justify-center gap-2 transition duration-300 shadow-md transform active:scale-95">
-                            <span>🚨 Kirim Ulang Alert ke Partner</span>
+                            <span>🚨 Kirim Ulang Alert ke Mitra</span>
                             <span id="re-alert-countdown" class="hidden font-mono bg-red-800 px-2 py-0.5 rounded text-xs"></span>
                         </button>
                     </div>
@@ -446,7 +446,7 @@
                         </div>
                     </div>
                 `;
-            }).join('') || '<p class="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">Kami sedang mencari partner yang relevan.</p>';
+            }).join('') || '<p class="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">Kami sedang mencari mitra yang relevan.</p>';
         }
 
         const timelineEl = document.getElementById('timeline');
@@ -479,7 +479,7 @@
                     <p class="text-sm text-gray-800">${escapeHtml(message.message)}</p>
                     <p class="mt-1 text-xs text-gray-400">${escapeHtml(message.time)}</p>
                 </div>
-            `).join('') || '<p class="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">Belum ada pesan partner. Tetap pantau halaman ini.</p>';
+            `).join('') || '<p class="rounded-lg bg-gray-50 p-4 text-sm text-gray-500">Belum ada pesan mitra. Tetap pantau halaman ini.</p>';
         }
 
         // Update Re-Alert Button UI secara dinamis
@@ -686,7 +686,7 @@
         const btnReAlert = document.getElementById('btn-re-alert');
         if (!btnReAlert || btnReAlert.disabled) return;
         
-        if (!confirm('Apakah Anda yakin ingin mengirim ulang alert WhatsApp ke partner terdekat?')) return;
+        if (!confirm('Apakah Anda yakin ingin mengirim ulang alert WhatsApp ke mitra terdekat?')) return;
         
         btnReAlert.disabled = true;
         const originalContent = btnReAlert.innerHTML;
@@ -710,7 +710,7 @@
             
             const data = await response.json();
             if (response.ok && data.ok) {
-                alert('Alert WhatsApp berhasil dikirim ulang ke partner!');
+                alert('Alert WhatsApp berhasil dikirim ulang ke mitra!');
                 startCountdownTimer(600);
                 pollLive();
             } else {
@@ -719,7 +719,7 @@
                 btnReAlert.disabled = false;
             }
         } catch (error) {
-            alert('Terjadi kesalahan sistem saat menghubungi partner.');
+            alert('Terjadi kesalahan sistem saat menghubungi mitra.');
             btnReAlert.innerHTML = originalContent;
             btnReAlert.disabled = false;
         }
@@ -1397,7 +1397,7 @@
         <div class="flex items-start justify-between gap-3 mb-4">
             <div>
                 <h2 class="font-black text-xl text-gray-900 mb-1 font-unbounded">Tambah Kronologi</h2>
-                <p class="text-gray-500 text-xs">Berikan detail kronologi atau pemutakhiran situasi terkini untuk membantu partner krisis.</p>
+                <p class="text-gray-500 text-xs">Berikan detail kronologi atau pemutakhiran situasi terkini untuk membantu mitra krisis.</p>
             </div>
             <button type="button" onclick="closeChronologyModal()" class="text-gray-400 hover:text-gray-600 transition p-2 rounded-full">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>

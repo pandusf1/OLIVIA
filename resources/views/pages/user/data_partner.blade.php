@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safora — Data Partner</title>
+    <title>Safora — Data Mitra</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -42,9 +42,18 @@
 
 
                 <div class="min-w-0">
-                    <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">INFORMASI DATA PARTNER</p>
+                    <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">INFORMASI DATA MITRA</p>
 <p class="text-gray-900 font-bold text-xl truncate">{{ $partner->partner_name }}</p>
-                    <p class="text-gray-500 text-sm mt-1">{{ $partner->partner_type }}</p>
+                    @php
+                        $typeLabel = match($partner->partner_type) {
+                            'ambulance' => 'Medis Darurat',
+                            'legal' => 'Bantuan Hukum',
+                            'counselor' => 'Psikososial',
+                            'pemadam' => 'Pemadam / Rescue',
+                            default => 'Mitra Krisis'
+                        };
+                    @endphp
+                    <p class="text-gray-500 text-sm mt-1">{{ $typeLabel }}</p>
                 </div>
             </div>
         </div>
@@ -56,7 +65,7 @@
             @endphp
 
             <div>
-                <h2 class="font-semibold text-gray-900 mb-6">Map & Informasi Partner</h2>
+                <h2 class="font-semibold text-gray-900 mb-6">Map & Informasi Mitra</h2>
 
                 <div class="grid lg:grid-cols-12 gap-6 items-start">
                     {{-- Map (kiri) --}}
@@ -76,8 +85,8 @@
 
                         <div class="relative">
                             <div class="flex items-center gap-2 mb-3">
-                                <span class="w-2.5 h-2.5 rounded-full bg-red-700" title="Lokasi partner"></span>
-                                <p class="text-xs font-semibold text-gray-600">Lokasi partner</p>
+                                <span class="w-2.5 h-2.5 rounded-full bg-red-700" title="Lokasi mitra"></span>
+                                <p class="text-xs font-semibold text-gray-600">Lokasi mitra</p>
                             </div>
 
                             <div id="partner-location-map" class="relative w-full h-64 rounded-xl border border-gray-100 bg-white/40 overflow-hidden z-0">
@@ -159,7 +168,7 @@
 
                 @if($priceLists->count() === 0)
                     <div class="text-sm text-gray-500 bg-[#faf9f7] border border-gray-100 rounded-xl p-4">
-                        Belum ada price list untuk partner ini.
+                        Belum ada daftar layanan untuk mitra ini.
                     </div>
                 @else
 

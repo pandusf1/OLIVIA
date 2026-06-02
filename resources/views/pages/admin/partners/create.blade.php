@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tambah Partner</title>
+    <title>Tambah Mitra</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -13,7 +13,7 @@
 <div class="max-w-3xl mx-auto px-6 py-10">
 
     <h1 class="text-3xl font-black mb-8">
-        Tambah Partner
+        Tambah Mitra
     </h1>
 
     <form method="POST"
@@ -23,7 +23,7 @@
         @csrf
 
         <div>
-            <label class="text-sm font-semibold">Nama Partner</label>
+            <label class="text-sm font-semibold">Nama Mitra</label>
 
             <input type="text"
                    name="partner_name"
@@ -89,7 +89,7 @@
         <button
             class="bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-xl font-bold transition">
 
-            Simpan Partner
+            Simpan Mitra
 
         </button>
 

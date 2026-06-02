@@ -157,7 +157,7 @@ function updateUI() {
                     </svg>
                 </div>
                 <p class="font-bold text-gray-700 mb-1">Belum ada pesan</p>
-                <p class="text-gray-400 text-sm max-w-xs">Korban, warga sekitar, dan partner yang menangani bisa berkomunikasi di sini.</p>
+                <p class="text-gray-400 text-sm max-w-xs">Korban, warga sekitar, dan mitra yang menangani bisa berkomunikasi di sini.</p>
             </div>
         `;
     } else {

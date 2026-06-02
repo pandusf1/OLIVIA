@@ -21,6 +21,18 @@
         'pelecehan' => 'bg-yellow-100 text-yellow-900 border-yellow-200',
         'kecelakaan' => 'bg-green-100 text-green-800 border-green-200',
     ];
+    $typeLabel = match($partner->partner_type) {
+        'ambulance' => 'Medis Darurat',
+        'legal' => 'Bantuan Hukum',
+        'counselor' => 'Psikososial',
+        'pemadam' => 'Pemadam / Rescue',
+        default => 'Mitra Krisis'
+    };
+    $monthsId = [
+        1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+        5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+        9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+    ];
 @endphp
 @include('partials.nav-auth')
 
@@ -31,7 +43,7 @@
         <div>
             <div class="mb-3 flex flex-wrap items-center gap-2">
                 <span class="rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-bold text-green-700">Mitra Terverifikasi</span>
-                <span class="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-600">{{ $partner->partner_type }}</span>
+                <span class="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-600">{{ $typeLabel }}</span>
             </div>
             <h1 class="text-3xl font-black tracking-tight text-gray-950">{{ $partner->partner_name }}</h1>
             <p class="mt-1 text-sm text-gray-500">{{ $partner->city }} - dashboard respons laporan darurat Safora</p>
@@ -58,12 +70,18 @@
                             'high' => 'bg-orange-100 text-orange-800',
                             'normal' => 'bg-gray-100 text-gray-700',
                         ][$report->urgency_level ?? 'high'] ?? 'bg-orange-100 text-orange-800';
+                        $urgencyLabel = match($report->urgency_level ?? 'high') {
+                            'critical' => 'Kritis',
+                            'high' => 'Tinggi',
+                            'normal' => 'Normal',
+                            default => 'Tinggi'
+                        };
                     @endphp
                     <article class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
                         <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
                             <div class="flex flex-wrap items-center gap-2">
                                 <span class="rounded-full border px-3 py-1 text-xs font-bold {{ $badgeClass }}">{{ $report->category }}</span>
-                                <span class="rounded-full px-3 py-1 text-xs font-bold uppercase {{ $urgencyClass }}">{{ $report->urgency_level ?? 'high' }}</span>
+                                <span class="rounded-full px-3 py-1 text-xs font-bold uppercase {{ $urgencyClass }}">{{ $urgencyLabel }}</span>
                                 @if($report->anonymous)
                                     <span class="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">Anonim</span>
                                 @endif
@@ -134,7 +152,7 @@
                 <select name="month" class="rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-gray-500 focus:outline-none">
                     <option value="">Semua Bulan</option>
                     @for($i=1; $i<=12; $i++)
-                    <option value="{{ $i }}" {{ request('month') == $i ? 'selected' : '' }}>{{ date('F', mktime(0, 0, 0, $i, 1)) }}</option>
+                    <option value="{{ $i }}" {{ request('month') == $i ? 'selected' : '' }}>{{ $monthsId[$i] }}</option>
                     @endfor
                 </select>
                 <div class="flex gap-2">
@@ -184,7 +202,7 @@
 
             const diff = new Date(raw).getTime() - Date.now();
             if (diff <= 0) {
-                node.textContent = 'Expired';
+                node.textContent = 'Kedaluwarsa';
                 node.closest('article')?.classList.add('opacity-60');
                 return;
             }

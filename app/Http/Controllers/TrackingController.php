@@ -429,7 +429,7 @@ class TrackingController extends Controller
         $eta = ($report->status === 'Resolved')
             ? 'Selesai'
             : ($assignedPartner
-                ? 'Partner sudah terhubung'
+                ? 'Mitra sudah terhubung'
                 : ($pendingRoutings->min('estimated_response_minutes')
                     ? $pendingRoutings->min('estimated_response_minutes') . '-' . ($pendingRoutings->min('estimated_response_minutes') + 3) . ' menit'
                     : '3-5 menit'));
@@ -485,7 +485,7 @@ class TrackingController extends Controller
             'next_instruction' => $this->nextInstruction($report),
             'escalation_message' => $retryCount >= 3
                 ? 'Sistem selesai mengirim ulang alert pengingat otomatis. Anda kini dapat mengirim ulang alert secara manual jika diperlukan.'
-                : 'Jika belum ada partner menerima dalam 5 menit, sistem akan mencoba ulang alert WhatsApp secara bertahap s.d. 3 kali.',
+                : 'Jika belum ada mitra menerima dalam 5 menit, sistem akan mencoba ulang alert WhatsApp secara bertahap s.d. 3 kali.',
             'assigned_partner' => $assignedPartner ? [
                 'id' => $assignedPartner->id,
                 'name' => $assignedPartner->partner_name,
@@ -499,7 +499,7 @@ class TrackingController extends Controller
                 ->sortByDesc(fn ($routing) => $routing->status === 'accepted')
                 ->values()
                 ->map(fn ($routing) => [
-                    'name' => $routing->partner?->partner_name ?? 'Partner Safora',
+                    'name' => $routing->partner?->partner_name ?? 'Mitra Safora',
                     'specialization' => $this->partnerTypeLabel($routing->partner?->partner_type),
                     'city' => $routing->partner?->city,
                     'estimated_response' => $routing->estimated_response_minutes
@@ -552,13 +552,13 @@ class TrackingController extends Controller
     private function humanStatusTitle(Report $report): string
     {
         return match ($report->status) {
-            'Submitted' => 'Laporan diterima',
-            'Routed' => 'Mencari partner terdekat',
-            'Viewed' => 'Partner sedang meninjau',
-            'Assigned' => 'Partner sudah menerima kasus',
-            'In Progress' => 'Kasus sedang ditangani',
-            'Resolved' => 'Kasus selesai',
-            default => 'Safora sedang memproses laporan',
+            'Submitted' => 'Diajukan',
+            'Routed' => 'Diteruskan',
+            'Viewed' => 'Ditinjau',
+            'Assigned' => 'Diterima',
+            'In Progress' => 'Diproses',
+            'Resolved' => 'Selesai',
+            default => 'Diajukan',
         };
     }
 
@@ -580,7 +580,7 @@ class TrackingController extends Controller
         }
 
         if ($pendingCount > 0) {
-            return 'Laporan Anda sudah diteruskan ke ' . $pendingCount . ' institusi terdekat yang sesuai kategori. Kami sedang menunggu partner tersedia menerima kasus ini.';
+            return 'Laporan Anda sudah diteruskan ke ' . $pendingCount . ' institusi terdekat yang sesuai kategori. Kami sedang menunggu mitra tersedia menerima kasus ini.';
         }
 
         return 'Kami masih mencoba menghubungkan Anda dengan responder. Jika kondisi memburuk, hubungi 112 sekarang.';
@@ -596,7 +596,7 @@ class TrackingController extends Controller
             return 'Buka chat dan kirim pesan sesingkat mungkin: lokasi detail, kondisi Anda, atau bantuan yang dibutuhkan.';
         }
 
-        return 'Tetap di tempat aman jika memungkinkan. Jangan menunggu Safora jika nyawa terancam, hubungi 112 segera.';
+        return 'Tetap di tempat aman jika memungkinkan. Jangan menunggu mitra jika nyawa terancam, hubungi 112 segera.';
     }
 
     private function routingDisplayStatus($routing): string
@@ -619,7 +619,7 @@ class TrackingController extends Controller
             'legal' => 'Bantuan Hukum',
             'counselor' => 'Psikososial',
             'pemadam' => 'Pemadam / Rescue',
-            default => 'Partner Krisis',
+            default => 'Mitra Krisis',
         };
     }
 
@@ -686,21 +686,21 @@ class TrackingController extends Controller
         ]);
 
         $role = 'Saksi';
-        $writerName = 'anonymous';
+        $writerName = 'Anonim';
 
         if (auth()->check() && auth()->user()->role === 'partner') {
-            $role = 'Partner';
+            $role = 'Mitra';
             $partner = \App\Models\Partner::find(auth()->user()->partner_id);
             $writerName = $partner ? $partner->partner_name : auth()->user()->name;
         } elseif ($isCreator) {
             $role = 'Korban';
-            $writerName = auth()->check() ? auth()->user()->name : 'anonymous';
+            $writerName = auth()->check() ? auth()->user()->name : 'Korban (anonim)';
         } elseif ($isTrustedContact) {
             $role = 'Kontak Terpercaya';
             $writerName = auth()->user()->name;
         } else {
             $role = 'Saksi';
-            $writerName = auth()->check() ? auth()->user()->name : 'anonymous';
+            $writerName = auth()->check() ? auth()->user()->name : 'Saksi (anonim)';
         }
 
         $chronology = \App\Models\ReportChronology::create([

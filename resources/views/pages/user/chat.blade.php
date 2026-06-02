@@ -47,10 +47,16 @@
                             }
                             $threadName = $viewerType === 'partner'
                                 ? ($t->user?->name ?? 'Pelapor')
-                                : ($t->partner?->partner_name ?? 'Partner');
+                                : ($t->partner?->partner_name ?? 'Mitra');
                             $threadType = $viewerType === 'partner'
                                 ? 'Pelapor'
-                                : ($t->partner?->partner_type ?? '');
+                                : match($t->partner?->partner_type ?? '') {
+                                    'ambulance' => 'Medis Darurat',
+                                    'legal' => 'Bantuan Hukum',
+                                    'counselor' => 'Psikososial',
+                                    'pemadam' => 'Pemadam / Rescue',
+                                    default => $t->partner?->partner_type ?? ''
+                                };
                         @endphp
                         <a href="{{ $threadHref }}"
                            data-chat-link
@@ -84,7 +90,7 @@
                         <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>
                     </div>
                     <p class="text-gray-400 text-sm font-medium">Belum ada chat yang terbuka</p>
-                    <p class="text-gray-300 text-xs mt-1">Pilih pricelist partner dan selesaikan pembayaran dulu.</p>
+                    <p class="text-gray-300 text-xs mt-1">Pilih layanan mitra dan selesaikan pembayaran dulu.</p>
                 </div>
             @endif
         </aside>
@@ -102,8 +108,22 @@
                         </div>
 
                         <div class="flex-1 min-w-0">
-                            <p id="partner-name" class="font-bold text-gray-900 text-sm truncate">{{ $viewerType === 'partner' ? (($reportContext?->anonymous ?? false) ? 'Anonim' : ($reportContext?->user?->name ?? 'Pelapor')) : ($partner->partner_name ?? 'Pilih partner') }}</p>
-                            <p id="partner-type" class="text-xs text-gray-400">{{ $viewerType === 'partner' ? 'Pelapor laporan' : ($partner->partner_type ?? '') }}</p>
+                            <p id="partner-name" class="font-bold text-gray-900 text-sm truncate">{{ $viewerType === 'partner' ? (($reportContext?->anonymous ?? false) ? 'Anonim' : ($reportContext?->user?->name ?? 'Pelapor')) : ($partner->partner_name ?? 'Pilih mitra') }}</p>
+                            @php
+                                $headerType = '';
+                                if ($viewerType === 'partner') {
+                                    $headerType = 'Pelapor laporan';
+                                } else {
+                                    $headerType = match($partner->partner_type ?? '') {
+                                        'ambulance' => 'Medis Darurat',
+                                        'legal' => 'Bantuan Hukum',
+                                        'counselor' => 'Psikososial',
+                                        'pemadam' => 'Pemadam / Rescue',
+                                        default => $partner->partner_type ?? ''
+                                    };
+                                }
+                            @endphp
+                            <p id="partner-type" class="text-xs text-gray-400">{{ $headerType }}</p>
                         </div>
                     </div>
 
@@ -241,7 +261,7 @@
     }
 
     function setPartnerHeader(link) {
-        partnerName.textContent = link.dataset.partnerName || 'Partner';
+        partnerName.textContent = link.dataset.partnerName || 'Mitra';
         partnerType.textContent = link.dataset.partnerType || '';
 
         if (link.dataset.partnerImage) {

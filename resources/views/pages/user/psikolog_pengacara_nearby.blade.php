@@ -60,9 +60,18 @@
                 const legal = (json.legal || []).slice(0,5);
                 const counselor = (json.counselor || []).slice(0,5);
 
+                const getMitraTypeLabel = (type) => {
+                    return {
+                        ambulance: 'Medis Darurat',
+                        legal: 'Bantuan Hukum',
+                        counselor: 'Psikososial',
+                        pemadam: 'Pemadam / Rescue'
+                    }[type] || type;
+                };
+
                 const render = (items) => {
                     if(items.length === 0){
-                        return '<div class="text-sm text-gray-400">Belum ada partner terdekat.</div>';
+                        return '<div class="text-sm text-gray-400">Belum ada mitra terdekat.</div>';
                     }
 
                     return items.map((x,i)=>{
@@ -75,7 +84,7 @@
                                 <div class="flex items-center justify-between gap-3">
                                     <div class="min-w-0">
                                         <p class="font-bold text-gray-900 text-sm truncate">${p.partner_name}</p>
-                                        <p class="text-xs text-gray-500 mt-1">${p.partner_type} • ${km.toFixed(2)} km</p>
+                                        <p class="text-xs text-gray-500 mt-1">${getMitraTypeLabel(p.partner_type)} • ${km.toFixed(2)} km</p>
                                     </div>
                                     <span class="text-xs font-semibold px-2 py-1 rounded-full bg-red-50 text-red-700 shrink-0">${no}</span>
                                 </div>

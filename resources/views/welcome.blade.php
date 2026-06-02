@@ -398,7 +398,7 @@ async function submitEmergency() {
     if (isSubmitting) return;
     isSubmitting = true;
 
-    document.getElementById('modal-status').textContent = 'Mengirim laporan ke partner terdekat...';
+    document.getElementById('modal-status').textContent = 'Mengirim laporan ke mitra terdekat...';
 
     await Promise.race([
         locationPromise,
