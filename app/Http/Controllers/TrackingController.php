@@ -85,9 +85,14 @@ class TrackingController extends Controller
     {
         $report = Report::findOrFail($id);
 
-        // Allow update if auth user is the creator or session has the report id
-        $isCreator = (auth()->check() && auth()->id() === $report->user_id) 
-            || in_array($report->id, $request->session()->get('my_reports', []));
+        $user = auth()->user();
+        $isPartner = $user && $user->role === 'partner';
+
+        // Allow update if auth user is the creator or session has the report id (and is not a partner responder)
+        $isCreator = !$isPartner && (
+            (auth()->check() && auth()->id() === $report->user_id) 
+            || in_array($report->id, $request->session()->get('my_reports', []))
+        );
 
         if (!$isCreator) {
             return response()->json(['error' => 'Unauthorized'], 403);

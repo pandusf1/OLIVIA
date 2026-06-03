@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safora — Dashboard</title>
+    <title>Dashboard</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -49,13 +49,13 @@
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 fade-in">
             @foreach([
-                [route('trusted-contact.index'), '👤', 'Kontak Darurat', 'Orang terpercaya', 'bg-blue-50'],
-                [route('report.create'),         '🛡️', 'Buat Laporan',    'Laporan kejadian masa lalu', 'bg-green-50'],
-                ['/evidence',                   '🗂️', 'Galeri Bukti',  'Aman tersimpan', 'bg-purple-50'],
-                [route('chat.threads'),         '💬', 'Chat', 'Riwayat chat', 'bg-orange-50'],
-            ] as [$url, $icon, $title, $sub, $bg])
+                [route('trusted-contact.index'), '👤', 'Kontak Darurat', 'Orang terpercaya'],
+                [route('report.create'),         '🛡️', 'Buat Laporan',    'Laporan kejadian masa lalu'],
+                ['/evidence',                   '🗂️', 'Galeri Bukti',  'Aman tersimpan'],
+                [route('chat.threads'),         '💬', 'Chat', 'Riwayat chat'],
+            ] as [$url, $icon, $title, $sub])
             <a href="{{ $url }}" class="bg-white border border-gray-100 hover:border-gray-200 rounded-2xl p-4 flex flex-col items-center text-center transition group shadow-sm active:scale-95">
-                <div class="w-12 h-12 {{ $bg }} rounded-full flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition-transform">
+                <div class="w-13 h-13 rounded-full flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition-transform">
                     {{ $icon }}
                 </div>
                 <p class="font-bold text-gray-900 text-sm mb-0.5">{{ $title }}</p>
@@ -93,7 +93,7 @@
                     <div id="nearby-map" class="relative overflow-hidden rounded-xl bg-[#faf9f7] border border-gray-100">
                         <div class="p-3 sm:p-4 relative">
                             {{-- Map canvas --}}
-                            <div id="leaflet-map" class="relative w-full h-48 sm:h-64 rounded-xl border border-gray-100 bg-gray-100 overflow-hidden" style="z-index: 1;" aria-label="Peta mitra terdekat">
+                            <div id="leaflet-map" class="relative w-full h-48 sm:h-64 rounded-xl border border-gray-100 bg-gray-100 overflow-hidden" style="z-index: 1;" aria-label="Peta mitra">
                             </div>
 
                             <div class="flex items-center gap-2 mb-3 mt-3">
@@ -103,7 +103,7 @@
                                     <option value="legal">LBH / Pengacara</option>
                                     <option value="counselor">Psikolog</option>
                                 </select>
-                                <input id="map-search-query" type="text" placeholder="Cari (mis. Semarang)" class="w-1/2 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
+                                <input id="map-search-query" type="text" placeholder="Cari (cth. lbh semarang)" class="w-1/2 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
                             </div>
 
                             <div id="nearby-partners" class="space-y-2">
@@ -231,12 +231,7 @@
         <div class="bg-white rounded-2xl w-full max-w-lg p-5 shadow-2xl max-h-[85vh] overflow-hidden flex flex-col">
             <div class="flex items-start justify-between gap-3 mb-3">
                 <div class="min-w-0">
-                    <div class="flex items-center gap-2 mb-1">
-                        <div class="w-2 h-2 bg-red-700 rounded-full animate-pulse"></div>
-                        <p class="text-red-700 text-xs font-semibold uppercase tracking-widest">Semua Mitra</p>
-                    </div>
-                    <h2 class="font-black text-xl text-gray-900 mb-1 font-unbounded leading-tight">Hasil sesuai filter</h2>
-                    <p id="all-partners-subtitle" class="text-gray-400 text-xs">Menampilkan semua mitra yang cocok.</p>
+                    <h2 class="font-black text-xl text-gray-900 mb-1 font-unbounded leading-tight">Mitra</h2>
                 </div>
                 <button type="button" onclick="closeAllPartnersModal()" class="text-gray-400 hover:text-gray-600 transition p-2 rounded-full">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -250,7 +245,7 @@
                     <option value="legal">LBH / Pengacara</option>
                     <option value="counselor">Psikolog</option>
                 </select>
-                <input id="all-partners-query" type="text" placeholder="Cari (mis. Semarang)" class="w-1/2 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
+                <input id="all-partners-query" type="text" placeholder="Cari (cth. lbh semarang)" class="w-1/2 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
             </div>
 
             <div id="all-partners-scroll-container" class="flex-1 overflow-auto" onscroll="handleAllPartnersScroll()">
@@ -271,10 +266,6 @@
             {{-- Header --}}
             <div class="flex items-start justify-between gap-3 p-5 border-b border-gray-100">
                 <div class="min-w-0">
-                    <div class="flex items-center gap-2 mb-1">
-                        <div class="w-2 h-2 bg-red-700 rounded-full animate-pulse"></div>
-                        <p class="text-red-700 text-xs font-semibold uppercase tracking-widest">Semua Laporan</p>
-                    </div>
                     <h2 class="font-black text-xl text-gray-900 font-unbounded leading-tight">Riwayat Lengkap</h2>
                     <p id="all-reports-subtitle" class="text-gray-400 text-xs mt-0.5">Menampilkan semua laporan kamu.</p>
                 </div>
@@ -503,8 +494,20 @@
         const m = document.getElementById('all-partners-modal');
         if(!m) return;
         document.body.style.overflow = 'hidden';
-        m.classList.add('flex');
         m.classList.remove('hidden');
+        m.classList.add('flex');
+
+        const mapType = document.getElementById('map-search-type')?.value || '';
+        const mapQuery = document.getElementById('map-search-query')?.value || '';
+        
+        const allType = document.getElementById('all-partners-type');
+        const allQuery = document.getElementById('all-partners-query');
+        if(allType) allType.value = mapType;
+        if(allQuery) allQuery.value = mapQuery;
+
+        const items = (window.__lastNearbyItems || []).slice(0, 20);
+        renderAllPartners(items);
+        fetchAllPartners(1, false);
     }
 
     function closeAllPartnersModal(){
@@ -731,13 +734,13 @@
             el.innerHTML = previewTop.map((x,i)=>{
                 const p = x.partner;
                 return `
-                    <a href="/data-partner/${p.id}" class="block bg-white border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition">
+                    <a href="/data-partner/${p.id}" class="block bg-white border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition group">
                         <div class="flex items-center justify-between gap-3">
-                            <div class="min-w-0">
+                            <div class="min-w-0 flex-1">
                                 <p class="font-bold text-gray-900 text-sm truncate">${p.partner_name}</p>
                                 <p class="text-xs text-gray-500 mt-1">${getMitraTypeLabel(p.partner_type)} • ${Number(x.distance_km).toFixed(2)} km</p>
                             </div>
-                            <span class="text-xs font-semibold px-2 py-1 rounded-full bg-red-50 text-red-700 shrink-0">${i+1}</span>
+                            <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </div>
                     </a>
                 `;
@@ -818,22 +821,17 @@
             return;
         }
 
-        if(subtitleEl && !append){
-            subtitleEl.textContent = `Menampilkan mitra terdekat. Scroll ke bawah untuk memuat lebih banyak.`;
-        }
-
-        const currentCount = append ? listEl.querySelectorAll('a').length : 0;
-
         const html = items.map((x, i)=>{
             const p = x.partner;
             const km = Number(x.distance_km) || 0;
             return `
-                <a href="/data-partner/${p.id}" class="block bg-white border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition">
+                <a href="/data-partner/${p.id}" class="block bg-white border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition group">
                     <div class="flex items-center justify-between gap-3">
-                        <div class="min-w-0">
+                        <div class="min-w-0 flex-1">
                             <p class="font-bold text-gray-900 text-sm truncate">${p.partner_name}</p>
                             <p class="text-xs text-gray-500 mt-1">${getMitraTypeLabel(p.partner_type)} • ${km.toFixed(2)} km</p>
                         </div>
+                        <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </div>
                 </a>
             `;
@@ -872,6 +870,7 @@
             if(t) params.set('type', t);
             if(q) params.set('query', q);
             params.set('page', page);
+            params.set('limit', 20);
 
             const res = await fetch(`/map-search?${params.toString()}`, { headers: { 'Accept':'application/json' } });
             if(!res.ok) throw new Error('HTTP '+res.status);
@@ -895,16 +894,8 @@
     }
 
     // open modal sync input ke filter map yang aktif
-    btnViewAll && btnViewAll.addEventListener('click', async ()=>{
-        const t = mapTypeEl?.value || '';
-        const q = mapQueryEl?.value || '';
-
-        if(allTypeEl) allTypeEl.value = t;
-        if(allQueryEl) allQueryEl.value = q;
-
+    btnViewAll && btnViewAll.addEventListener('click', () => {
         openAllPartnersModal();
-
-        fetchAllPartners(1, false);
     });
 
     // modal search realtime (gunakan API yang sama)

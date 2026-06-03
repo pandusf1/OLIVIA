@@ -103,10 +103,12 @@
 
             @php
                 $user = auth()->user();
-                $isReporter = (auth()->check() && auth()->id() === $report->user_id)
-                           || in_array($report->id, session('my_reports', []));
-                
                 $isPartner = $user && $user->role === 'partner';
+                $isReporter = !$isPartner && (
+                    (auth()->check() && auth()->id() === $report->user_id)
+                    || in_array($report->id, session('my_reports', []))
+                );
+                
                 $isOtherPartnerHandling = $isPartner && $report->handler_partner_id !== null && $report->handler_partner_id !== $user->partner_id;
                 
                 $isRoutingExist = $isPartner && $report->partnerRoutings()

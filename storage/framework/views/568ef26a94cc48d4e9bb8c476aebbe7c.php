@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safora — Dashboard</title>
+    <title>Dashboard</title>
     <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -49,13 +49,13 @@
 
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 fade-in">
             <?php $__currentLoopData = [
-                [route('trusted-contact.index'), '👤', 'Kontak Darurat', 'Orang terpercaya', 'bg-blue-50'],
-                [route('report.create'),         '🛡️', 'Buat Laporan',    'Laporan kejadian masa lalu', 'bg-green-50'],
-                ['/evidence',                   '🗂️', 'Galeri Bukti',  'Aman tersimpan', 'bg-purple-50'],
-                [route('chat.threads'),         '💬', 'Chat', 'Riwayat chat', 'bg-orange-50'],
-            ]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as [$url, $icon, $title, $sub, $bg]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                [route('trusted-contact.index'), '👤', 'Kontak Darurat', 'Orang terpercaya'],
+                [route('report.create'),         '🛡️', 'Buat Laporan',    'Laporan kejadian masa lalu'],
+                ['/evidence',                   '🗂️', 'Galeri Bukti',  'Aman tersimpan'],
+                [route('chat.threads'),         '💬', 'Chat', 'Riwayat chat'],
+            ]; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as [$url, $icon, $title, $sub]): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
             <a href="<?php echo e($url); ?>" class="bg-white border border-gray-100 hover:border-gray-200 rounded-2xl p-4 flex flex-col items-center text-center transition group shadow-sm active:scale-95">
-                <div class="w-12 h-12 <?php echo e($bg); ?> rounded-full flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition-transform">
+                <div class="w-13 h-13 rounded-full flex items-center justify-center text-xl mb-3 group-hover:scale-110 transition-transform">
                     <?php echo e($icon); ?>
 
                 </div>
@@ -74,11 +74,11 @@
                 <div class="bg-white border border-gray-100 rounded-2xl p-4 sm:p-6 shadow-sm">
                     <div class="flex items-center justify-between mb-4">
                         <div>
-                            <h2 class="font-semibold text-gray-900">Partner Terdekat</h2>
+                            <h2 class="font-semibold text-gray-900">Mitra Terdekat</h2>
                             <p class="text-gray-400 text-xs mt-0.5">Urut berdasarkan jarak dari lokasi kamu.</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button type="button" id="btn-view-all-partners" aria-label="Lihat semua partner" title="Lihat semua partner"
+                            <button type="button" id="btn-view-all-partners" aria-label="Lihat semua mitra" title="Lihat semua mitra"
                                 class="hidden sm:inline-flex text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full transition border border-gray-150">
                                 Lihat Semua
                             </button>
@@ -94,7 +94,7 @@
                     <div id="nearby-map" class="relative overflow-hidden rounded-xl bg-[#faf9f7] border border-gray-100">
                         <div class="p-3 sm:p-4 relative">
                             
-                            <div id="leaflet-map" class="relative w-full h-48 sm:h-64 rounded-xl border border-gray-100 bg-gray-100 overflow-hidden" style="z-index: 1;" aria-label="Peta partner terdekat">
+                            <div id="leaflet-map" class="relative w-full h-48 sm:h-64 rounded-xl border border-gray-100 bg-gray-100 overflow-hidden" style="z-index: 1;" aria-label="Peta mitra">
                             </div>
 
                             <div class="flex items-center gap-2 mb-3 mt-3">
@@ -104,15 +104,15 @@
                                     <option value="legal">LBH / Pengacara</option>
                                     <option value="counselor">Psikolog</option>
                                 </select>
-                                <input id="map-search-query" type="text" placeholder="Cari (mis. Semarang)" class="w-1/2 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
+                                <input id="map-search-query" type="text" placeholder="Cari (cth. lbh semarang)" class="w-1/2 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
                             </div>
 
                             <div id="nearby-partners" class="space-y-2">
-                                <div class="text-sm text-gray-400">Memuat partner terdekat...</div>
+                                <div class="text-sm text-gray-400">Memuat mitra terdekat...</div>
                             </div>
 
                             <button type="button" onclick="openAllPartnersModal()" class="w-full mt-3 sm:hidden text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 py-2.5 rounded-xl transition border border-gray-150 text-center block">
-                                Lihat Semua Partner
+                                Lihat Semua Mitra
                             </button>
 
                         </div>
@@ -193,7 +193,7 @@
                                 <?php if(in_array($report->status, ['Submitted', 'Routed', 'Viewed'])): ?>
                                     <div class="items-center gap-1.5 report-action-buttons hidden sm:flex" data-time="<?php echo e($report->created_at->timestamp); ?>">
                                         <button type="button" data-id="<?php echo e($report->id); ?>" data-category="<?php echo e($report->category); ?>" data-desc="<?php echo e($report->description); ?>" onclick="event.preventDefault(); event.stopPropagation(); openEditReportModal(this)" class="text-xs bg-white hover:bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-200 transition font-medium">Edit</button>
-                                        <form action="<?php echo e(route('report.destroy', $report->id)); ?>" method="POST" onsubmit="return confirm('Hapus laporan ini?');" onclick="event.stopPropagation();" class="inline">
+                                        <form action="<?php echo e(route('report.destroy', $report->id)); ?>" method="POST" data-confirm="Apakah Anda yakin ingin menghapus laporan ini? Tindakan ini tidak dapat dibatalkan." onclick="event.stopPropagation();" class="inline">
                                             <?php echo csrf_field(); ?>
                                             <?php echo method_field('DELETE'); ?>
                                             <button type="submit" class="text-xs bg-white hover:bg-red-50 text-red-600 px-2.5 py-1.5 rounded-lg border border-gray-200 transition font-medium">Hapus</button>
@@ -202,7 +202,7 @@
                                 <?php endif; ?>
                                 <span class="text-xs font-semibold px-2.5 py-1 rounded-full <?php echo e($s['bg']); ?> <?php echo e($s['text']); ?> flex items-center gap-1.5 whitespace-nowrap">
                                     <span class="w-1.5 h-1.5 rounded-full <?php echo e($s['dot']); ?>"></span>
-                                    <?php echo e($report->status); ?>
+                                    <?php echo e($report->status_label_indonesian); ?>
 
                                 </span>
                                 <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
@@ -235,12 +235,7 @@
         <div class="bg-white rounded-2xl w-full max-w-lg p-5 shadow-2xl max-h-[85vh] overflow-hidden flex flex-col">
             <div class="flex items-start justify-between gap-3 mb-3">
                 <div class="min-w-0">
-                    <div class="flex items-center gap-2 mb-1">
-                        <div class="w-2 h-2 bg-red-700 rounded-full animate-pulse"></div>
-                        <p class="text-red-700 text-xs font-semibold uppercase tracking-widest">Semua Partner</p>
-                    </div>
-                    <h2 class="font-black text-xl text-gray-900 mb-1 font-unbounded leading-tight">Hasil sesuai filter</h2>
-                    <p id="all-partners-subtitle" class="text-gray-400 text-xs">Menampilkan semua partner yang cocok.</p>
+                    <h2 class="font-black text-xl text-gray-900 mb-1 font-unbounded leading-tight">Mitra</h2>
                 </div>
                 <button type="button" onclick="closeAllPartnersModal()" class="text-gray-400 hover:text-gray-600 transition p-2 rounded-full">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -254,12 +249,12 @@
                     <option value="legal">LBH / Pengacara</option>
                     <option value="counselor">Psikolog</option>
                 </select>
-                <input id="all-partners-query" type="text" placeholder="Cari (mis. Semarang)" class="w-1/2 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
+                <input id="all-partners-query" type="text" placeholder="Cari (cth. lbh semarang)" class="w-1/2 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
             </div>
 
             <div id="all-partners-scroll-container" class="flex-1 overflow-auto" onscroll="handleAllPartnersScroll()">
                 <div id="all-partners-list" class="space-y-2">
-                    <div class="text-sm text-gray-400">Memuat partner...</div>
+                    <div class="text-sm text-gray-400">Memuat mitra...</div>
                 </div>
             </div>
 
@@ -275,10 +270,6 @@
             
             <div class="flex items-start justify-between gap-3 p-5 border-b border-gray-100">
                 <div class="min-w-0">
-                    <div class="flex items-center gap-2 mb-1">
-                        <div class="w-2 h-2 bg-red-700 rounded-full animate-pulse"></div>
-                        <p class="text-red-700 text-xs font-semibold uppercase tracking-widest">Semua Laporan</p>
-                    </div>
                     <h2 class="font-black text-xl text-gray-900 font-unbounded leading-tight">Riwayat Lengkap</h2>
                     <p id="all-reports-subtitle" class="text-gray-400 text-xs mt-0.5">Menampilkan semua laporan kamu.</p>
                 </div>
@@ -439,6 +430,26 @@
     </div>
 
     <script>
+    // Indonesian UI Mappers
+    function getMitraTypeLabel(type) {
+        return {
+            ambulance: 'Medis Darurat',
+            legal: 'Bantuan Hukum',
+            counselor: 'Psikososial',
+            pemadam: 'Pemadam / Rescue'
+        }[type] || type;
+    }
+
+    const _arStatusNames = {
+        'Submitted': 'Diajukan',
+        'Routed': 'Diteruskan',
+        'Viewed': 'Ditinjau',
+        'Assigned': 'Diterima',
+        'In Progress': 'Diproses',
+        'Resolved': 'Selesai',
+        'Rejected': 'Ditolak'
+    };
+
     let cdInterval=null, lat=null, lng=null;
     let map = null;
     let userMarker = null;
@@ -488,8 +499,20 @@
         const m = document.getElementById('all-partners-modal');
         if(!m) return;
         document.body.style.overflow = 'hidden';
-        m.classList.add('flex');
         m.classList.remove('hidden');
+        m.classList.add('flex');
+
+        const mapType = document.getElementById('map-search-type')?.value || '';
+        const mapQuery = document.getElementById('map-search-query')?.value || '';
+        
+        const allType = document.getElementById('all-partners-type');
+        const allQuery = document.getElementById('all-partners-query');
+        if(allType) allType.value = mapType;
+        if(allQuery) allQuery.value = mapQuery;
+
+        const items = (window.__lastNearbyItems || []).slice(0, 20);
+        renderAllPartners(items);
+        fetchAllPartners(1, false);
     }
 
     function closeAllPartnersModal(){
@@ -618,7 +641,7 @@
                 const popupHtml = `
                     <div class="text-xs p-1">
                         <div class="font-bold">${String(p.partner_name).replace(/</g,'&lt;')}</div>
-                        <div class="text-gray-500">${p.partner_type} • ${km.toFixed(2)} km</div>
+                        <div class="text-gray-500">${getMitraTypeLabel(p.partner_type)} • ${km.toFixed(2)} km</div>
                         <a href="/data-partner/${p.id}" class="text-blue-600 hover:underline mt-1 block">Lihat Detail &rarr;</a>
                     </div>
                 `;
@@ -674,7 +697,7 @@
         if(!el) return;
 
         try{
-            el.innerHTML = '<div class="text-sm text-gray-400">Memuat partner...</div>';
+            el.innerHTML = '<div class="text-sm text-gray-400">Memuat mitra...</div>';
 
             const params = new URLSearchParams();
             if(type) params.set('type', type);
@@ -688,7 +711,7 @@
             const emergencies = json.emergencies || [];
 
             if(items.length===0){
-                el.innerHTML = '<div class="text-sm text-gray-400">Belum ada partner yang cocok.</div>';
+                el.innerHTML = '<div class="text-sm text-gray-400">Belum ada mitra yang cocok.</div>';
                 if (map) {
                     partnerMarkers.forEach(m => map.removeLayer(m));
                     partnerMarkers = [];
@@ -716,13 +739,13 @@
             el.innerHTML = previewTop.map((x,i)=>{
                 const p = x.partner;
                 return `
-                    <a href="/data-partner/${p.id}" class="block bg-white border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition">
+                    <a href="/data-partner/${p.id}" class="block bg-white border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition group">
                         <div class="flex items-center justify-between gap-3">
-                            <div class="min-w-0">
+                            <div class="min-w-0 flex-1">
                                 <p class="font-bold text-gray-900 text-sm truncate">${p.partner_name}</p>
-                                <p class="text-xs text-gray-500 mt-1">${p.partner_type} • ${Number(x.distance_km).toFixed(2)} km</p>
+                                <p class="text-xs text-gray-500 mt-1">${getMitraTypeLabel(p.partner_type)} • ${Number(x.distance_km).toFixed(2)} km</p>
                             </div>
-                            <span class="text-xs font-semibold px-2 py-1 rounded-full bg-red-50 text-red-700 shrink-0">${i+1}</span>
+                            <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </div>
                     </a>
                 `;
@@ -798,27 +821,22 @@
         if(!listEl) return;
 
         if(!append && (!items || items.length === 0)){
-            listEl.innerHTML = '<div class="text-sm text-gray-400">Belum ada partner yang cocok.</div>';
+            listEl.innerHTML = '<div class="text-sm text-gray-400">Belum ada mitra yang cocok.</div>';
             if(subtitleEl) subtitleEl.textContent = '0 hasil untuk filter & pencarian saat ini.';
             return;
         }
-
-        if(subtitleEl && !append){
-            subtitleEl.textContent = `Menampilkan partner terdekat. Scroll ke bawah untuk memuat lebih banyak.`;
-        }
-
-        const currentCount = append ? listEl.querySelectorAll('a').length : 0;
 
         const html = items.map((x, i)=>{
             const p = x.partner;
             const km = Number(x.distance_km) || 0;
             return `
-                <a href="/data-partner/${p.id}" class="block bg-white border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition">
+                <a href="/data-partner/${p.id}" class="block bg-white border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition group">
                     <div class="flex items-center justify-between gap-3">
-                        <div class="min-w-0">
+                        <div class="min-w-0 flex-1">
                             <p class="font-bold text-gray-900 text-sm truncate">${p.partner_name}</p>
-                            <p class="text-xs text-gray-500 mt-1">${p.partner_type} • ${km.toFixed(2)} km</p>
+                            <p class="text-xs text-gray-500 mt-1">${getMitraTypeLabel(p.partner_type)} • ${km.toFixed(2)} km</p>
                         </div>
+                        <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </div>
                 </a>
             `;
@@ -841,7 +859,7 @@
         const q = allQueryEl?.value || '';
 
         if(page === 1) {
-            if(listEl) listEl.innerHTML = '<div class="text-sm text-gray-400">Memuat partner...</div>';
+            if(listEl) listEl.innerHTML = '<div class="text-sm text-gray-400">Memuat mitra...</div>';
         } else {
             if(listEl) {
                 const loadingEl = document.createElement('div');
@@ -857,6 +875,7 @@
             if(t) params.set('type', t);
             if(q) params.set('query', q);
             params.set('page', page);
+            params.set('limit', 20);
 
             const res = await fetch(`/map-search?${params.toString()}`, { headers: { 'Accept':'application/json' } });
             if(!res.ok) throw new Error('HTTP '+res.status);
@@ -880,16 +899,8 @@
     }
 
     // open modal sync input ke filter map yang aktif
-    btnViewAll && btnViewAll.addEventListener('click', async ()=>{
-        const t = mapTypeEl?.value || '';
-        const q = mapQueryEl?.value || '';
-
-        if(allTypeEl) allTypeEl.value = t;
-        if(allQueryEl) allQueryEl.value = q;
-
+    btnViewAll && btnViewAll.addEventListener('click', () => {
         openAllPartnersModal();
-
-        fetchAllPartners(1, false);
     });
 
     // modal search realtime (gunakan API yang sama)
@@ -1306,7 +1317,7 @@
                         </div>
                         <div class="flex items-center gap-2 flex-shrink-0">
                             <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${s.bg} ${s.text} flex items-center gap-1.5 whitespace-nowrap">
-                                <span class="w-1.5 h-1.5 rounded-full ${s.dot}"></span>${r.status}
+                                <span class="w-1.5 h-1.5 rounded-full ${s.dot}"></span>${_arStatusNames[r.status] || r.status}
                             </span>
                             <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </div>
