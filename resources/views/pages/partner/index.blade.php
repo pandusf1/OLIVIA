@@ -36,7 +36,7 @@
 @endphp
 @include('partials.nav-auth')
 
-<main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+<main class="max-w-6xl mx-auto px-6 py-10 fade-in">
 
     <section class="mb-8" id="pending-reports-container">
         <div class="mb-4 flex items-center justify-between">
