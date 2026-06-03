@@ -169,7 +169,7 @@ Route::middleware(['auth', 'phone.required'])->group(function () {
     Route::get('/report/create', [\App\Http\Controllers\PastReportController::class, 'create'])->name('report.create');
     Route::post('/report', [\App\Http\Controllers\PastReportController::class, 'store'])->name('report.store');
     Route::post('/report/evidence/upload', [\App\Http\Controllers\PastReportController::class, 'uploadEvidenceTemp'])->name('report.evidence.upload');
-    Route::delete('/report/evidence/delete', [\App\Http\Controllers\PastReportController::class, 'deleteEvidenceTemp'])->name('report.evidence.delete');
+    Route::match(['post', 'delete'], '/report/evidence/delete', [\App\Http\Controllers\PastReportController::class, 'deleteEvidenceTemp'])->name('report.evidence.delete');
     Route::get('/report/{id}/edit', [\App\Http\Controllers\ReportController::class, 'edit'])->name('report.edit');
     Route::patch('/report/{id}', [\App\Http\Controllers\ReportController::class, 'update'])->name('report.update');
     Route::delete('/report/{id}', [\App\Http\Controllers\ReportController::class, 'destroy'])->name('report.destroy');
