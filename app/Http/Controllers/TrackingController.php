@@ -12,6 +12,23 @@ class TrackingController extends Controller
 {
     public function resolveReport($id, array $relations = [])
     {
+        // Auto-sync cookie 'safora_my_reports' to session to avoid client-side reload loops
+        try {
+            $sessionReports = session()->get('my_reports', []);
+            $cookieReports = request()->hasCookie('safora_my_reports') 
+                ? json_decode(request()->cookie('safora_my_reports'), true) ?: []
+                : [];
+            
+            if (!empty($cookieReports)) {
+                $newReports = array_unique(array_merge($sessionReports, $cookieReports));
+                if (count($newReports) !== count($sessionReports)) {
+                    session()->put('my_reports', $newReports);
+                }
+            }
+        } catch (\Exception $e) {
+            // ignore session issues
+        }
+
         $id = trim($id);
         $id = ltrim($id, '#');
         $id = trim($id);
@@ -76,6 +93,7 @@ class TrackingController extends Controller
             'handlerUser',
             'partnerRoutings.partner',
             'timelineEvents',
+            'chronologies',
         ]);
 
         return response()->json($this->buildLivePayload($report));
@@ -529,7 +547,7 @@ class TrackingController extends Controller
             'hotlines' => $this->hotlines(),
             'retry_count' => $retryCount,
             'cooldown_seconds' => $cooldownSeconds,
-            'chronologies' => $report->chronologies()->orderBy('created_at', 'asc')->get()->map(function ($chrono) {
+            'chronologies' => $report->chronologies->sortBy('created_at')->values()->map(function ($chrono) {
                 return [
                     'id' => $chrono->id,
                     'role' => $chrono->role,
@@ -537,8 +555,8 @@ class TrackingController extends Controller
                     'description' => $chrono->description,
                     'created_at' => $chrono->created_at->format('d M Y, H:i'),
                 ];
-            }),
-            'evidences' => $report->evidences()->orderBy('uploaded_at', 'asc')->get()->map(function ($ev) {
+            })->all(),
+            'evidences' => $report->evidences->sortBy('uploaded_at')->values()->map(function ($ev) {
                 return [
                     'id' => $ev->id,
                     'file_url' => str_starts_with($ev->file_url, 'data:') ? $ev->file_url : url('/evidences/view/' . basename($ev->file_url)),
@@ -547,7 +565,7 @@ class TrackingController extends Controller
                     'uploaded_at' => $ev->uploaded_at ? ($ev->uploaded_at instanceof \Carbon\Carbon ? $ev->uploaded_at->format('d M Y, H:i') : \Carbon\Carbon::parse($ev->uploaded_at)->format('d M Y, H:i')) : null,
                     'uploader_role' => $ev->uploader_role ?? 'Saksi',
                 ];
-            }),
+            })->all(),
             'can_view_evidence' => (bool) ($report->show_evidence 
                 || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner')) 
                 || in_array($report->id, session()->get('my_reports', []))),

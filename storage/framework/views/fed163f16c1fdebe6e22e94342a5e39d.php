@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safora - Tracking Darurat</title>
+    <title>Tracking Laporan</title>
     <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
         <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
         * { font-family: 'Space Grotesk', sans-serif; }
         h1 { font-family: 'Space Grotesk', sans-serif !important; }
         .font-unbounded { font-family: 'Space Grotesk', sans-serif !important; }
     </style>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 </head>
 <body class="min-h-screen bg-gray-50 text-gray-950 antialiased">
 <?php
@@ -105,9 +105,14 @@
             <?php
                 $user = auth()->user();
                 $isPartner = $user && $user->role === 'partner';
+                $cookieReports = [];
+                if (request()->hasCookie('safora_my_reports')) {
+                    $cookieReports = json_decode(request()->cookie('safora_my_reports'), true) ?: [];
+                }
                 $isReporter = !$isPartner && (
                     (auth()->check() && auth()->id() === $report->user_id)
                     || in_array($report->id, session('my_reports', []))
+                    || in_array($report->id, $cookieReports)
                 );
                 
                 $isOtherPartnerHandling = $isPartner && $report->handler_partner_id !== null && $report->handler_partner_id !== $user->partner_id;
@@ -357,7 +362,8 @@
     // Sync session my_reports dengan localStorage agar ketahanan 100% terjamin (misal habis login/logout)
     let storedReports = JSON.parse(localStorage.getItem('safora_guest_reports') || '[]');
     if (storedReports.includes(reportId) && !isPartner) {
-        if (!isCreator) {
+        if (!isCreator && !sessionStorage.getItem('synced_' + reportId)) {
+            sessionStorage.setItem('synced_' + reportId, 'true');
             // Pelapor terdeteksi di browser ini tapi session kosong (misal habis logout)
             fetch('/tracking/active-check?ids=' + encodeURIComponent(storedReports.join(',')), {
                 method: 'GET',
@@ -368,7 +374,12 @@
             .then(res => {
                 if (res.ok) {
                     window.location.reload();
+                } else {
+                    sessionStorage.removeItem('synced_' + reportId);
                 }
+            })
+            .catch(() => {
+                sessionStorage.removeItem('synced_' + reportId);
             });
         }
     } else if (isCreator && !isLoggedIn && !isPartner) {
@@ -784,10 +795,12 @@
 
             if (response.ok) {
                 render(await response.json());
-                document.getElementById('live-dot').textContent = 'Live';
+                const liveDot = document.getElementById('live-dot');
+                if (liveDot) liveDot.textContent = 'Live';
             }
         } catch (error) {
-            document.getElementById('live-dot').textContent = 'Mencoba ulang';
+            const liveDot = document.getElementById('live-dot');
+            if (liveDot) liveDot.textContent = 'Mencoba ulang';
         }
     }
 
