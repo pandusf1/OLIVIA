@@ -11,12 +11,19 @@
         * { font-family: 'Space Grotesk', sans-serif; }
         h1 { font-family: 'Space Grotesk', sans-serif !important; }
         .font-unbounded { font-family: 'Space Grotesk', sans-serif !important; }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .animate-scale-in {
+            animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
     </style>
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
     <?php echo $__env->make('partials.nav-auth', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
-    <div class="max-w-5xl mx-auto px-6 py-10">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10">
 
 
 
@@ -41,9 +48,9 @@
                 </div>
 
 
-                <div class="min-w-0">
+                <div class="min-w-0 flex-1">
                     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">INFORMASI DATA MITRA</p>
-<p class="text-gray-900 font-bold text-xl truncate"><?php echo e($partner->partner_name); ?></p>
+                    <p class="text-gray-900 font-bold text-lg sm:text-xl md:text-2xl break-words leading-tight"><?php echo e($partner->partner_name); ?></p>
                     <?php
                         $typeLabel = match($partner->partner_type) {
                             'ambulance' => 'Medis Darurat',
@@ -59,7 +66,7 @@
         </div>
 
         
-        <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-4">
+        <div class="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 mb-4">
             <?php
                 $hasLatLng = filled($partner->latitude) && filled($partner->longitude);
             ?>
@@ -67,11 +74,11 @@
             <div>
                 <h2 class="font-semibold text-gray-900 mb-6">Map & Informasi Mitra</h2>
 
-                <div class="grid lg:grid-cols-12 gap-6 items-start">
+                <div class="grid md:grid-cols-12 gap-6 items-start">
                     
-                    <div class="lg:col-span-5">
+                    <div class="md:col-span-5 w-full">
 
-                        <div class="relative overflow-hidden rounded-xl bg-[#faf9f7] border border-gray-100 p-4">
+                        <div class="relative overflow-hidden rounded-xl bg-[#faf9f7] border border-gray-100 p-3 sm:p-4">
 
                             <div class="absolute inset-0 pointer-events-none" style="
                             background:
@@ -89,7 +96,7 @@
                                 <p class="text-xs font-semibold text-gray-600">Lokasi mitra</p>
                             </div>
 
-                            <div id="partner-location-map" class="relative w-full h-64 rounded-xl border border-gray-100 bg-white/40 overflow-hidden z-0">
+                            <div id="partner-location-map" class="relative w-full h-48 sm:h-56 md:h-64 rounded-xl border border-gray-100 bg-white/40 overflow-hidden z-0">
 
                                 <?php if($hasLatLng): ?>
                                     <div class="absolute left-3 bottom-3 text-[11px] text-gray-600 bg-white/90 border border-gray-100 rounded-lg px-3 py-2">
@@ -117,32 +124,32 @@
                 </div>
 
                 
-                <div class="lg:col-span-7">
-                    <div class="flex flex-col gap-4">
-                        <div>
+                <div class="md:col-span-7 w-full">
+                    <div class="flex flex-col divide-y divide-gray-100">
+                        <div class="py-3 first:pt-0 last:pb-0">
                             <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Email</p>
-                            <p class="text-gray-800 font-semibold mt-1"><?php echo e($partner->email ? $partner->email : '-'); ?></p>
+                            <p class="text-gray-800 font-semibold mt-1 break-all text-sm sm:text-base"><?php echo e($partner->email ? $partner->email : '-'); ?></p>
                         </div>
 
-                        <div>
+                        <div class="py-3 first:pt-0 last:pb-0">
                             <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Kontak</p>
-                            <p class="text-gray-800 font-semibold mt-1"><?php echo e($partner->phone ? $partner->phone : '-'); ?></p>
+                            <p class="text-gray-800 font-semibold mt-1 break-all text-sm sm:text-base"><?php echo e($partner->phone ? $partner->phone : '-'); ?></p>
                         </div>
 
-                        <div>
+                        <div class="py-3 first:pt-0 last:pb-0">
                             <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Kota</p>
-                            <p class="text-gray-800 font-semibold mt-1"><?php echo e($partner->city ? $partner->city : '-'); ?></p>
+                            <p class="text-gray-800 font-semibold mt-1 break-words text-sm sm:text-base"><?php echo e($partner->city ? $partner->city : '-'); ?></p>
                         </div>
 
-                        <div>
+                        <div class="py-3 first:pt-0 last:pb-0">
                             <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Alamat</p>
-                            <p class="text-gray-800 font-semibold mt-1"><?php echo e($partner->address ? $partner->address : '-'); ?></p>
+                            <p class="text-gray-800 font-semibold mt-1 break-words text-sm sm:text-base leading-relaxed whitespace-pre-line"><?php echo e($partner->address ? $partner->address : '-'); ?></p>
                         </div>
                     </div>
 
-                    <div class="mt-4 bg-[#faf9f7] border border-gray-100 rounded-xl p-4">
+                    <div class="mt-4 bg-[#faf9f7] border border-gray-100 rounded-xl p-3 sm:p-4">
                         <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Catatan</p>
-                        <p class="text-gray-500 text-sm mt-1">
+                        <p class="text-gray-500 text-xs sm:text-sm mt-1 leading-relaxed">
                             Jam kerja atau informasi lainnya.
                         </p>
                     </div>
@@ -161,14 +168,14 @@
                 </div>
             <?php else: ?>
         
-        <div class="bg-white border border-gray-200 rounded-2xl p-6">
-            <h2 class="font-semibold text-gray-900 mb-4">Daftar Pricelist</h2>
+        <div class="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6">
+            <h2 class="font-semibold text-gray-900 mb-4 text-base sm:text-lg">Daftar Pricelist</h2>
 
             
             <div id="priceListSelectedState" class="hidden">0</div>
 
                 <?php if($priceLists->count() === 0): ?>
-                    <div class="text-sm text-gray-500 bg-[#faf9f7] border border-gray-100 rounded-xl p-4">
+                    <div class="text-sm text-gray-500 bg-[#faf9f7] border border-gray-100 rounded-xl p-3 sm:p-4">
                         Belum ada daftar layanan untuk mitra ini.
                     </div>
                 <?php else: ?>
@@ -178,13 +185,13 @@
                             <div
                                 data-price-list-id="<?php echo e($pl->id); ?>"
                                 data-selected="0"
-                                class="price-list-card flex items-start justify-between gap-4 bg-[#faf9f7] border border-gray-100 rounded-xl p-4 cursor-pointer transition"
+                                class="price-list-card flex items-start justify-between gap-3 sm:gap-4 bg-[#faf9f7] border border-gray-100 rounded-xl p-3 sm:p-4 cursor-pointer transition hover:border-gray-300"
                             >
-                                <div>
-                                    <p class="font-semibold text-gray-900"><?php echo e($pl->service_name); ?></p>
+                                <div class="min-w-0 flex-1">
+                                    <p class="font-semibold text-gray-900 text-sm sm:text-base break-words leading-tight"><?php echo e($pl->service_name); ?></p>
                                 </div>
                                 <div class="text-right shrink-0">
-                                    <p class="font-black text-gray-900">Rp <?php echo e(number_format($pl->price, 0, ',', '.')); ?></p>
+                                    <p class="font-black text-gray-900 text-sm sm:text-base">Rp <?php echo e(number_format($pl->price, 0, ',', '.')); ?></p>
                                 </div>
                             </div>
                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
@@ -195,7 +202,7 @@
                         <button
                             id="selectedPriceListCta"
                             type="button"
-                            class="w-full bg-gray-900 hover:bg-black text-white font-bold py-2 rounded-2xl transition active:scale-[0.98] text-base"
+                            class="w-full bg-gray-900 hover:bg-black text-white font-bold py-3 px-4 rounded-xl sm:rounded-2xl transition active:scale-[0.98] text-sm sm:text-base shadow-sm"
                         >
                             Lanjut
                         </button>
@@ -206,14 +213,14 @@
         </div>
 
         
-        <div id="servicesModal" class="fixed inset-0 z-50 hidden">
+        <div id="servicesModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
             <div class="absolute inset-0 bg-black/40"></div>
-            <div class="relative max-w-md mx-auto mt-20 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden">
-                <div class="p-5 border-b border-gray-100">
+            <div class="relative w-full max-w-md bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden flex flex-col max-h-[85vh] animate-scale-in">
+                <div class="p-4 sm:p-5 border-b border-gray-100 flex-shrink-0">
                     <div class="flex items-start justify-between gap-3">
                         <div>
                             <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Layanan Terpilih</p>
-                            <h3 class="font-black text-lg text-gray-900">Ringkasan Pricelist</h3>
+                            <h3 class="font-black text-base sm:text-lg text-gray-900">Ringkasan Pricelist</h3>
                         </div>
                         <button
                             type="button"
@@ -226,37 +233,34 @@
                     </div>
                 </div>
 
-                <div class="p-5">
+                <div class="p-4 sm:p-5 overflow-y-auto flex-1">
                     <div id="selectedServicesList" class="space-y-3">
                         
                     </div>
 
-                    <div id="selectedServicesEmpty" class="hidden text-sm text-gray-500 bg-[#faf9f7] border border-gray-100 rounded-xl p-4 mt-1">
+                    <div id="selectedServicesEmpty" class="hidden text-sm text-gray-500 bg-[#faf9f7] border border-gray-100 rounded-xl p-3 sm:p-4 mt-1">
                         Tidak ada layanan dipilih.
                     </div>
                 </div>
 
-                <div class="p-5 border-t border-gray-100 flex gap-3">
+                <div class="p-4 sm:p-5 border-t border-gray-100 flex gap-3 flex-shrink-0">
                     <button
                         type="button"
                         id="modalBackBtn"
-                        class="flex-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-900 font-bold py-2 rounded-2xl transition"
+                        class="flex-1 bg-white hover:bg-gray-50 border border-gray-200 text-gray-900 font-bold py-2.5 rounded-xl sm:rounded-2xl transition text-sm sm:text-base"
                     >
                         Kembali
                     </button>
                     <button
                         type="button"
                         id="modalContinueBtn"
-                        class="flex-1 bg-gray-900 hover:bg-black text-white font-bold py-2 rounded-2xl transition active:scale-[0.98]"
+                        class="flex-1 bg-gray-900 hover:bg-black text-white font-bold py-2.5 rounded-xl sm:rounded-2xl transition active:scale-[0.98] text-sm sm:text-base shadow-sm"
                     >
                         Lanjut
                     </button>
                 </div>
             </div>
         </div>
-
-</body>
-</html>
 
 <script>
 <?php if($hasLatLng): ?>
@@ -350,19 +354,19 @@
 
         items.forEach((item) => {
             const row = document.createElement('div');
-            row.className = 'flex items-start justify-between gap-3 bg-[#faf9f7] border border-gray-100 rounded-xl p-4';
+            row.className = 'flex items-start justify-between gap-3 bg-[#faf9f7] border border-gray-100 rounded-xl p-3 sm:p-4';
 
             row.innerHTML = `
-                <div class="min-w-0">
-                    <p class="font-semibold text-gray-900 truncate">${escapeHtml(item.serviceName)}</p>
+                <div class="min-w-0 flex-1">
+                    <p class="font-semibold text-gray-900 text-sm sm:text-base break-words leading-tight">${escapeHtml(item.serviceName)}</p>
                     ${item.durationText ? `<p class="text-xs text-gray-500 mt-1">${escapeHtml(item.durationText)}</p>` : ''}
                     <p class="text-xs text-gray-400 mt-1">${escapeHtml(item.currencyText)}</p>
                 </div>
                 <div class="text-right shrink-0">
-                    <p class="font-black text-gray-900 font-semibold">${escapeHtml(item.priceText)}</p>
+                    <p class="font-black text-gray-900 text-sm sm:text-base">${escapeHtml(item.priceText)}</p>
                     <button
                         type="button"
-                        class="mt-2 inline-flex bg-white border border-gray-200 hover:bg-gray-50 text-gray-900 text-xs font-bold px-3 py-2 rounded-xl transition"
+                        class="mt-2 inline-flex bg-white border border-gray-200 hover:bg-gray-50 text-gray-900 text-xs font-bold px-2.5 py-1.5 rounded-lg transition"
                         data-remove-id="${escapeHtml(item.id)}"
                     >
                         Hapus
