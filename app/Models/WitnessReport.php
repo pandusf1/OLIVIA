@@ -23,6 +23,10 @@ class WitnessReport extends Model
     protected $keyType = 'string';
     public $timestamps = false;
 
+    protected $casts = [
+        'created_at' => 'datetime',
+    ];
+
     public function evidences()
     {
         return $this->hasMany(WitnessEvidence::class, 'witness_report_id');

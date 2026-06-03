@@ -25,4 +25,8 @@ class TrustedContact extends Model
     protected $keyType = 'string';
 
     public $timestamps = false;
+
+    protected $casts = [
+        'created_at' => 'datetime',
+    ];
 }

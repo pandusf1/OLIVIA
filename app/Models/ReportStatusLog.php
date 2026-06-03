@@ -24,4 +24,8 @@ class ReportStatusLog extends Model
     protected $keyType = 'string';
 
     public $timestamps = false;
+
+    protected $casts = [
+        'changed_at' => 'datetime',
+    ];
 }

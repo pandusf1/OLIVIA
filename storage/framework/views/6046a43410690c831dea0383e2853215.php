@@ -21,22 +21,22 @@
         'pelecehan' => 'bg-yellow-100 text-yellow-900 border-yellow-200',
         'kecelakaan' => 'bg-green-100 text-green-800 border-green-200',
     ];
+    $typeLabel = match($partner->partner_type) {
+        'ambulance' => 'Medis Darurat',
+        'legal' => 'Bantuan Hukum',
+        'counselor' => 'Psikososial',
+        'pemadam' => 'Pemadam / Rescue',
+        default => 'Mitra Krisis'
+    };
+    $monthsId = [
+        1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
+        5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
+        9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+    ];
 ?>
 <?php echo $__env->make('partials.nav-auth', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
 <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-
-
-    <header class="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-            <div class="mb-3 flex flex-wrap items-center gap-2">
-                <span class="rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-bold text-green-700">Mitra Terverifikasi</span>
-                <span class="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-600"><?php echo e($partner->partner_type); ?></span>
-            </div>
-            <h1 class="text-3xl font-black tracking-tight text-gray-950"><?php echo e($partner->partner_name); ?></h1>
-            <p class="mt-1 text-sm text-gray-500"><?php echo e($partner->city); ?> - dashboard respons laporan darurat Safora</p>
-        </div>
-    </header>
 
     <section class="mb-8" id="pending-reports-container">
         <div class="mb-4 flex items-center justify-between">
@@ -58,27 +58,34 @@
                             'high' => 'bg-orange-100 text-orange-800',
                             'normal' => 'bg-gray-100 text-gray-700',
                         ][$report->urgency_level ?? 'high'] ?? 'bg-orange-100 text-orange-800';
+                        $urgencyLabel = match($report->urgency_level ?? 'high') {
+                            'critical' => 'Kritis',
+                            'high' => 'Tinggi',
+                            'normal' => 'Normal',
+                            default => 'Tinggi'
+                        };
                     ?>
-                    <article class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-                        <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <span class="rounded-full border px-3 py-1 text-xs font-bold <?php echo e($badgeClass); ?>"><?php echo e($report->category); ?></span>
-                                <span class="rounded-full px-3 py-1 text-xs font-bold uppercase <?php echo e($urgencyClass); ?>"><?php echo e($report->urgency_level ?? 'high'); ?></span>
-                                <?php if($report->anonymous): ?>
-                                    <span class="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">Anonim</span>
-                                <?php endif; ?>
+                    <article class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition">
+                        <a href="<?php echo e(route('partner.show', $report->id)); ?>" class="block group mb-4">
+                            <div class="flex flex-wrap items-start justify-between gap-3">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="rounded-full border px-3 py-1 text-xs font-bold <?php echo e($badgeClass); ?>"><?php echo e($report->category); ?></span>
+                                    <span class="rounded-full px-3 py-1 text-xs font-bold uppercase <?php echo e($urgencyClass); ?>"><?php echo e($urgencyLabel); ?></span>
+                                    <?php if($report->anonymous): ?>
+                                        <span class="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">Anonim</span>
+                                    <?php endif; ?>
+                                </div>
+                                <div class="text-right">
+                                    <p class="pt-1 text-xs font-bold uppercase text-red-700 group-hover:underline">Menunggu Respons</p>
+                                </div>
                             </div>
-                            <div class="text-right">
-                                <p class="text-xs font-bold uppercase text-red-700">Menunggu Respons</p>
-                                <p class="countdown text-sm font-black text-gray-950" data-expires-at="<?php echo e(optional($routing->expires_at)->toIso8601String()); ?>">--:--</p>
-                            </div>
-                        </div>
 
-                        <div class="mb-5 grid gap-2 text-sm text-gray-500">
-                            <p><span class="font-semibold text-gray-700">Area:</span> <?php echo e($report->location_text ?: ($report->latitude ? 'Sekitar ' . number_format($report->latitude, 3) . ', ' . number_format($report->longitude, 3) : 'Lokasi belum tersedia')); ?></p>
-                            <p><span class="font-semibold text-gray-700">Jarak:</span> <?php echo e($routing->distance_km !== null ? number_format($routing->distance_km, 1) . ' km' : 'Belum tersedia'); ?></p>
-                            <p><span class="font-semibold text-gray-700">Waktu masuk:</span> <?php echo e($report->created_at->format('d M Y, H:i')); ?></p>
-                        </div>
+                            <div class="mt-4 grid gap-2 text-sm text-gray-500">
+                                <p><span class="font-semibold text-gray-700">Area:</span> <?php echo e($report->location_text ?: ($report->latitude ? 'Sekitar ' . number_format($report->latitude, 3) . ', ' . number_format($report->longitude, 3) : 'Lokasi belum tersedia')); ?></p>
+                                <p><span class="font-semibold text-gray-700">Jarak:</span> <?php echo e($routing->distance_km !== null ? number_format($routing->distance_km, 1) . ' km' : 'Belum tersedia'); ?></p>
+                                <p><span class="font-semibold text-gray-700">Waktu masuk:</span> <?php echo e($report->created_at->format('d M Y, H:i')); ?></p>
+                            </div>
+                        </a>
 
                         <form method="POST" action="<?php echo e(route('partner.report.accept', $report->id)); ?>">
                             <?php echo csrf_field(); ?>
@@ -134,7 +141,7 @@
                 <select name="month" class="rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-gray-500 focus:outline-none">
                     <option value="">Semua Bulan</option>
                     <?php for($i=1; $i<=12; $i++): ?>
-                    <option value="<?php echo e($i); ?>" <?php echo e(request('month') == $i ? 'selected' : ''); ?>><?php echo e(date('F', mktime(0, 0, 0, $i, 1))); ?></option>
+                    <option value="<?php echo e($i); ?>" <?php echo e(request('month') == $i ? 'selected' : ''); ?>><?php echo e($monthsId[$i]); ?></option>
                     <?php endfor; ?>
                 </select>
                 <div class="flex gap-2">
@@ -176,32 +183,6 @@
 </main>
 
 <script>
-    function updateCountdowns() {
-        document.querySelectorAll('.countdown').forEach(function (node) {
-            const raw = node.dataset.expiresAt;
-            if (!raw) {
-                node.textContent = 'Tanpa batas';
-                return;
-            }
-
-            const diff = new Date(raw).getTime() - Date.now();
-            if (diff <= 0) {
-                node.textContent = 'Expired';
-                node.closest('article')?.classList.add('opacity-60');
-                return;
-            }
-
-            const totalSeconds = Math.floor(diff / 1000);
-            const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-            const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-            const seconds = String(totalSeconds % 60).padStart(2, '0');
-            node.textContent = (hours > 0 ? hours + ':' : '') + minutes + ':' + seconds;
-        });
-    }
-
-    updateCountdowns();
-    setInterval(updateCountdowns, 1000);
-
     // Auto-refresh (AJAX Polling) to feel real-time
     setInterval(async function() {
         try {

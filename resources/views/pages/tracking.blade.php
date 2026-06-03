@@ -54,12 +54,47 @@
                 <p class="mt-1 font-black" data-field="eta">{{ $livePayload['eta'] }}</p>
             </div>
         </div>
-        @if((auth()->check() && auth()->id() === $report->user_id) || in_array($report->id, session('my_reports', [])))
+        @php
+            $currUser = auth()->user();
+            $isPartnerUser = $currUser && $currUser->role === 'partner';
+            $pId = $isPartnerUser ? $currUser->partner_id : null;
+            
+            $pRouting = $isPartnerUser ? $report->partnerRoutings()->where('partner_id', $pId)->first() : null;
+            $isChronoPending = ($pRouting && $pRouting->status === 'pending' && (is_null($pRouting->expires_at) || $pRouting->expires_at > now()));
+            
+            $canPartnerAccept = ($report->handler_partner_id === null && $isChronoPending);
+            $isPartnerHandling = ($isPartnerUser && $report->handler_partner_id === $pId);
+        @endphp
+
+        @if(!$isPartnerUser && ((auth()->check() && auth()->id() === $report->user_id) || in_array($report->id, session('my_reports', []))))
             @if(in_array($report->status, ['In Progress', 'Assigned']))
                 <div class="mt-4">
-                    <form action="/tracking/{{ $report->id }}/resolve" method="POST" onsubmit="return confirm('Apakah Anda yakin laporan ini telah tertangani dan Anda sudah aman?');">
+                    <form action="/tracking/{{ $report->id }}/resolve" method="POST" data-confirm="Apakah Anda yakin laporan ini telah tertangani dan Anda sudah aman?">
                         @csrf
-                        <button type="submit" class="w-full rounded-lg bg-green-600 px-4 py-3 text-sm font-black text-white hover:bg-green-700 transition">Laporan Selesai</button>
+                        <button type="submit" class="w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-black text-white hover:bg-green-700 transition">Laporan Selesai</button>
+                    </form>
+                </div>
+            @endif
+        @endif
+
+        @if($isPartnerUser)
+            @if($canPartnerAccept)
+                <div class="mt-4">
+                    <form method="POST" action="{{ route('partner.report.accept', $report->id) }}">
+                        @csrf
+                        <button type="submit" class="w-full rounded-lg bg-red-700 hover:bg-red-800 text-white px-5 py-3.5 text-sm font-black transition hover:scale-[1.01] duration-200 shadow-md">
+                            TERIMA KASUS
+                        </button>
+                    </form>
+                </div>
+            @elseif($isPartnerHandling && in_array($report->status, ['In Progress', 'Assigned', 'Viewed', 'Routed', 'Submitted']))
+                <div class="mt-4">
+                    <form method="POST" action="{{ route('partner.status', $report->id) }}" data-confirm="Apakah Anda yakin kasus ini telah selesai ditangani?">
+                        @csrf
+                        <input type="hidden" name="status" value="Resolved">
+                        <button type="submit" class="w-full rounded-lg bg-green-600 hover:bg-green-700 text-white px-5 py-3.5 text-sm font-black transition hover:scale-[1.01] duration-200 shadow-md">
+                            Laporan Selesai
+                        </button>
                     </form>
                 </div>
             @endif
@@ -70,11 +105,18 @@
                 $user = auth()->user();
                 $isReporter = (auth()->check() && auth()->id() === $report->user_id)
                            || in_array($report->id, session('my_reports', []));
-                $isAcceptedPartner = $user && $user->role === 'partner' && $report->partnerRoutings()
+                
+                $isPartner = $user && $user->role === 'partner';
+                $isOtherPartnerHandling = $isPartner && $report->handler_partner_id !== null && $report->handler_partner_id !== $user->partner_id;
+                
+                $isRoutingExist = $isPartner && $report->partnerRoutings()
+                    ->where('partner_id', $user->partner_id)
+                    ->exists();
+                $isAcceptedPartner = $isPartner && $report->partnerRoutings()
                     ->where('partner_id', $user->partner_id)
                     ->where('status', 'accepted')
                     ->exists();
-                $hasDirectChatAccess = $isReporter || $isAcceptedPartner;
+                $hasDirectChatAccess = $isReporter || $isAcceptedPartner || $isRoutingExist;
             @endphp
 
             <section class="mt-4 rounded-lg border border-gray-200 bg-white p-5">
@@ -86,31 +128,35 @@
                     </div>
                     
                     <div class="flex items-center gap-2">
-                        <!-- Tombol Tambah Bukti -->
-                        <button type="button" onclick="openEvidenceModal()" class="text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition border border-gray-200">
-                            + Bukti
-                        </button>
-                        
-                        <!-- Tombol Tambah Kronologi -->
-                        <button id="btn-add-chronology" onclick="openChronologyModal()" 
-                                class="{{ ($isReporter || $isTrustedContact) ? '' : 'hidden' }} text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition border border-red-100">
-                            + Kronologi
-                        </button>
+                        @if(!$isOtherPartnerHandling)
+                            <!-- Tombol Tambah Bukti -->
+                            <button type="button" onclick="openEvidenceModal()" class="text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition border border-gray-200">
+                                + Bukti
+                            </button>
+                            
+                            <!-- Tombol Tambah Kronologi -->
+                            <button id="btn-add-chronology" onclick="openChronologyModal()" 
+                                    class="{{ ($isReporter || $isTrustedContact) ? '' : 'hidden' }} text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition border border-red-100">
+                                + Kronologi
+                            </button>
+                        @endif
 
                         <!-- Tombol Chat -->
-                        @if($hasDirectChatAccess)
-                            <a href="/chat/report/{{ $report->id }}"
-                               class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-700 hover:bg-red-800 text-white transition shadow-sm"
-                               title="Buka Chat Laporan">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"/></svg>
-                            </a>
-                        @else
-                            <div id="chat-action" class="inline-flex items-center gap-1.5">
-                                <span id="chat-checking" class="text-[10px] text-gray-400 italic">Memeriksa lokasi...</span>
-                                <a id="chat-link" href="#" class="hidden items-center justify-center w-8 h-8 rounded-full bg-gray-900 hover:bg-gray-700 text-white transition shadow-sm" title="Buka Chat Laporan">
+                        @if($report->status !== 'Resolved')
+                            @if($hasDirectChatAccess)
+                                <a href="/chat/report/{{ $report->id }}"
+                                   class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-red-700 hover:bg-red-800 text-white transition shadow-sm"
+                                   title="Buka Chat Laporan">
                                     <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"/></svg>
                                 </a>
-                            </div>
+                            @else
+                                <div id="chat-action" class="inline-flex items-center gap-1.5">
+                                    <span id="chat-checking" class="text-[10px] text-gray-400 italic">Memeriksa lokasi...</span>
+                                    <a id="chat-link" href="#" class="hidden items-center justify-center w-8 h-8 rounded-full bg-gray-900 hover:bg-gray-700 text-white transition shadow-sm" title="Buka Chat Laporan">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd"/></svg>
+                                    </a>
+                                </div>
+                            @endif
                         @endif
                     </div>
                 </div>
@@ -257,7 +303,6 @@
                 <p class="text-xs font-bold uppercase tracking-widest text-green-700">Sedang Menangani</p>
                 <h2 class="mt-2 text-xl font-black text-green-950" data-field="assigned_name"></h2>
                 <p class="mt-1 text-sm text-green-800" data-field="assigned_detail"></p>
-                <p class="mt-3 text-xs text-green-700">Mitra sudah terhubung ke chat laporan yang sama.</p>
             </section>
 
             <section class="rounded-lg border border-gray-200 bg-white p-5">
@@ -301,11 +346,12 @@
     const isCreator = @json($isReporter);
     const hasDirectChatAccess = @json($hasDirectChatAccess);
     const isLoggedIn = @json(auth()->check());
+    const isPartner = @json($isPartner);
     let lastPayload = null;
 
     // Sync session my_reports dengan localStorage agar ketahanan 100% terjamin (misal habis login/logout)
     let storedReports = JSON.parse(localStorage.getItem('safora_guest_reports') || '[]');
-    if (storedReports.includes(reportId)) {
+    if (storedReports.includes(reportId) && !isPartner) {
         if (!isCreator) {
             // Pelapor terdeteksi di browser ini tapi session kosong (misal habis logout)
             fetch('/tracking/active-check?ids=' + encodeURIComponent(storedReports.join(',')), {
@@ -320,7 +366,7 @@
                 }
             });
         }
-    } else if (isCreator && !isLoggedIn) {
+    } else if (isCreator && !isLoggedIn && !isPartner) {
         // Tambahkan ke localStorage jika kita adalah pelapor guest/anonim
         storedReports.push(reportId);
         localStorage.setItem('safora_guest_reports', JSON.stringify(Array.from(new Set(storedReports))));
@@ -686,7 +732,7 @@
         const btnReAlert = document.getElementById('btn-re-alert');
         if (!btnReAlert || btnReAlert.disabled) return;
         
-        if (!confirm('Apakah Anda yakin ingin mengirim ulang alert WhatsApp ke mitra terdekat?')) return;
+        if (!await window.showConfirm('Apakah Anda yakin ingin mengirim ulang alert WhatsApp ke mitra terdekat?')) return;
         
         btnReAlert.disabled = true;
         const originalContent = btnReAlert.innerHTML;
@@ -1355,9 +1401,10 @@
         }
     }
 
-    // Show "+ Tambah Kronologi" button if Korban or Trusted Contact
+    // Show "+ Tambah Kronologi" button if Korban or Trusted Contact, and not another partner handling
     const isTrustedContact = @json($isTrustedContact);
-    if (isCreator || isTrustedContact) {
+    const isOtherPartnerHandling = @json($isOtherPartnerHandling);
+    if ((isCreator || isTrustedContact) && !isOtherPartnerHandling) {
         const btn = document.getElementById('btn-add-chronology');
         if (btn) btn.classList.remove('hidden');
     }

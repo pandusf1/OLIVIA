@@ -57,7 +57,16 @@
             {{-- Rendered dynamically via Javascript updateUI() --}}
         </div>
 
+        @php
+            $user = auth()->user();
+            $canSendChat = true;
+            if ($user && $user->role === 'partner') {
+                $canSendChat = ($report->handler_partner_id === $user->partner_id);
+            }
+        @endphp
+
         {{-- INPUT --}}
+        @if($canSendChat)
         <div class="bg-white border-t border-gray-200 px-4 py-3 flex-shrink-0">
             <div class="max-w-2xl mx-auto flex items-end gap-2">
                 <div class="flex-1 bg-gray-50 rounded-2xl border border-gray-200 focus-within:border-gray-400 focus-within:bg-white transition-all">
@@ -69,12 +78,17 @@
                 <button onclick="sendMsg()" id="send-btn"
                     class="w-11 h-11 bg-red-700 hover:bg-red-800 text-white rounded-2xl flex items-center justify-center transition flex-shrink-0 disabled:opacity-50">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+                        <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 00.17-1.408l-7-14z"/>
                     </svg>
                 </button>
             </div>
             <p class="text-center text-xs text-gray-400 mt-2">Mengirim sebagai <span class="font-semibold">{{ $currentName }}</span></p>
         </div>
+        @else
+        <div class="bg-gray-50 border-t border-gray-200 px-4 py-4 flex-shrink-0 text-center text-sm font-semibold text-gray-500">
+            🔒 Obrolan ini bersifat hanya-baca karena kasus ini ditangani oleh mitra lain.
+        </div>
+        @endif
     </div>
 
 <script>
@@ -256,10 +270,13 @@ async function doPoll() {
 }
 
 // Textarea auto-resize
-document.getElementById('chat-input').addEventListener('input', function() {
-    this.style.height = 'auto';
-    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-});
+const chatInput = document.getElementById('chat-input');
+if (chatInput) {
+    chatInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+}
 
 // Init
 updateUI();

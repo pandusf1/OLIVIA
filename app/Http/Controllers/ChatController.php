@@ -25,11 +25,10 @@ class ChatController extends Controller
     {
         $user = auth()->user();
 
-        // Partner: hanya yang sudah accept laporan ini
+        // Partner: mitra yang di-route (baik pending, accepted, expired) diizinkan membaca chat
         if ($user && $user->role === 'partner') {
             return $report->partnerRoutings()
                 ->where('partner_id', $user->partner_id)
-                ->where('status', 'accepted')
                 ->exists();
         }
 
@@ -217,6 +216,13 @@ class ChatController extends Controller
 
         $user = auth()->user();
         if ($user && $user->role === 'partner') {
+            $isHandling = ($report->handler_partner_id === $user->partner_id);
+            if (!$isHandling) {
+                if ($request->expectsJson()) {
+                    return response()->json(['ok' => false, 'message' => 'Akses ditolak. Anda tidak menangani kasus ini.'], 403);
+                }
+                abort(403, 'Akses ditolak. Anda tidak menangani kasus ini.');
+            }
             $senderType = 'partner';
             $senderId   = $user->partner_id;
         } elseif ($user) {

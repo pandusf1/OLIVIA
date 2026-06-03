@@ -29,6 +29,10 @@ class Evidence extends Model
 
     public $timestamps = false;
 
+    protected $casts = [
+        'uploaded_at' => 'datetime',
+    ];
+
     /**
      * Generate a fast, hybrid SHA-256 hash for small and large files.
      * Keeps upload execution extremely quick for large files.

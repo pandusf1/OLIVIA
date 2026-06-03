@@ -21,6 +21,10 @@ class ReportRouting extends Model
     protected $keyType = 'string';
     public $timestamps = false;
 
+    protected $casts = [
+        'routed_at' => 'datetime',
+    ];
+
     public function report()
     {
         return $this->belongsTo(Report::class);

@@ -38,18 +38,6 @@
 
 <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
 
-
-    <header class="mb-8 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-            <div class="mb-3 flex flex-wrap items-center gap-2">
-                <span class="rounded-full border border-green-200 bg-green-50 px-3 py-1 text-xs font-bold text-green-700">Mitra Terverifikasi</span>
-                <span class="rounded-full border border-gray-200 bg-white px-3 py-1 text-xs font-semibold text-gray-600">{{ $typeLabel }}</span>
-            </div>
-            <h1 class="text-3xl font-black tracking-tight text-gray-950">{{ $partner->partner_name }}</h1>
-            <p class="mt-1 text-sm text-gray-500">{{ $partner->city }} - dashboard respons laporan darurat Safora</p>
-        </div>
-    </header>
-
     <section class="mb-8" id="pending-reports-container">
         <div class="mb-4 flex items-center justify-between">
             <div>
@@ -77,26 +65,27 @@
                             default => 'Tinggi'
                         };
                     @endphp
-                    <article class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-                        <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <span class="rounded-full border px-3 py-1 text-xs font-bold {{ $badgeClass }}">{{ $report->category }}</span>
-                                <span class="rounded-full px-3 py-1 text-xs font-bold uppercase {{ $urgencyClass }}">{{ $urgencyLabel }}</span>
-                                @if($report->anonymous)
-                                    <span class="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">Anonim</span>
-                                @endif
+                    <article class="rounded-lg border border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition">
+                        <a href="{{ route('partner.show', $report->id) }}" class="block group mb-4">
+                            <div class="flex flex-wrap items-start justify-between gap-3">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="rounded-full border px-3 py-1 text-xs font-bold {{ $badgeClass }}">{{ $report->category }}</span>
+                                    <span class="rounded-full px-3 py-1 text-xs font-bold uppercase {{ $urgencyClass }}">{{ $urgencyLabel }}</span>
+                                    @if($report->anonymous)
+                                        <span class="rounded-full bg-purple-50 px-3 py-1 text-xs font-bold text-purple-700">Anonim</span>
+                                    @endif
+                                </div>
+                                <div class="text-right">
+                                    <p class="pt-1 text-xs font-bold uppercase text-red-700 group-hover:underline">Menunggu Respons</p>
+                                </div>
                             </div>
-                            <div class="text-right">
-                                <p class="text-xs font-bold uppercase text-red-700">Menunggu Respons</p>
-                                <p class="countdown text-sm font-black text-gray-950" data-expires-at="{{ optional($routing->expires_at)->toIso8601String() }}">--:--</p>
-                            </div>
-                        </div>
 
-                        <div class="mb-5 grid gap-2 text-sm text-gray-500">
-                            <p><span class="font-semibold text-gray-700">Area:</span> {{ $report->location_text ?: ($report->latitude ? 'Sekitar ' . number_format($report->latitude, 3) . ', ' . number_format($report->longitude, 3) : 'Lokasi belum tersedia') }}</p>
-                            <p><span class="font-semibold text-gray-700">Jarak:</span> {{ $routing->distance_km !== null ? number_format($routing->distance_km, 1) . ' km' : 'Belum tersedia' }}</p>
-                            <p><span class="font-semibold text-gray-700">Waktu masuk:</span> {{ $report->created_at->format('d M Y, H:i') }}</p>
-                        </div>
+                            <div class="mt-4 grid gap-2 text-sm text-gray-500">
+                                <p><span class="font-semibold text-gray-700">Area:</span> {{ $report->location_text ?: ($report->latitude ? 'Sekitar ' . number_format($report->latitude, 3) . ', ' . number_format($report->longitude, 3) : 'Lokasi belum tersedia') }}</p>
+                                <p><span class="font-semibold text-gray-700">Jarak:</span> {{ $routing->distance_km !== null ? number_format($routing->distance_km, 1) . ' km' : 'Belum tersedia' }}</p>
+                                <p><span class="font-semibold text-gray-700">Waktu masuk:</span> {{ $report->created_at->format('d M Y, H:i') }}</p>
+                            </div>
+                        </a>
 
                         <form method="POST" action="{{ route('partner.report.accept', $report->id) }}">
                             @csrf
@@ -192,32 +181,6 @@
 </main>
 
 <script>
-    function updateCountdowns() {
-        document.querySelectorAll('.countdown').forEach(function (node) {
-            const raw = node.dataset.expiresAt;
-            if (!raw) {
-                node.textContent = 'Tanpa batas';
-                return;
-            }
-
-            const diff = new Date(raw).getTime() - Date.now();
-            if (diff <= 0) {
-                node.textContent = 'Kedaluwarsa';
-                node.closest('article')?.classList.add('opacity-60');
-                return;
-            }
-
-            const totalSeconds = Math.floor(diff / 1000);
-            const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
-            const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
-            const seconds = String(totalSeconds % 60).padStart(2, '0');
-            node.textContent = (hours > 0 ? hours + ':' : '') + minutes + ':' + seconds;
-        });
-    }
-
-    updateCountdowns();
-    setInterval(updateCountdowns, 1000);
-
     // Auto-refresh (AJAX Polling) to feel real-time
     setInterval(async function() {
         try {

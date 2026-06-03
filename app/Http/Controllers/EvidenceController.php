@@ -47,10 +47,21 @@ class EvidenceController extends Controller
             $isCreator = (auth()->check() && auth()->id() === $report->user_id) 
                 || in_array($reportId, session()->get('my_reports', []));
             
+            $isPartner = auth()->check() && auth()->user()->role === 'partner';
+            if ($isPartner) {
+                $partnerId = auth()->user()->partner_id;
+                if ($report->handler_partner_id !== null && $report->handler_partner_id !== $partnerId) {
+                    return response()->json([
+                        'ok' => false,
+                        'error' => 'Akses ditolak. Kasus ini ditangani oleh mitra lain.'
+                    ], 403);
+                }
+            }
+            
             $uploaderRole = 'Saksi';
             if ($isCreator) {
                 $uploaderRole = 'Korban';
-            } elseif (auth()->check() && auth()->user()->role === 'partner') {
+            } elseif ($isPartner) {
                 $uploaderRole = 'Mitra';
             }
 

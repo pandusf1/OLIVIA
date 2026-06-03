@@ -10,7 +10,7 @@ use App\Services\FonnteService;
 
 class TrackingController extends Controller
 {
-    private function resolveReport($id, array $relations = [])
+    public function resolveReport($id, array $relations = [])
     {
         $id = trim($id);
         $id = ltrim($id, '#');
@@ -414,7 +414,7 @@ class TrackingController extends Controller
         ]);
     }
 
-    private function buildLivePayload(Report $report): array
+    public function buildLivePayload(Report $report): array
     {
         $assignedPartner = $report->assignedPartner;
         $relevantRoutings = $this->relevantPartnerRoutings($report);
@@ -539,7 +539,7 @@ class TrackingController extends Controller
                     'file_url' => str_starts_with($ev->file_url, 'data:') ? $ev->file_url : url('/evidences/view/' . basename($ev->file_url)),
                     'file_type' => $ev->file_type,
                     'file_hash' => $ev->file_hash,
-                    'uploaded_at' => $ev->uploaded_at->format('d M Y, H:i'),
+                    'uploaded_at' => $ev->uploaded_at ? ($ev->uploaded_at instanceof \Carbon\Carbon ? $ev->uploaded_at->format('d M Y, H:i') : \Carbon\Carbon::parse($ev->uploaded_at)->format('d M Y, H:i')) : null,
                     'uploader_role' => $ev->uploader_role ?? 'Saksi',
                 ];
             }),
@@ -676,9 +676,15 @@ class TrackingController extends Controller
         }
 
         $isPartner = auth()->check() && auth()->user()->role === 'partner';
+        if ($isPartner) {
+            $partnerId = auth()->user()->partner_id;
+            if ($report->handler_partner_id !== $partnerId) {
+                return response()->json(['error' => 'Akses ditolak. Kasus ini ditangani oleh mitra lain.'], 403);
+            }
+        }
 
         if (!$isCreator && !$isTrustedContact && !$isWitnessWithin5Km && !$isPartner) {
-            return response()->json(['error' => 'Akses ditolak. Hanya korban, saksi (< 5 km), partner, atau kontak terpercaya yang bisa menambah kronologi.'], 403);
+            return response()->json(['error' => 'Akses ditolak. Hanya korban, saksi (< 5 km), mitra krisis, atau kontak terpercaya yang bisa menambah kronologi.'], 403);
         }
 
         $request->validate([

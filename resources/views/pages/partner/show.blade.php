@@ -63,6 +63,17 @@
                 @endif
             </div>
             @endif
+
+            @if($report->handler_partner_id === null && isset($isPending) && $isPending)
+            <div class="mt-6">
+                <form method="POST" action="{{ route('partner.report.accept', $report->id) }}">
+                    @csrf
+                    <button type="submit" class="bg-red-700 hover:bg-red-800 text-white px-6 py-3 rounded-xl font-black text-sm transition shadow-md">
+                        TERIMA KASUS
+                    </button>
+                </form>
+            </div>
+            @endif
         </div>
 
         @if($report->description)
@@ -73,6 +84,7 @@
         @endif
 
         {{-- Update Status --}}
+        @if($isHandling)
         <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
             <h2 class="font-bold text-gray-900 mb-4">Update Status</h2>
             <form action="/partner/report/{{ $report->id }}/status" method="POST" class="flex gap-3">
@@ -85,6 +97,7 @@
                 <button type="submit" class="bg-gray-900 hover:bg-gray-700 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition">Update</button>
             </form>
         </div>
+        @endif
 
         {{-- Status Timeline --}}
         <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">

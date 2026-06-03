@@ -22,4 +22,8 @@ class WitnessEvidence extends Model
     public $incrementing = false;
     protected $keyType = 'string';
     public $timestamps = false;
+
+    protected $casts = [
+        'uploaded_at' => 'datetime',
+    ];
 }

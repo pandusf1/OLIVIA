@@ -382,7 +382,7 @@ function requestLocation() {
         navigator.geolocation.getCurrentPosition(
             (pos) => { locationPayload = { latitude: pos.coords.latitude, longitude: pos.coords.longitude }; resolve(); },
             () => { locationPayload = { latitude: null, longitude: null }; resolve(); },
-            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 30000 }
         );
     });
 }
@@ -399,11 +399,11 @@ async function submitEmergency() {
     if (isSubmitting) return;
     isSubmitting = true;
 
-    document.getElementById('modal-status').textContent = 'Mengirim laporan ke partner terdekat...';
+    document.getElementById('modal-status').textContent = 'Mengirim laporan ke mitra terdekat...';
 
     await Promise.race([
         locationPromise,
-        new Promise(r => setTimeout(r, 2000))
+        new Promise(r => setTimeout(r, 1000))
     ]);
 
     const payload = {

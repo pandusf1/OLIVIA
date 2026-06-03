@@ -16,8 +16,18 @@
 
         <?php
         $sc=['Submitted'=>'bg-gray-100 text-gray-600','Routed'=>'bg-blue-50 text-blue-700','Viewed'=>'bg-yellow-50 text-yellow-700','In Progress'=>'bg-orange-50 text-orange-700','Resolved'=>'bg-green-50 text-green-700'];
-        $stages=[['Submitted','Terkirim'],['Routed','Diteruskan'],['Viewed','Dilihat'],['In Progress','Ditangani'],['Resolved','Selesai']];
+        $stages=[['Submitted','Diajukan'],['Routed','Diteruskan'],['Viewed','Ditinjau'],['In Progress','Diproses'],['Resolved','Selesai']];
         $ci=array_search($report->status,array_column($stages,0));
+        $statusIndo = match($report->status) {
+            'Submitted' => 'Diajukan',
+            'Routed' => 'Diteruskan',
+            'Viewed' => 'Ditinjau',
+            'Assigned' => 'Diterima',
+            'In Progress' => 'Diproses',
+            'Resolved' => 'Selesai',
+            'Rejected' => 'Ditolak',
+            default => $report->status
+        };
         ?>
 
         
@@ -38,7 +48,7 @@
                     </div>
                     <?php endif; ?>
                 </div>
-                <span class="px-3 py-1.5 rounded-full text-sm font-semibold <?php echo e($sc[$report->status]??'bg-gray-100 text-gray-600'); ?> whitespace-nowrap"><?php echo e($report->status); ?></span>
+                <span class="px-3 py-1.5 rounded-full text-sm font-semibold <?php echo e($sc[$report->status]??'bg-gray-100 text-gray-600'); ?> whitespace-nowrap"><?php echo e($statusIndo); ?></span>
             </div>
             
             <?php if($isHandling): ?>
@@ -53,6 +63,17 @@
                 <?php endif; ?>
             </div>
             <?php endif; ?>
+
+            <?php if($report->handler_partner_id === null && isset($isPending) && $isPending): ?>
+            <div class="mt-6">
+                <form method="POST" action="<?php echo e(route('partner.report.accept', $report->id)); ?>">
+                    <?php echo csrf_field(); ?>
+                    <button type="submit" class="bg-red-700 hover:bg-red-800 text-white px-6 py-3 rounded-xl font-black text-sm transition shadow-md">
+                        TERIMA KASUS
+                    </button>
+                </form>
+            </div>
+            <?php endif; ?>
         </div>
 
         <?php if($report->description): ?>
@@ -63,18 +84,20 @@
         <?php endif; ?>
 
         
+        <?php if($isHandling): ?>
         <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
             <h2 class="font-bold text-gray-900 mb-4">Update Status</h2>
             <form action="/partner/report/<?php echo e($report->id); ?>/status" method="POST" class="flex gap-3">
                 <?php echo csrf_field(); ?>
                 <select name="status" class="flex-1 border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-2.5 text-sm focus:outline-none bg-white">
-                    <?php $__currentLoopData = ['Submitted','Routed','Viewed','In Progress','Resolved']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $s): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                    <option value="<?php echo e($s); ?>" <?php echo e($report->status===$s?'selected':''); ?>><?php echo e($s); ?></option>
+                    <?php $__currentLoopData = ['Submitted' => 'Diajukan', 'Routed' => 'Diteruskan', 'Viewed' => 'Ditinjau', 'In Progress' => 'Diproses', 'Resolved' => 'Selesai']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $val => $lbl): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <option value="<?php echo e($val); ?>" <?php echo e($report->status===$val?'selected':''); ?>><?php echo e($lbl); ?></option>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                 </select>
                 <button type="submit" class="bg-gray-900 hover:bg-gray-700 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition">Update</button>
             </form>
         </div>
+        <?php endif; ?>
 
         
         <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
@@ -101,10 +124,22 @@
 
             <div class="space-y-3 border-t border-gray-100 pt-4">
                 <?php $__currentLoopData = $report->statusLogs; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $log): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                <?php
+                    $logStatusIndo = match($log->new_status) {
+                        'Submitted' => 'Diajukan',
+                        'Routed' => 'Diteruskan',
+                        'Viewed' => 'Ditinjau',
+                        'Assigned' => 'Diterima',
+                        'In Progress' => 'Diproses',
+                        'Resolved' => 'Selesai',
+                        'Rejected' => 'Ditolak',
+                        default => $log->new_status
+                    };
+                ?>
                 <div class="flex items-start gap-3">
                     <div class="w-2 h-2 bg-red-500 rounded-full mt-1.5 flex-shrink-0"></div>
                     <div>
-                        <p class="text-sm font-semibold text-gray-900"><?php echo e($log->new_status); ?></p>
+                        <p class="text-sm font-semibold text-gray-900"><?php echo e($logStatusIndo); ?></p>
                         <p class="text-xs text-gray-400"><?php echo e(\Carbon\Carbon::parse($log->changed_at)->format('d/m/Y, H:i:s')); ?></p>
                     </div>
                 </div>

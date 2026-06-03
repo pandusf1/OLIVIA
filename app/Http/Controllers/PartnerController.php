@@ -174,7 +174,36 @@ class PartnerController extends Controller
             AuditLog::log('view_report', 'report', $report->id);
         }
 
-        return view('pages.partner.show', compact('report', 'canViewSensitive', 'isHandling'));
+        $trackingController = app(\App\Http\Controllers\TrackingController::class);
+        $reportLoaded = $trackingController->resolveReport($report->id, [
+            'evidences',
+            'statusLogs',
+            'partner',
+            'assignedPartner',
+            'handlerUser',
+            'partnerRoutings.partner',
+            'timelineEvents',
+            'chronologies',
+        ]);
+
+        $isTrustedContact = false;
+        if (auth()->check() && $reportLoaded->user_id) {
+            $userPhone = auth()->user()->phone;
+            if ($userPhone) {
+                $isTrustedContact = \App\Models\TrustedContact::where('user_id', $reportLoaded->user_id)
+                    ->where('contact_phone', $userPhone)
+                    ->where('is_verified', true)
+                    ->exists();
+            }
+        }
+
+        return view('pages.tracking', [
+            'report' => $reportLoaded,
+            'livePayload' => $trackingController->buildLivePayload($reportLoaded),
+            'isTrustedContact' => $isTrustedContact,
+            'backUrl' => route('partner.index'),
+            'backLabel' => 'Kembali',
+        ]);
     }
 
     public function updateStatus(Request $request, $id)
@@ -226,14 +255,16 @@ class PartnerController extends Controller
 
         $partnerId = auth()->user()->partner_id;
 
+        $phoneToSend = null;
+        $messageToSend = null;
+
         try {
             $redirectPartnerId = $partnerId;
 
-            DB::transaction(function () use ($id, $partnerId, &$redirectPartnerId) {
+            DB::transaction(function () use ($id, $partnerId, &$redirectPartnerId, &$phoneToSend, &$messageToSend) {
                 $report = Report::with(['user'])
                     ->where('id', $id)
                     ->whereNull('handler_partner_id')
-                    ->lockForUpdate()
                     ->firstOrFail();
 
                 $routing = ReportPartnerRouting::query()
@@ -244,7 +275,6 @@ class PartnerController extends Controller
                         $query->whereNull('expires_at')
                             ->orWhere('expires_at', '>', now());
                     })
-                    ->lockForUpdate()
                     ->firstOrFail();
 
                 $routing->update([
@@ -331,23 +361,26 @@ class PartnerController extends Controller
                 $thread->update(['last_message_at' => now()]);
 
                 if ($report->report_type !== 'past_incident' && $report->user?->phone) {
-                    $message =
+                    $phoneToSend = $report->user->phone;
+                    $messageToSend =
                         "Safora: laporan Anda dengan kategori {$report->category} telah diterima oleh {$partner?->partner_name}. " .
                         "Silakan buka chat untuk koordinasi lanjutan.";
-
-                    try {
-                        FonnteService::send($report->user->phone, $message);
-                    } catch (\Exception $e) {
-                        // skip jika layanan WA tidak tersedia
-                    }
                 }
 
             });
+
+            // Send WhatsApp outside database transaction to prevent deadlocks / lock blocking
+            if ($phoneToSend && $messageToSend) {
+                try {
+                    FonnteService::send($phoneToSend, $messageToSend);
+                } catch (\Exception $e) {
+                    // skip
+                }
+            }
 
             return redirect()->route('partner.show', $id)->with('success', 'Laporan berhasil diterima.');
         } catch (\Exception $e) {
             return back()->with('error', 'Laporan tidak dapat diterima. Mungkin sudah expired atau diambil mitra lain.');
         }
     }
-    
 }

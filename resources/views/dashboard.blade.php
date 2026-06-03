@@ -190,7 +190,7 @@
                                 @if(in_array($report->status, ['Submitted', 'Routed', 'Viewed']))
                                     <div class="items-center gap-1.5 report-action-buttons hidden sm:flex" data-time="{{ $report->created_at->timestamp }}">
                                         <button type="button" data-id="{{ $report->id }}" data-category="{{ $report->category }}" data-desc="{{ $report->description }}" onclick="event.preventDefault(); event.stopPropagation(); openEditReportModal(this)" class="text-xs bg-white hover:bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-200 transition font-medium">Edit</button>
-                                        <form action="{{ route('report.destroy', $report->id) }}" method="POST" onsubmit="return confirm('Hapus laporan ini?');" onclick="event.stopPropagation();" class="inline">
+                                        <form action="{{ route('report.destroy', $report->id) }}" method="POST" data-confirm="Apakah Anda yakin ingin menghapus laporan ini? Tindakan ini tidak dapat dibatalkan." onclick="event.stopPropagation();" class="inline">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="text-xs bg-white hover:bg-red-50 text-red-600 px-2.5 py-1.5 rounded-lg border border-gray-200 transition font-medium">Hapus</button>
