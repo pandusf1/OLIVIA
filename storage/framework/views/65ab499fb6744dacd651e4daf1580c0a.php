@@ -673,12 +673,29 @@ async function submitEmergency() {
         const data = await res.json();
         document.body.style.overflow = '';
 
-        if (data.call_phone) {
-            window.location.href = 'tel:' + data.call_phone;
+        // Save report ID directly to localStorage before redirecting to support transient sessions/cookies on mobile
+        if (data.report_id) {
+            try {
+                let storedReports = JSON.parse(localStorage.getItem('safora_guest_reports') || '[]');
+                storedReports.push(data.report_id);
+                localStorage.setItem('safora_guest_reports', JSON.stringify(Array.from(new Set(storedReports))));
+            } catch (err) {
+                console.error('Error saving to localStorage:', err);
+            }
         }
-        setTimeout(() => {
-            window.location.href = data.tracking_url;
-        }, 500);
+
+        let redirectUrl = data.tracking_url;
+        if (data.call_phone) {
+            // Pass phone number to tracking page to avoid timing/redirect race conditions on mobile/deployed sites
+            try {
+                const urlObj = new URL(redirectUrl, window.location.origin);
+                urlObj.searchParams.set('call', data.call_phone);
+                redirectUrl = urlObj.toString();
+            } catch (e) {
+                redirectUrl += (redirectUrl.indexOf('?') !== -1 ? '&' : '?') + 'call=' + encodeURIComponent(data.call_phone);
+            }
+        }
+        window.location.href = redirectUrl;
     } catch (e) {
         document.getElementById('modal-status').textContent = e.message;
         isSubmitting = false;

@@ -175,7 +175,12 @@
                 </div>
 
                 <!-- GPS Alert Messages for Saksi -->
-                <p id="chat-no-gps" class="hidden text-xs text-gray-500 bg-gray-50 px-3 py-2 rounded-lg mb-3">📍 Tidak bisa mengambil lokasi. Chat hanya tersedia untuk pelapor dan warga dalam 5 km.</p>
+                <div id="chat-no-gps" class="hidden text-xs text-gray-500 bg-gray-50 px-3 py-2.5 rounded-lg mb-3 flex flex-col gap-1.5">
+                    <p class="font-medium">📍 Tidak bisa mengambil lokasi. Chat & tambah kronologi saksi hanya tersedia dalam radius 5 km.</p>
+                    <button id="btn-retry-gps" type="button" onclick="retryGeolocation()" class="w-fit text-left text-red-700 font-bold underline hover:text-red-800 transition">
+                        Beri Izin Lokasi & Coba Lagi
+                    </button>
+                </div>
 
                 <!-- ID Laporan (for saksi/warga around) -->
                 <div class="mb-4 bg-slate-50 border border-slate-200 rounded-xl p-3">
@@ -362,6 +367,22 @@
     const isPartner = @json($isPartner);
     const isPartnerHandling = @json($isPartnerHandling);
     let lastPayload = null;
+
+    // Check if we need to launch the native phone dialer immediately (forwarded from emergency submission)
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const callPhone = urlParams.get('call');
+        if (callPhone) {
+            window.location.href = 'tel:' + callPhone;
+            // Clean up the URL search param so refresh doesn't trigger dialer again
+            urlParams.delete('call');
+            const searchString = urlParams.toString();
+            const newUrl = window.location.pathname + (searchString ? '?' + searchString : '');
+            window.history.replaceState({}, document.title, newUrl);
+        }
+    } catch (e) {
+        console.error('Error handling dialer parameter:', e);
+    }
 
     // Sync session my_reports dengan localStorage agar ketahanan 100% terjamin (misal habis login/logout)
     let storedReports = JSON.parse(localStorage.getItem('safora_guest_reports') || '[]');
@@ -912,8 +933,21 @@
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     }
 
-    // Warga/guest: cek lokasi, tampilkan tombol hanya jika < 5km
-    if (!hasDirectChatAccess && navigator.geolocation) {
+    function runGeolocationCheck() {
+        const checking = document.getElementById('chat-checking');
+        const noGps    = document.getElementById('chat-no-gps');
+        const chatLink  = document.getElementById('chat-link');
+
+        if (!navigator.geolocation) {
+            if (checking) checking.classList.add('hidden');
+            if (noGps) {
+                const p = noGps.querySelector('p');
+                if (p) p.textContent = '📍 Browser Anda tidak mendukung GPS atau koneksi tidak aman (HTTPS).';
+                noGps.classList.remove('hidden');
+            }
+            return;
+        }
+
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 const lat = pos.coords.latitude;
@@ -923,13 +957,11 @@
                 window._userLat = lat;
                 window._userLng = lng;
 
-                const checking  = document.getElementById('chat-checking');
-                const chatLink  = document.getElementById('chat-link');
                 const tooFar    = document.getElementById('chat-too-far');
                 const distNote  = document.getElementById('chat-distance-note');
-                const noGps     = document.getElementById('chat-no-gps');
 
                 if (checking) checking.classList.add('hidden');
+                if (noGps) noGps.classList.add('hidden');
 
                 // Set URL dengan koordinat agar server bisa verifikasi
                 if (chatLink) chatLink.href = `/chat/report/${reportId}?lat=${lat}&lng=${lng}`;
@@ -951,6 +983,14 @@
                         window._chatAllowed = false;
                         // Terlalu jauh — tampilkan pesan, sembunyikan tombol
                         if (tooFar) tooFar.classList.remove('hidden');
+                        if (noGps) {
+                            const p = noGps.querySelector('p');
+                            if (p) p.textContent = `📍 Lokasi Anda terlalu jauh (${dist.toFixed(1)} km). Chat & tambah kronologi saksi hanya tersedia dalam radius 5 km.`;
+                            noGps.classList.remove('hidden');
+                            // Sembunyikan tombol coba lagi jika lokasinya memang di luar radius
+                            const retryBtn = document.getElementById('btn-retry-gps');
+                            if (retryBtn) retryBtn.classList.add('hidden');
+                        }
                     }
                 } else {
                     // Laporan tidak punya GPS — tidak bisa verifikasi jarak
@@ -965,21 +1005,42 @@
                     }
                 }
             },
-            () => {
+            (err) => {
                 // Gagal ambil lokasi browser
-                const checking = document.getElementById('chat-checking');
-                const noGps    = document.getElementById('chat-no-gps');
                 if (checking) checking.classList.add('hidden');
-                if (noGps)    noGps.classList.remove('hidden');
+                if (noGps) {
+                    const p = noGps.querySelector('p');
+                    let errMsg = 'Gagal memverifikasi lokasi.';
+                    if (err.code === err.PERMISSION_DENIED) {
+                        errMsg = '📍 Akses lokasi ditolak. Silakan izinkan akses GPS pada browser Anda.';
+                    } else if (err.code === err.POSITION_UNAVAILABLE) {
+                        errMsg = '📍 Informasi lokasi tidak tersedia. Pastikan GPS aktif.';
+                    } else if (err.code === err.TIMEOUT) {
+                        errMsg = '📍 Waktu verifikasi lokasi habis (timeout). Coba lagi di area terbuka.';
+                    }
+                    if (p) p.textContent = errMsg;
+                    // Pastikan tombol coba lagi terlihat
+                    const retryBtn = document.getElementById('btn-retry-gps');
+                    if (retryBtn) retryBtn.classList.remove('hidden');
+                    noGps.classList.remove('hidden');
+                }
             },
             { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
         );
-    } else if (!hasDirectChatAccess) {
-        // Browser tidak support geolocation
+    }
+
+    function retryGeolocation() {
         const checking = document.getElementById('chat-checking');
         const noGps    = document.getElementById('chat-no-gps');
-        if (checking) checking.classList.add('hidden');
-        if (noGps)    noGps.classList.remove('hidden');
+        if (checking) checking.classList.remove('hidden');
+        if (noGps)    noGps.classList.add('hidden');
+        
+        runGeolocationCheck();
+    }
+
+    // Panggil jika bukan pelapor langsung
+    if (!hasDirectChatAccess) {
+        runGeolocationCheck();
     }
 
 
