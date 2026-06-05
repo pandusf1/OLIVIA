@@ -85,17 +85,19 @@ class EvidenceController extends Controller
                         $path = 'data:' . $mimeType . ';base64,' . $base64;
                     }
 
-                    $evidence = Evidence::create([
-                        'report_id'   => $reportId,
-                        'file_url'    => $path,
-                        'file_type'   => $file->getClientMimeType(),
-                        'file_hash'   => $hash,
-                        'uploaded_by' => auth()->id(),
-                        'uploaded_at' => now(),
-                        'uploaded_ip' => $request->ip(),
-                        'device_info' => $request->userAgent(),
-                        'uploader_role' => $uploaderRole,
-                    ]);
+                    $evidence = \Illuminate\Support\Facades\DB::transaction(function () use ($reportId, $path, $file, $hash, $request, $uploaderRole) {
+                        return Evidence::create([
+                            'report_id'   => $reportId,
+                            'file_url'    => $path,
+                            'file_type'   => $file->getClientMimeType(),
+                            'file_hash'   => $hash,
+                            'uploaded_by' => auth()->id(),
+                            'uploaded_at' => now(),
+                            'uploaded_ip' => $request->ip(),
+                            'device_info' => $request->userAgent(),
+                            'uploader_role' => $uploaderRole,
+                        ]);
+                    });
 
                     $uploaded[] = [
                         'id' => $evidence->id,
