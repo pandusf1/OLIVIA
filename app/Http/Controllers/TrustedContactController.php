@@ -10,9 +10,14 @@ use App\Models\TrustedContact;
 
 class TrustedContactController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $contacts = auth()->user()->trustedContacts;
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'contacts' => $contacts
+            ]);
+        }
         return view('trusted-contacts.index', compact('contacts'));
     }
 

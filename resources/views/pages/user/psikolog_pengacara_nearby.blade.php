@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safora — Psikolog & Pengacara Terdekat</title>
+    <title>Psikolog & Pengacara</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-[#faf9f7] text-gray-900 min-h-screen">
@@ -26,14 +26,44 @@
             <div class="bg-white border border-gray-200 rounded-2xl p-6">
                 <h2 class="font-bold text-gray-900 text-lg">Pengacara (Legal)</h2>
                 <div id="legal-list" class="mt-4 space-y-2">
-                    <div class="text-sm text-gray-400">Memuat data...</div>
+                    <div class="animate-pulse space-y-2">
+                        <div class="flex items-center justify-between p-3 bg-[#faf9f7] border border-gray-100 rounded-xl">
+                            <div class="flex-1 space-y-2">
+                                <div class="h-4 bg-gray-200 rounded w-2/3"></div>
+                                <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+                            </div>
+                            <div class="w-6 h-6 bg-gray-200 rounded-full"></div>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-[#faf9f7] border border-gray-100 rounded-xl">
+                            <div class="flex-1 space-y-2">
+                                <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                                <div class="h-3 bg-gray-200 rounded w-1/3"></div>
+                            </div>
+                            <div class="w-6 h-6 bg-gray-200 rounded-full"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div class="bg-white border border-gray-200 rounded-2xl p-6">
                 <h2 class="font-bold text-gray-900 text-lg">Psikolog (Konselor)</h2>
                 <div id="counselor-list" class="mt-4 space-y-2">
-                    <div class="text-sm text-gray-400">Memuat data...</div>
+                    <div class="animate-pulse space-y-2">
+                        <div class="flex items-center justify-between p-3 bg-[#faf9f7] border border-gray-100 rounded-xl">
+                            <div class="flex-1 space-y-2">
+                                <div class="h-4 bg-gray-200 rounded w-2/3"></div>
+                                <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+                            </div>
+                            <div class="w-6 h-6 bg-gray-200 rounded-full"></div>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-[#faf9f7] border border-gray-100 rounded-xl">
+                            <div class="flex-1 space-y-2">
+                                <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                                <div class="h-3 bg-gray-200 rounded w-1/3"></div>
+                            </div>
+                            <div class="w-6 h-6 bg-gray-200 rounded-full"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -50,8 +80,26 @@
             if(!legalEl || !counselorEl) return;
 
             try{
-                legalEl.innerHTML = '<div class="text-sm text-gray-400">Memuat data...</div>';
-                counselorEl.innerHTML = '<div class="text-sm text-gray-400">Memuat data...</div>';
+                const skeletonHtml = `
+                    <div class="animate-pulse space-y-2">
+                        <div class="flex items-center justify-between p-3 bg-[#faf9f7] border border-gray-100 rounded-xl">
+                            <div class="flex-1 space-y-2">
+                                <div class="h-4 bg-gray-200 rounded w-2/3"></div>
+                                <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+                            </div>
+                            <div class="w-6 h-6 bg-gray-200 rounded-full"></div>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-[#faf9f7] border border-gray-100 rounded-xl">
+                            <div class="flex-1 space-y-2">
+                                <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                                <div class="h-3 bg-gray-200 rounded w-1/3"></div>
+                            </div>
+                            <div class="w-6 h-6 bg-gray-200 rounded-full"></div>
+                        </div>
+                    </div>
+                `;
+                legalEl.innerHTML = skeletonHtml;
+                counselorEl.innerHTML = skeletonHtml;
 
                 const res = await fetch('/psikolog-pengacara-nearby', { headers: { 'Accept':'application/json' } });
                 if(!res.ok) throw new Error('HTTP '+res.status);

@@ -29,6 +29,9 @@ class AdminPartnerController extends Controller
             'partner_type' => 'required|string|max:255',
             'city' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+            'address' => 'required|string',
 
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
@@ -41,6 +44,9 @@ class AdminPartnerController extends Controller
             'city' => $request->city,
             'phone' => $request->phone,
             'email' => $request->email,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'address' => $request->address,
             'verified' => true,
             'is_active' => true,
         ]);

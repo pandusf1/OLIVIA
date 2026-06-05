@@ -75,18 +75,17 @@ class EmergencyController extends Controller
         // unknown_emergency: jangan route ke partner (tetap kirim notifikasi/WA terdekat via notifyNearestUsers)
         $partners = collect();
         if (strtolower((string) $request->category) !== 'unknown_emergency') {
-            $partners = Partner::routeMultipleByCategory(
-                $request->category,
-                5,
-                $request->latitude ? (float) $request->latitude : null,
-                $request->longitude ? (float) $request->longitude : null
-            );
-
-            // Filter to only partners within 10 km if location is available
             if ($request->latitude && $request->longitude) {
+                $partners = Partner::routeMultipleByCategory(
+                    $request->category,
+                    5,
+                    (float) $request->latitude,
+                    (float) $request->longitude
+                );
+
                 $partners = $partners->filter(function($p) use ($request) {
                     $dist = Partner::distanceKm((float) $request->latitude, (float) $request->longitude, (float) $p->latitude, (float) $p->longitude);
-                    return $dist <= 10.0;
+                    return $dist <= 20.0;
                 });
             }
         }
@@ -127,7 +126,7 @@ class EmergencyController extends Controller
                 'idempotency_key' => $idempotencyKey,
 
 
-                'status' => $partners->isNotEmpty() ? 'Routed' : 'Submitted',
+                'status' => ($partners->isNotEmpty()) ? 'Routed' : 'Submitted',
                 'urgency_level' => $urgency,
 
                 'routed_partner_id' => $firstPartner?->id,
@@ -223,6 +222,7 @@ class EmergencyController extends Controller
                 'ok' => true,
                 'report_id' => $report->id,
                 'tracking_url' => $trackingLink,
+                'call_phone' => $firstPartner?->phone ?? null,
             ]);
         } else {
             $response = redirect('/tracking/' . $report->id);
@@ -286,13 +286,13 @@ class EmergencyController extends Controller
 
         // Alert ke trusted contacts jika user login
         if ($userId) {
-            if ($this->notifyTrustedContacts($report, $trackingLink, $mapsLink)) {
+            if ($this->notifyTrustedContacts($report, $trackingLink, $mapsLink, $firstPartner)) {
                 $this->timeline($report, 'trusted_contacts_notified', 'Kontak terpercaya Anda sudah kami beri tautan tracking dan lokasi laporan.');
             }
         }
 
         // Alert ke 3 user terdekat (role='user') via users.phone + simpan routing
-        $this->notifyNearestUsers($report, $trackingLink, $mapsLink, 3);
+        $this->notifyNearestUsers($report, $trackingLink, $mapsLink, 3, $firstPartner);
 
         \Log::info("Safora Emergency: Laporan darurat berhasil dibuat & diroute.", [
             'report_id' => $report->id,
@@ -319,13 +319,13 @@ class EmergencyController extends Controller
     private function determineUrgency(string $category): string
     {
         return match (strtolower($category)) {
-            'kekerasan', 'kesehatan', 'kecelakaan', 'ancaman', 'ambulance', 'pemadam' => 'critical',
-            'pelecehan', 'legal', 'counselor' => 'high',
+            'kekerasan', 'kesehatan', 'kecelakaan', 'kebakaran', 'ambulance', 'pemadam' => 'critical',
+            'pelecehan', 'legal', 'counselor', 'bullying', 'perundungan' => 'high',
             default => 'normal',
         };
     }
 
-    private function notifyTrustedContacts(Report $report, string $trackingLink, string $mapsLink): bool
+    private function notifyTrustedContacts(Report $report, string $trackingLink, string $mapsLink, ?Partner $partner = null): bool
     {
         $user = $report->user;
         if (!$user) {
@@ -337,6 +337,11 @@ class EmergencyController extends Controller
             return false;
         }
 
+        $helpInstruction = "";
+        if ($partner && $partner->phone) {
+            $helpInstruction = "\n\nTolong laporkan/hubungi *{$partner->partner_name}* di nomor *{$partner->phone}*, bantu korban agar cepat tertangani.";
+        }
+
         $sent = false;
         foreach ($contacts as $contact) {
             $message =
@@ -344,7 +349,8 @@ class EmergencyController extends Controller
                 "{$user->name} memerlukan bantuan!\n\n" .
                 "Kategori: *{$report->category}*\n\n" .
                 "📍 Lokasi:\n{$mapsLink}\n\n" .
-                "🔗 Pantau status:\n{$trackingLink}\n\n" .
+                "🔗 Pantau status:\n{$trackingLink}" .
+                $helpInstruction . "\n\n" .
                 "_Pesan ini dikirim otomatis oleh Safora._";
 
             try {
@@ -358,7 +364,7 @@ class EmergencyController extends Controller
         return $sent;
     }
 
-    private function notifyNearestUsers(Report $report, string $trackingLink, string $mapsLink, int $limit = 3): void
+    private function notifyNearestUsers(Report $report, string $trackingLink, string $mapsLink, int $limit = 3, ?Partner $partner = null): void
     {
         if (!$report->latitude || !$report->longitude) {
             return;
@@ -366,12 +372,18 @@ class EmergencyController extends Controller
 
         $fromUserId = $report->user_id;
 
+        $helpInstruction = "";
+        if ($partner && $partner->phone) {
+            $helpInstruction = "\n\nTolong laporkan/hubungi *{$partner->partner_name}* di nomor *{$partner->phone}*, bantu korban agar cepat tertangani.";
+        }
+
         $message =
             "🚨 *ALERT DARURAT — Safora*\n\n" .
             "Ada korban meminta pertolongan!\n\n" .
             "Kategori: *{$report->category}*\n\n" .
             "📍 Lokasi:\n{$mapsLink}\n\n" .
-            "🔗 Pantau status:\n{$trackingLink}\n\n" .
+            "🔗 Pantau status:\n{$trackingLink}" .
+            $helpInstruction . "\n\n" .
             "_Pesan ini dikirim otomatis oleh Safora._";
 
         // Ambil semua lokasi user dengan role='user'

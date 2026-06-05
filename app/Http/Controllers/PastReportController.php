@@ -177,7 +177,7 @@ class PastReportController extends Controller
 
         $report->update([
             'status' => 'Routed',
-            'routed_partner_id' => $partners->first()->id,
+            'routed_partner_id' => $partners->first()?->id,
         ]);
 
         if ($partners->isNotEmpty()) {

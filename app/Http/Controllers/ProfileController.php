@@ -39,13 +39,20 @@ class ProfileController extends Controller
 
         $phoneChanged = $oldPhone !== $user->phone;
 
-        if ($phoneChanged) {
+        if ($user->google_id && !empty($user->phone)) {
+            $user->phone_is_verified = true;
+            $user->phone_verification_code = null;
+        } elseif ($phoneChanged) {
             $code = str_pad((string) rand(0, 99999), 5, '0', STR_PAD_LEFT);
             $user->phone_is_verified = false;
             $user->phone_verification_code = $code;
         }
 
         $user->save();
+
+        if ($user->google_id && !empty($user->phone) && ($phoneChanged || !$user->phone_is_verified)) {
+            return Redirect::route('dashboard')->with('success', 'Nomor WhatsApp berhasil disimpan.');
+        }
 
         if ($phoneChanged) {
             $message = "Halo {$user->name},\n\nNomor WhatsApp ini baru saja dimasukkan di akun Safora Anda.\nKode verifikasi Anda adalah: *{$code}*\n\nJika Anda tidak melakukan perubahan ini, abaikan pesan ini.";
@@ -79,7 +86,7 @@ class ProfileController extends Controller
                 'phone_verification_code' => null,
             ]);
 
-            return Redirect::route('settings')->with('success', 'Nomor WhatsApp berhasil diverifikasi.');
+            return Redirect::route('dashboard')->with('success', 'Nomor WhatsApp berhasil diverifikasi.');
         }
 
         return Redirect::route('settings')

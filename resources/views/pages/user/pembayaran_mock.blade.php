@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safora — Pembayaran</title>
+    <title>Pembayaran</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap');
@@ -60,7 +60,7 @@
             <div class="flex justify-between items-start gap-4 py-3 border-b border-gray-100">
                 <div>
                     <p class="font-semibold text-gray-900">{{ $priceList->service_name }}</p>
-                    @if($priceList->duration)
+                    @if($priceList->duration && !str_contains(strtolower($priceList->duration), 'menit'))
                         <p class="text-xs text-gray-500 mt-0.5">⏱ {{ $priceList->duration }}</p>
                     @endif
                 </div>

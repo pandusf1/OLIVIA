@@ -6,11 +6,13 @@ window.Alpine = Alpine;
 
 Alpine.start();
 
-import { registerSW } from 'virtual:pwa-register'
-
-registerSW({
-    immediate: true,
-})
+if (import.meta.env.PROD) {
+    import('virtual:pwa-register').then(({ registerSW }) => {
+        registerSW({
+            immediate: true,
+        });
+    });
+}
 
 // Premium Custom Modal Alert & Confirm system
 window.showAlert = function(message, title = 'Perhatian') {

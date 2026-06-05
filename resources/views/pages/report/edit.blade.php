@@ -17,10 +17,12 @@
                         <div class="mb-4">
                             <label for="category" class="block text-sm font-medium text-gray-700">Kategori Laporan</label>
                             <select name="category" id="category" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 sm:text-sm" required>
-                                <option value="ambulance" {{ $report->category === 'ambulance' ? 'selected' : '' }}>Medis Darurat</option>
-                                <option value="legal" {{ $report->category === 'legal' ? 'selected' : '' }}>Bantuan Hukum</option>
-                                <option value="counselor" {{ $report->category === 'counselor' ? 'selected' : '' }}>Psikososial</option>
-                                <option value="pemadam" {{ $report->category === 'pemadam' ? 'selected' : '' }}>Pemadam / Rescue</option>
+                                <option value="Kekerasan" {{ $report->category === 'Kekerasan' ? 'selected' : '' }}>Kekerasan Fisik / KDRT</option>
+                                <option value="Pelecehan & Bullying" {{ $report->category === 'Pelecehan & Bullying' ? 'selected' : '' }}>Pelecehan & Perundungan (Bullying)</option>
+                                <option value="Salah Tangkap" {{ $report->category === 'Salah Tangkap' ? 'selected' : '' }}>Salah Tangkap / Kriminalisasi</option>
+                                <option value="Konseling & Trauma" {{ $report->category === 'Konseling & Trauma' ? 'selected' : '' }}>Konseling & Pemulihan Trauma</option>
+                                <option value="Sosial" {{ $report->category === 'Sosial' ? 'selected' : '' }}>Sosial / Anak/Lansia Terlantar</option>
+                                <option value="Lainnya" {{ $report->category === 'Lainnya' ? 'selected' : '' }}>Lainnya</option>
                             </select>
                             <p class="mt-1 text-xs text-gray-500">Mengubah kategori akan meneruskan ulang laporan Anda ke institusi yang relevan dan menyetel ulang waktu expired (15 menit).</p>
                         </div>

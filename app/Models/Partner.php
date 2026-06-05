@@ -73,12 +73,13 @@ class Partner extends Model
         $normalized = preg_replace('/\s+/', ' ', $normalized);
 
         return match ($normalized) {
-            'ambulance', 'ambulans', 'medis', 'medis darurat', 'kesehatan', 'kecelakaan' => ['ambulance'],
-            'legal', 'lbh', 'pengacara', 'bantuan hukum', 'salah tangkap', 'pelecehan' => ['legal'],
-            'counselor', 'konselor', 'psikolog', 'psikososial' => ['counselor'],
-            'pemadam', 'damkar', 'rescue', 'pemadam rescue', 'pemadam / rescue', 'kebakaran' => ['pemadam'],
-            'kekerasan', 'ancaman' => ['legal', 'counselor'],
-            'lainnya' => ['ambulance', 'legal', 'counselor', 'pemadam'],
+            'ambulance', 'ambulans', 'medis', 'medis darurat', 'kesehatan', 'kecelakaan', 'medis & kecelakaan' => ['ambulance'],
+            'legal', 'lbh', 'pengacara', 'bantuan hukum', 'hukum & keamanan', 'salah tangkap' => ['legal'],
+            'pelecehan', 'pelecehan & bullying', 'bullying', 'perundungan', 'kekerasan' => ['pppa'],
+            'counselor', 'konselor', 'psikolog', 'psikososial', 'krisis mental', 'konseling & trauma' => ['counselor'],
+            'pemadam', 'damkar', 'rescue', 'pemadam rescue', 'pemadam / rescue', 'kebakaran', 'kebakaran & penyelamatan' => ['pemadam'],
+            'sosial & lansia/anak terlantar', 'sosial' => ['pppa', 'counselor'],
+            'lainnya' => ['ambulance', 'legal', 'counselor', 'pemadam', 'pppa'],
             default => [],
         };
     }
@@ -101,9 +102,9 @@ class Partner extends Model
         $normalized = preg_replace('/\s+/', ' ', $normalized);
 
         if ($normalized === 'lainnya') {
-            // Get all active partners of the four types
+            // Get all active partners of the five types
             $query = self::query()
-                ->whereIn('partner_type', ['ambulance', 'legal', 'counselor', 'pemadam']);
+                ->whereIn('partner_type', ['ambulance', 'legal', 'counselor', 'pemadam', 'pppa']);
 
             if (Schema::hasColumn('partners', 'is_active')) {
                 $query->where('is_active', true);
@@ -130,7 +131,7 @@ class Partner extends Model
             $grouped = $allPartners->groupBy('partner_type');
 
             $selectedPartners = collect();
-            $types = ['ambulance', 'legal', 'counselor', 'pemadam'];
+            $types = ['ambulance', 'legal', 'counselor', 'pemadam', 'pppa'];
 
             // 1. For each type, get the closest (verified desc, distance_km asc) partner
             foreach ($types as $type) {

@@ -29,10 +29,9 @@
 
     <?php $backUrl = null; ?>
     <?php echo $__env->make('partials.nav-auth', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
-
+ 
     <div class="max-w-6xl mx-auto px-6 py-10 fade-in">
-
-
+  
         
         <div class="flex justify-center mb-10 mt-6 fade-in">
             <div class="relative flex flex-col items-center">
@@ -98,17 +97,32 @@
                             </div>
 
                             <div class="flex items-center gap-2 mb-3 mt-3">
-                                <select id="map-search-type" class="w-1/2 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
+                                <select id="map-search-type" class="w-1/2 border border-gray-200 rounded-2xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
                                     <option value="">Semua</option>
-                                    <option value="ambulance">Ambulans</option>
-                                    <option value="legal">LBH / Pengacara</option>
-                                    <option value="counselor">Psikolog</option>
+                                    <option value="ambulance">Medis Darurat</option>
+                                    <option value="legal">Bantuan Hukum</option>
+                                    <option value="counselor">Psikososial</option>
+                                    <option value="pemadam">Pemadam / Rescue</option>
+                                    <option value="pppa">Layanan PPPA</option>
                                 </select>
-                                <input id="map-search-query" type="text" placeholder="Cari (cth. lbh semarang)" class="w-1/2 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
+                                <input id="map-search-query" type="text" placeholder="Cari (cth. lbh semarang)" class="w-1/2 border border-gray-200 rounded-2xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
                             </div>
 
                             <div id="nearby-partners" class="space-y-2">
-                                <div class="text-sm text-gray-400">Memuat mitra terdekat...</div>
+                                <div class="animate-pulse flex items-center justify-between p-3 bg-[#faf9f7] border border-gray-100 rounded-xl">
+                                    <div class="flex-1 space-y-2">
+                                        <div class="h-4 bg-gray-200 rounded w-2/3"></div>
+                                        <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+                                    </div>
+                                    <div class="w-4 h-4 bg-gray-200 rounded-full"></div>
+                                </div>
+                                <div class="animate-pulse flex items-center justify-between p-3 bg-[#faf9f7] border border-gray-100 rounded-xl">
+                                    <div class="flex-1 space-y-2">
+                                        <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                                        <div class="h-3 bg-gray-200 rounded w-1/3"></div>
+                                    </div>
+                                    <div class="w-4 h-4 bg-gray-200 rounded-full"></div>
+                                </div>
                             </div>
 
                             <button type="button" onclick="openAllPartnersModal()" class="w-full mt-3 sm:hidden text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 py-2.5 rounded-xl transition border border-gray-150 text-center block">
@@ -128,14 +142,12 @@
                     <div class="flex items-center justify-between mb-5">
                         <div>
                             <h2 class="font-semibold text-gray-900">Riwayat Laporan</h2>
-                            <p class="text-gray-400 text-xs mt-0.5"><?php echo e($totalReports); ?> laporan tercatat</p>
+                            <p id="total-reports-text" class="text-gray-400 text-xs mt-0.5">Memuat laporan...</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <?php if($reports->count() > 7): ?>
-                            <button type="button" onclick="openAllReportsModal()" class="hidden sm:inline-flex text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full transition border border-gray-150">
+                            <button type="button" id="btn-view-all-reports" onclick="openAllReportsModal()" class="hidden sm:inline-flex text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full transition border border-gray-150">
                                 Lihat Semua
                             </button>
-                            <?php endif; ?>
                             <a href="<?php echo e(route('report.create')); ?>" class="text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition border border-red-100">+ Laporan Baru</a>
                         </div>
                     </div>
@@ -155,75 +167,39 @@
                         </form>
                     </div>
 
-                    <?php if($reports->count() > 0): ?>
-                    <div class="space-y-3">
-                        <?php $__currentLoopData = $reports->take(7); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $report): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                        <?php
-                        $sc = [
-                            'Submitted'   => ['bg'=>'bg-gray-100',    'text'=>'text-gray-600',  'dot'=>'bg-gray-400'],
-                            'Routed'      => ['bg'=>'bg-blue-50',     'text'=>'text-blue-700',  'dot'=>'bg-blue-500'],
-                            'Viewed'      => ['bg'=>'bg-yellow-50',   'text'=>'text-yellow-700','dot'=>'bg-yellow-500'],
-                            'In Progress' => ['bg'=>'bg-orange-50',   'text'=>'text-orange-700','dot'=>'bg-orange-500'],
-                            'Resolved'    => ['bg'=>'bg-green-50',    'text'=>'text-green-700', 'dot'=>'bg-green-500'],
-                        ];
-                        $s = $sc[$report->status] ?? $sc['Submitted'];
-                        ?>
-                        <a href="/tracking/<?php echo e($report->id); ?>" class="flex items-center justify-between p-4 bg-[#faf9f7] hover:bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition group gap-4">
-                            <div class="min-w-0 flex-1">
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <p class="font-semibold text-gray-900 text-sm truncate"><?php echo e($report->category); ?></p>
-                                    <?php if($report->anonymous): ?>
-                                    <span class="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-semibold">Anonim</span>
-                                    <?php endif; ?>
-                                    <?php if($report->evidences_count > 0): ?>
-                                    <span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-semibold"><?php echo e($report->evidences_count); ?> bukti</span>
-                                    <?php endif; ?>
-                                </div>
-                                <p class="text-gray-400 text-xs mt-1">
-                                    <?php if($report->incident_date): ?>
-                                        <?php echo e(\Carbon\Carbon::parse($report->incident_date)->format('d M Y, H:i')); ?>
-
-                                    <?php else: ?>
-                                        <?php echo e($report->created_at->format('d M Y, H:i')); ?>
-
-                                    <?php endif; ?>
-                                </p>
+                    <div id="reports-skeleton" class="space-y-3">
+                        <div class="animate-pulse flex items-center justify-between p-6 bg-[#faf9f7] rounded-xl border border-gray-100 gap-4">
+                            <div class="flex-1 space-y-2">
+                                <div class="h-4 bg-gray-200 rounded w-1/3"></div>
+                                <div class="h-3 bg-gray-200 rounded w-1/4"></div>
                             </div>
-                            <div class="flex items-center gap-3 flex-shrink-0">
-                                <?php if(in_array($report->status, ['Submitted', 'Routed', 'Viewed'])): ?>
-                                    <div class="items-center gap-1.5 report-action-buttons hidden sm:flex" data-time="<?php echo e($report->created_at->timestamp); ?>">
-                                        <button type="button" data-id="<?php echo e($report->id); ?>" data-category="<?php echo e($report->category); ?>" data-desc="<?php echo e($report->description); ?>" onclick="event.preventDefault(); event.stopPropagation(); openEditReportModal(this)" class="text-xs bg-white hover:bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-200 transition font-medium">Edit</button>
-                                        <form action="<?php echo e(route('report.destroy', $report->id)); ?>" method="POST" data-confirm="Apakah Anda yakin ingin menghapus laporan ini? Tindakan ini tidak dapat dibatalkan." onclick="event.stopPropagation();" class="inline">
-                                            <?php echo csrf_field(); ?>
-                                            <?php echo method_field('DELETE'); ?>
-                                            <button type="submit" class="text-xs bg-white hover:bg-red-50 text-red-600 px-2.5 py-1.5 rounded-lg border border-gray-200 transition font-medium">Hapus</button>
-                                        </form>
-                                    </div>
-                                <?php endif; ?>
-                                <span class="text-xs font-semibold px-2.5 py-1 rounded-full <?php echo e($s['bg']); ?> <?php echo e($s['text']); ?> flex items-center gap-1.5 whitespace-nowrap">
-                                    <span class="w-1.5 h-1.5 rounded-full <?php echo e($s['dot']); ?>"></span>
-                                    <?php echo e($report->status_label_indonesian); ?>
-
-                                </span>
-                                <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            <div class="h-6 bg-gray-200 rounded-full w-20"></div>
+                        </div>
+                        <div class="animate-pulse flex items-center justify-between p-6 bg-[#faf9f7] rounded-xl border border-gray-100 gap-4">
+                            <div class="flex-1 space-y-2">
+                                <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                                <div class="h-3 bg-gray-200 rounded w-1/3"></div>
                             </div>
-                        </a>
-                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
-                        <?php if($reports->count() > 7): ?>
-                        <button type="button" onclick="openAllReportsModal()" class="w-full mt-3 sm:hidden text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 py-2.5 rounded-xl transition border border-gray-150 text-center block">
-                            Lihat <?php echo e($reports->count() - 7); ?> laporan lainnya →
-                        </button>
-                        <?php endif; ?>
+                            <div class="h-6 bg-gray-200 rounded-full w-16"></div>
+                        </div>
+                        <div class="animate-pulse flex items-center justify-between p-6 bg-[#faf9f7] rounded-xl border border-gray-100 gap-4">
+                            <div class="flex-1 space-y-2">
+                                <div class="h-4 bg-gray-200 rounded w-1/4"></div>
+                                <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+                            </div>
+                            <div class="h-6 bg-gray-200 rounded-full w-24"></div>
+                        </div>
                     </div>
-                    <?php else: ?>
-                    <div class="text-center py-10">
+
+                    <div id="reports-list" class="space-y-3 hidden"></div>
+
+                    <div id="reports-empty" class="text-center py-10 hidden">
                         <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                             <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         </div>
                         <p class="text-gray-400 text-sm font-medium">Belum ada laporan</p>
                         <p class="text-gray-300 text-xs mt-1">Laporan kamu akan muncul di sini</p>
                     </div>
-                    <?php endif; ?>
                 </div>
 
             </div>
@@ -243,13 +219,15 @@
             </div>
 
             <div class="flex items-center gap-2 mb-3">
-                <select id="all-partners-type" class="w-1/2 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
+                <select id="all-partners-type" class="w-1/2 border border-gray-200 rounded-2xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
                     <option value="">Semua</option>
-                    <option value="ambulance">Ambulans</option>
-                    <option value="legal">LBH / Pengacara</option>
-                    <option value="counselor">Psikolog</option>
+                    <option value="ambulance">Medis Darurat</option>
+                    <option value="legal">Bantuan Hukum</option>
+                    <option value="counselor">Psikososial</option>
+                    <option value="pemadam">Pemadam / Rescue</option>
+                    <option value="pppa">Layanan PPPA</option>
                 </select>
-                <input id="all-partners-query" type="text" placeholder="Cari (cth. lbh semarang)" class="w-1/2 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
+                <input id="all-partners-query" type="text" placeholder="Cari (cth. lbh semarang)" class="w-1/2 border border-gray-200 rounded-2xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
             </div>
 
             <div id="all-partners-scroll-container" class="flex-1 overflow-auto" onscroll="handleAllPartnersScroll()">
@@ -287,6 +265,7 @@
                         <option value="legal">Bantuan Hukum</option>
                         <option value="counselor">Psikososial</option>
                         <option value="pemadam">Pemadam / Rescue</option>
+                        <option value="pppa">Layanan PPPA</option>
                     </select>
                     <select id="all-reports-status" class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
                         <option value="">Semua Status</option>
@@ -350,17 +329,17 @@
                     <p class="text-gray-400 text-xs mt-1">Pilih kategori — laporan dikirim anonim secara otomatis.</p>
                 </div>
                 <div class="grid grid-cols-2 gap-2.5 p-5">
-                    <?php $__currentLoopData = ['Kekerasan','Kesehatan','Pelecehan','Kecelakaan','Ancaman','Lainnya']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
-                    <button onclick="selectCategory('<?php echo e($cat); ?>')"
+                    <?php $__currentLoopData = ['Kekerasan','Medis & Kecelakaan','Pelecehan & Bullying','Kebakaran & Penyelamatan','Krisis Mental','Hukum & Keamanan','Lainnya']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $cat): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                    <button onclick="selectCategory('<?php echo e($cat); ?>', this)"
                         class="category-btn flex flex-col items-start gap-1 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-300 rounded-2xl px-4 py-4 text-left transition-all group">
-                        <span class="font-bold text-gray-900 text-sm group-hover:text-red-700 transition"><?php echo e($cat); ?></span>
-                        <span class="text-xs text-gray-400">
-                            <?php $hints = ['Kekerasan'=>'Perlu perlindungan','Kesehatan'=>'Butuh bantuan medis','Pelecehan'=>'Butuh pendampingan','Kecelakaan'=>'Butuh respons cepat','Ancaman'=>'Merasa tidak aman','Lainnya'=>'Saya butuh bantuan']; ?>
-                            <?php echo e($hints[$cat]); ?>
-
-                        </span>
+                        <span class="category-name font-bold text-gray-900 text-sm group-hover:text-red-700 transition"><?php echo e($cat); ?></span>
                     </button>
                     <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                </div>
+                <div class="px-5 pb-2.5">
+                    <button type="button" id="btn-next-step" onclick="goToSendingStep()" disabled class="w-full bg-gray-300 text-white py-3 rounded-xl font-semibold text-sm transition opacity-50 cursor-not-allowed">
+                        Lanjut
+                    </button>
                 </div>
                 <div class="px-5 pb-5">
                     <p class="text-center text-xs text-gray-400">Jika nyawa terancam, hubungi langsung:
@@ -390,6 +369,8 @@
         </div>
     </div>
 
+
+
     
     <div id="edit-report-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-[110] items-center justify-center px-4 transition-all duration-300">
         <div class="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl">
@@ -409,10 +390,16 @@
                 <div class="mb-4">
                     <label class="block text-sm font-bold text-gray-900 mb-1">Kategori Laporan</label>
                     <select name="category" id="edit-category" class="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-red-500 focus:bg-white" required>
-                        <option value="ambulance">Medis Darurat (Ambulans)</option>
-                        <option value="legal">Bantuan Hukum (LBH)</option>
-                        <option value="counselor">Psikososial (Psikolog)</option>
-                        <option value="pemadam">Pemadam / Rescue</option>
+                        <option value="Kekerasan">Kekerasan</option>
+                        <option value="Medis & Kecelakaan">Medis & Kecelakaan</option>
+                        <option value="Pelecehan & Bullying">Pelecehan & Bullying</option>
+                        <option value="Kebakaran & Penyelamatan">Kebakaran & Penyelamatan</option>
+                        <option value="Krisis Mental">Krisis Mental</option>
+                        <option value="Hukum & Keamanan">Hukum & Keamanan</option>
+                        <option value="Salah Tangkap">Salah Tangkap / Kriminalisasi</option>
+                        <option value="Konseling & Trauma">Konseling & Trauma</option>
+                        <option value="Sosial">Sosial / Anak Terlantar</option>
+                        <option value="Lainnya">Lainnya</option>
                     </select>
                 </div>
                 
@@ -430,13 +417,34 @@
     </div>
 
     <script>
+    const csrf = '<?php echo e(csrf_token()); ?>';
+
+    function dismissDashboardHelper() {
+        const card = document.getElementById('dashboard-helper-guide');
+        if (card) {
+            card.classList.add('opacity-0', 'max-h-0', 'py-0', 'my-0', 'overflow-hidden');
+            setTimeout(() => {
+                card.remove();
+            }, 500);
+        }
+        localStorage.setItem('safora_dashboard_guide_dismissed', '1');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const guideDismissed = localStorage.getItem('safora_dashboard_guide_dismissed');
+        const card = document.getElementById('dashboard-helper-guide');
+        if (!guideDismissed && card) {
+            card.classList.remove('hidden');
+        }
+    });
     // Indonesian UI Mappers
     function getMitraTypeLabel(type) {
         return {
             ambulance: 'Medis Darurat',
             legal: 'Bantuan Hukum',
             counselor: 'Psikososial',
-            pemadam: 'Pemadam / Rescue'
+            pemadam: 'Pemadam / Rescue',
+            pppa: 'Layanan PPPA'
         }[type] || type;
     }
 
@@ -584,6 +592,8 @@
             key = 'counselor';
         } else if (normalized.includes('pemadam') || normalized.includes('fire') || normalized.includes('rescue')) {
             key = 'pemadam';
+        } else if (normalized.includes('pppa')) {
+            key = 'pppa';
         }
 
         const visuals = {
@@ -602,6 +612,10 @@
             pemadam: {
                 bg: 'bg-orange-600',
                 svg: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22a6 6 0 0 0 6-6c0-3.5-2.5-5.5-4.5-8.5-.5 2-2 3-3.5 4.5.2-2.5-.8-4.5-2-6C6.5 9.5 6 12 6 16a6 6 0 0 0 6 6Z"/></svg>'
+            },
+            pppa: {
+                bg: 'bg-purple-600',
+                svg: '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>'
             },
             default: {
                 bg: 'bg-gray-700',
@@ -628,7 +642,9 @@
             const p = x.partner;
             const km = Number(x.distance_km) || 0;
             if (p.latitude && p.longitude) {
-                bounds.push([p.latitude, p.longitude]);
+                if (km <= 30) {
+                    bounds.push([p.latitude, p.longitude]);
+                }
                 const visual = partnerMarkerVisual(p.partner_type);
                 
                 const partnerIcon = L.divIcon({
@@ -654,8 +670,11 @@
         });
 
         emergencies.forEach((e) => {
+            const km = Number(e.distance_km) || 0;
             if (e.latitude && e.longitude) {
-                bounds.push([e.latitude, e.longitude]);
+                if (km <= 30) {
+                    bounds.push([e.latitude, e.longitude]);
+                }
 
                 const emergencyIcon = L.divIcon({
                     className: 'custom-emergency-marker',
@@ -685,8 +704,10 @@
             }
         });
         
-        if (bounds.length > 0 && !window.__mapUserPanned) {
+        if (bounds.length > 1 && !window.__mapUserPanned) {
             map.fitBounds(bounds, { padding: [30, 30], maxZoom: 15 });
+        } else if (lat && lng && !window.__mapUserPanned) {
+            map.setView([lat, lng], 11);
         }
     }
 
@@ -696,8 +717,23 @@
 
         if(!el) return;
 
-        try{
-            el.innerHTML = '<div class="text-sm text-gray-400">Memuat mitra...</div>';
+        try {
+            el.innerHTML = `
+                <div class="animate-pulse flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl">
+                    <div class="flex-1 space-y-2">
+                        <div class="h-4 bg-gray-200 rounded w-2/3"></div>
+                        <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+                    </div>
+                    <div class="w-4 h-4 bg-gray-200 rounded-full"></div>
+                </div>
+                <div class="animate-pulse flex items-center justify-between p-3 bg-white border border-gray-100 rounded-xl">
+                    <div class="flex-1 space-y-2">
+                        <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                        <div class="h-3 bg-gray-200 rounded w-1/3"></div>
+                    </div>
+                    <div class="w-4 h-4 bg-gray-200 rounded-full"></div>
+                </div>
+            `;
 
             const params = new URLSearchParams();
             if(type) params.set('type', type);
@@ -790,9 +826,110 @@
         });
     }
 
+    async function fetchDashboardSummary() {
+        const skeleton = document.getElementById('reports-skeleton');
+        const list = document.getElementById('reports-list');
+        const empty = document.getElementById('reports-empty');
+        const totalText = document.getElementById('total-reports-text');
+        const viewAllBtn = document.getElementById('btn-view-all-reports');
+
+        try {
+            const res = await fetch('/dashboard/summary-data', { headers: { 'Accept': 'application/json' } });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const json = await res.json();
+
+            // 1. Update total text
+            if (totalText) {
+                totalText.textContent = json.totalReports + ' laporan tercatat';
+            }
+
+            // 2. Update view all button visibility
+            if (viewAllBtn) {
+                if (json.totalReports > 7) {
+                    viewAllBtn.classList.remove('hidden');
+                } else {
+                    viewAllBtn.classList.add('hidden');
+                }
+            }
+
+            // 3. Render reports list
+            if (json.reports && json.reports.length > 0) {
+                let html = json.reports.map(r => {
+                    const anonBadge = r.anonymous ? `<span class="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-semibold">Anonim</span>` : '';
+                    const evBadge = r.evidences_count > 0 ? `<span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-semibold">${r.evidences_count} bukti</span>` : '';
+                    
+                    let actionButtons = '';
+                    if (r.is_editable_deletable) {
+                        actionButtons = `
+                            <div class="items-center gap-1.5 report-action-buttons hidden sm:flex" data-time="${r.created_at_timestamp}">
+                                <button type="button" data-id="${r.id}" data-category="${r.category}" data-desc="${r.description || ''}" onclick="event.preventDefault(); event.stopPropagation(); openEditReportModal(this)" class="text-xs bg-white hover:bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg border border-gray-200 transition font-medium">Edit</button>
+                                <form action="/report/${r.id}" method="POST" data-confirm="Apakah Anda yakin ingin menghapus laporan ini? Tindakan ini tidak dapat dibatalkan." onclick="event.stopPropagation();" class="inline">
+                                    <input type="hidden" name="_token" value="${csrf}">
+                                    <input type="hidden" name="_method" value="DELETE">
+                                    <button type="submit" class="text-xs bg-white hover:bg-red-50 text-red-600 px-2.5 py-1.5 rounded-lg border border-gray-200 transition font-medium">Hapus</button>
+                                </form>
+                            </div>
+                        `;
+                    }
+
+                    return `
+                        <a href="/tracking/${r.id}" class="flex items-center justify-between p-6 bg-[#faf9f7] hover:bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition group gap-4">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <p class="font-semibold text-gray-900 text-sm truncate">${r.category}</p>
+                                    ${anonBadge}
+                                    ${evBadge}
+                                </div>
+                                <p class="text-gray-400 text-xs mt-1">${r.incident_date}</p>
+                            </div>
+                            <div class="flex items-center gap-3 flex-shrink-0">
+                                ${actionButtons}
+                                <span class="text-xs font-semibold px-2.5 py-1 rounded-full ${r.status_classes.bg} ${r.status_classes.text} flex items-center gap-1.5 whitespace-nowrap">
+                                    <span class="w-1.5 h-1.5 rounded-full ${r.status_classes.dot}"></span>
+                                    ${r.status_label}
+                                </span>
+                                <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </div>
+                        </a>
+                    `;
+                }).join('');
+
+                if (json.totalReports > 7) {
+                    html += `
+                        <button type="button" onclick="openAllReportsModal()" class="w-full mt-3 sm:hidden text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 py-2.5 rounded-xl transition border border-gray-150 text-center block">
+                            Lihat ${json.totalReports - 7} laporan lainnya →
+                        </button>
+                    `;
+                }
+
+                if (list) {
+                    list.innerHTML = html;
+                    list.classList.remove('hidden');
+                }
+                if (skeleton) skeleton.classList.add('hidden');
+                if (empty) empty.classList.add('hidden');
+
+                // Recalculate edit/delete button timer hide
+                checkReportActionTime();
+            } else {
+                if (skeleton) skeleton.classList.add('hidden');
+                if (list) list.classList.add('hidden');
+                if (empty) empty.classList.remove('hidden');
+            }
+        } catch (err) {
+            console.error('Gagal memuat ringkasan dashboard:', err);
+            if (skeleton) skeleton.classList.add('hidden');
+            if (list) {
+                list.innerHTML = `<div class="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2">Gagal memuat ringkasan: ${err.message}</div>`;
+                list.classList.remove('hidden');
+            }
+        }
+    }
+
 
     // initial load (semua)
     loadNearbyPartners();
+    fetchDashboardSummary();
 
     // Lihat Semua
     const btnViewAll = document.getElementById('btn-view-all-partners');
@@ -1063,7 +1200,6 @@
 
 
     // ─── Emergency Modal Logic ───────────────────────────────────────────────────
-    const csrf = '<?php echo e(csrf_token()); ?>';
     const isLoggedIn = true;
     window.hasActiveReport = false;
     let locationPayload = { latitude: null, longitude: null };
@@ -1088,14 +1224,48 @@
         document.body.style.overflow = '';
     }
 
-    function selectCategory(cat) {
+    function selectCategory(cat, element) {
         selectedCategory = cat;
+
+        // Reset all category buttons to inactive
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.classList.remove('border-red-600', 'bg-red-50', 'text-red-700');
+            btn.classList.add('bg-gray-50', 'border-gray-200');
+            const nameSpan = btn.querySelector('.category-name');
+            if (nameSpan) {
+                nameSpan.classList.remove('text-red-700');
+                nameSpan.classList.add('text-gray-900');
+            }
+        });
+
+        // Mark current category button as active
+        if (element) {
+            element.classList.remove('bg-gray-50', 'border-gray-200');
+            element.classList.add('border-red-600', 'bg-red-50', 'text-red-700');
+            const nameSpan = element.querySelector('.category-name');
+            if (nameSpan) {
+                nameSpan.classList.remove('text-gray-900');
+                nameSpan.classList.add('text-red-700');
+            }
+        }
+
+        // Enable next button
+        const nextBtn = document.getElementById('btn-next-step');
+        if (nextBtn) {
+            nextBtn.removeAttribute('disabled');
+            nextBtn.classList.remove('bg-gray-300', 'opacity-50', 'cursor-not-allowed');
+            nextBtn.classList.add('bg-red-700', 'hover:bg-red-800');
+        }
+    }
+
+    function goToSendingStep() {
+        if (!selectedCategory) return;
         requestLocation();
 
         // Switch to step 2
         document.getElementById('step-category').classList.add('hidden');
         document.getElementById('step-sending').classList.remove('hidden');
-        document.getElementById('modal-category-label').textContent = cat;
+        document.getElementById('modal-category-label').textContent = selectedCategory;
         document.getElementById('modal-status').textContent = 'Mengambil lokasi GPS...';
 
         submitEmergency();
@@ -1116,6 +1286,27 @@
         isSubmitting = false;
         selectedCategory = null;
         locationPayload = { latitude: null, longitude: null };
+
+        // Reset all category buttons to inactive
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.classList.remove('border-red-600', 'bg-red-50', 'text-red-700');
+            btn.classList.add('bg-gray-50', 'border-gray-200');
+            const nameSpan = btn.querySelector('.category-name');
+            if (nameSpan) {
+                nameSpan.classList.remove('text-red-700');
+                nameSpan.classList.add('text-gray-900');
+            }
+        });
+
+        // Disable next button
+        const nextBtn = document.getElementById('btn-next-step');
+        if (nextBtn) {
+            nextBtn.setAttribute('disabled', 'true');
+            nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            nextBtn.classList.remove('bg-red-700', 'hover:bg-red-800');
+            nextBtn.classList.add('bg-gray-300');
+        }
+
         document.getElementById('step-sending').classList.add('hidden');
         document.getElementById('step-category').classList.remove('hidden');
     }
@@ -1136,7 +1327,7 @@
             description: null,
             latitude: locationPayload.latitude || lat,
             longitude: locationPayload.longitude || lng,
-            anonymous: 1,
+            anonymous: 0,
         };
 
         try {
@@ -1162,7 +1353,13 @@
 
             const data = await res.json();
             document.body.style.overflow = '';
-            window.location.href = data.tracking_url;
+
+            if (data.call_phone) {
+                window.location.href = 'tel:' + data.call_phone;
+            }
+            setTimeout(() => {
+                window.location.href = data.tracking_url;
+            }, 500);
         } catch (e) {
             document.getElementById('modal-status').textContent = e.message;
             isSubmitting = false;
@@ -1307,7 +1504,7 @@
                     const anonBadge = r.anonymous ? `<span class="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-semibold">Anonim</span>` : '';
                     const evBadge  = r.evidences_count > 0 ? `<span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-semibold">${r.evidences_count} bukti</span>` : '';
                     return `
-                    <a href="/tracking/${r.id}" class="flex items-center justify-between p-4 bg-[#faf9f7] hover:bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition group gap-4">
+                    <a href="/tracking/${r.id}" class="flex items-center justify-between p-6 bg-[#faf9f7] hover:bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition group gap-4">
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-2 flex-wrap">
                                 <p class="font-semibold text-gray-900 text-sm truncate">${catLabel}</p>

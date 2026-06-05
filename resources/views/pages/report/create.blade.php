@@ -30,10 +30,11 @@
                     <label class="block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5">Kategori Kejadian *</label>
                     <select name="category" class="w-full border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-3 text-sm focus:outline-none transition bg-white" required>
                         <option value="" disabled selected>Pilih Kategori...</option>
+                        <option value="Kekerasan">Kekerasan Fisik / KDRT</option>
+                        <option value="Pelecehan & Bullying">Pelecehan & Perundungan (Bullying)</option>
                         <option value="Salah Tangkap">Salah Tangkap / Kriminalisasi</option>
-                        <option value="Pelecehan">Pelecehan Seksual</option>
-                        <option value="Kekerasan">Kekerasan Fisik</option>
-                        <option value="Kecelakaan">Kecelakaan Lalu Lintas</option>
+                        <option value="Konseling & Trauma">Konseling & Pemulihan Trauma</option>
+                        <option value="Sosial">Sosial / Anak/Lansia Terlantar</option>
                         <option value="Lainnya">Lainnya</option>
                     </select>
                 </div>

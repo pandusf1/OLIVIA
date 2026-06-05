@@ -37,8 +37,29 @@ class ChatController extends Controller
             return true;
         }
 
-        // Pelapor via session (anonymous report)
-        if (in_array($report->id, session()->get('my_reports', []))) {
+        // Kontak Terpercaya login
+        if ($user && $report->user_id && $user->phone) {
+            $isTrustedContact = \App\Models\TrustedContact::where('user_id', $report->user_id)
+                ->where('contact_phone', $user->phone)
+                ->where('is_verified', true)
+                ->exists();
+            if ($isTrustedContact) {
+                return true;
+            }
+        }
+
+        // Pelapor via session/cookie (anonymous report)
+        $cookieReports = request()->hasCookie('safora_my_reports')
+            ? json_decode(request()->cookie('safora_my_reports'), true) ?: []
+            : [];
+        if (in_array($report->id, session()->get('my_reports', [])) || in_array($report->id, $cookieReports)) {
+            try {
+                $sessionReports = session()->get('my_reports', []);
+                if (!in_array($report->id, $sessionReports)) {
+                    $sessionReports[] = $report->id;
+                    session()->put('my_reports', $sessionReports);
+                }
+            } catch (\Exception $e) {}
             return true;
         }
 
@@ -317,7 +338,7 @@ class ChatController extends Controller
 
     // ─── Direct User Chat methods ───────────────────────────────────────────
 
-    public function indexThreads()
+    public function indexThreads(Request $request)
     {
         $user = auth()->user();
         $isPartner = $user && $user->role === 'partner';
@@ -347,6 +368,48 @@ class ChatController extends Controller
                 ->orderBy('last_message_at', 'desc')
                 ->get();
             $viewerType = 'user';
+        }
+
+        if ($request->expectsJson() || $request->ajax()) {
+            $data = $threads->map(function ($t) use ($viewerType) {
+                $threadName = $viewerType === 'partner'
+                    ? ($t->user?->name ?? 'Pelapor')
+                    : ($t->partner?->partner_name ?? 'Mitra');
+                
+                $threadType = $viewerType === 'partner'
+                    ? 'Pelapor'
+                    : match($t->partner?->partner_type ?? '') {
+                        'ambulance' => 'Medis Darurat',
+                        'legal' => 'Bantuan Hukum',
+                        'counselor' => 'Psikososial',
+                        'pemadam' => 'Pemadam / Rescue',
+                        default => $t->partner?->partner_type ?? ''
+                    };
+
+                $threadHref = '#';
+                if ($t->report_id) {
+                    $threadHref = route('chat.report', ['reportId' => $t->report_id]);
+                } elseif ($t->partner_id) {
+                    $threadHref = route('chat.messages', ['partnerId' => $t->partner_id]);
+                }
+
+                return [
+                    'id' => $t->id,
+                    'report_id' => $t->report_id,
+                    'partner_id' => $t->partner_id,
+                    'user_id' => $t->user_id,
+                    'threadName' => $threadName,
+                    'threadType' => $threadType,
+                    'threadHref' => $threadHref,
+                    'partner_image' => $t->partner?->image_url ?? '',
+                    'last_message_time' => $t->last_message_at ? $t->last_message_at->format('d M Y, H:i') : 'Belum ada pesan',
+                ];
+            });
+
+            return response()->json([
+                'threads' => $data,
+                'viewerType' => $viewerType,
+            ]);
         }
 
         return view('pages.user.chat', [

@@ -28,8 +28,8 @@ class FonnteService
                 return;
             }
 
-            Http::timeout(1)
-                ->connectTimeout(1)
+            Http::timeout(3)
+                ->connectTimeout(2)
                 ->withHeaders([
                     'Authorization' => $token,
                 ])

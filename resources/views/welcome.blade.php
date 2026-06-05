@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Safora — Suara & Perlindungan</title>
+    <title>Safora</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+        html { scroll-behavior: smooth; }
         * { font-family: 'Inter', sans-serif; }
         @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
         .fade-up { animation: fadeUp 0.6s ease forwards; }
@@ -44,7 +45,7 @@
     </nav>
 
     {{-- HERO --}}
-    <section class="sm:pt-12 pt-11 min-h-screen flex items-center bg-[#faf9f7] relative overflow-hidden">
+    <section id="hero-section" class="sm:pt-12 pt-11 min-h-screen flex items-center bg-[#faf9f7] relative overflow-hidden">
 
         <div class="max-w-xl md:max-w-5xl mx-auto px-5 w-full flex flex-col items-center text-center pt-10 pb-8">
 
@@ -129,16 +130,17 @@
                     <p class="text-gray-400 text-xs mt-1">Pilih kategori — laporan dikirim anonim secara otomatis.</p>
                 </div>
                 <div class="grid grid-cols-2 gap-2.5 p-5">
-                    @foreach(['Kekerasan','Kesehatan','Pelecehan','Kecelakaan','Ancaman','Lainnya'] as $cat)
-                    <button onclick="selectCategory('{{ $cat }}')"
+                    @foreach(['Kekerasan','Medis & Kecelakaan','Pelecehan & Bullying','Kebakaran & Penyelamatan','Krisis Mental','Hukum & Keamanan','Lainnya'] as $cat)
+                    <button onclick="selectCategory('{{ $cat }}', this)"
                         class="category-btn flex flex-col items-start gap-1 bg-gray-50 hover:bg-red-50 border border-gray-200 hover:border-red-300 rounded-2xl px-4 py-4 text-left transition-all group">
-                        <span class="font-bold text-gray-900 text-sm group-hover:text-red-700 transition">{{ $cat }}</span>
-                        <span class="text-xs text-gray-400">
-                            @php $hints = ['Kekerasan'=>'Perlu perlindungan','Kesehatan'=>'Butuh bantuan medis','Pelecehan'=>'Butuh pendampingan','Kecelakaan'=>'Butuh respons cepat','Ancaman'=>'Merasa tidak aman','Lainnya'=>'Saya butuh bantuan']; @endphp
-                            {{ $hints[$cat] }}
-                        </span>
+                        <span class="category-name font-bold text-gray-900 text-sm group-hover:text-red-700 transition">{{ $cat }}</span>
                     </button>
                     @endforeach
+                </div>
+                <div class="px-5 pb-2.5">
+                    <button type="button" id="btn-next-step" onclick="goToSendingStep()" disabled class="w-full bg-gray-300 text-white py-3 rounded-xl font-semibold text-sm transition opacity-50 cursor-not-allowed">
+                        Lanjut
+                    </button>
                 </div>
                 <div class="px-5 pb-5">
                     <p class="text-center text-xs text-gray-400">Jika nyawa terancam, hubungi langsung:
@@ -168,70 +170,249 @@
         </div>
     </div>
 
+    {{-- CARA KERJA INTERAKTIF --}}
+    <section id="cara-kerja" class="bg-[#fcfbf9] py-24 px-6 border-y border-gray-200">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center max-w-2xl mx-auto mb-16">
+                <p class="text-xs font-bold uppercase tracking-widest text-red-600 mb-3">ALUR PERLINDUNGAN</p>
+                <h2 class="text-2xl md:text-3xl font-black text-gray-900 leading-tight">Bagaimana Safora Melindungi Anda?</h2>
+                <p class="text-gray-500 text-sm mt-3">Pelajari alur perlindungan instan saat Anda mengaktifkan mode darurat.</p>
+            </div>
 
+            <div class="grid lg:grid-cols-12 gap-8 items-stretch">
+                {{-- KIRI: Langkah-langkah interaktif --}}
+                <div class="lg:col-span-5 flex flex-col gap-3 justify-center">
+                    {{-- Step 1 --}}
+                    <button type="button" onclick="switchWorkStep(1)" id="work-step-btn-1" class="work-step-btn text-left p-5 rounded-2xl border transition-all duration-300 bg-white border-red-600 shadow-md group">
+                        <div class="flex items-start gap-4">
+                            <span class="work-step-num font-mono text-2xl font-black text-red-700 transition">01</span>
+                            <div>
+                                <h3 class="font-bold text-gray-900 text-base mb-1 group-hover:text-red-700 transition">Lapor Cepat (GPS & Akun)</h3>
+                                <p class="text-gray-500 text-xs leading-relaxed">Satu tombol langsung melacak posisi Anda. Bisa dikirim tanpa akun (anonim/rahasia) atau otomatis terhubung ke profil akun Anda.</p>
+                            </div>
+                        </div>
+                    </button>
 
+                    {{-- Step 2 --}}
+                    <button type="button" onclick="switchWorkStep(2)" id="work-step-btn-2" class="work-step-btn text-left p-5 rounded-2xl border transition-all duration-300 bg-transparent border-transparent hover:bg-gray-100/50 group">
+                        <div class="flex items-start gap-4">
+                            <span class="work-step-num font-mono text-2xl font-black text-gray-400 group-hover:text-red-600 transition">02</span>
+                            <div>
+                                <h3 class="font-bold text-gray-900 text-base mb-1 group-hover:text-red-700 transition">Telepon Instansi Terdekat</h3>
+                                <p class="text-gray-500 text-xs leading-relaxed">Aplikasi telepon di HP langsung terbuka dan otomatis terisi nomor layanan darurat terdekat yang sesuai (seperti Ambulans 119 atau Damkar).</p>
+                            </div>
+                        </div>
+                    </button>
+
+                    {{-- Step 3 --}}
+                    <button type="button" onclick="switchWorkStep(3)" id="work-step-btn-3" class="work-step-btn text-left p-5 rounded-2xl border transition-all duration-300 bg-transparent border-transparent hover:bg-gray-100/50 group">
+                        <div class="flex items-start gap-4">
+                            <span class="work-step-num font-mono text-2xl font-black text-gray-400 group-hover:text-red-600 transition">03</span>
+                            <div>
+                                <h3 class="font-bold text-gray-900 text-base mb-1 group-hover:text-red-700 transition">Hubungi Warga & Keluarga</h3>
+                                <p class="text-gray-500 text-xs leading-relaxed">Sistem otomatis mengirim pesan WhatsApp darurat ke warga sekitar (radius 10 km) dan keluarga terdekat untuk pertolongan pertama.</p>
+                            </div>
+                        </div>
+                    </button>
+
+                    {{-- Step 4 --}}
+                    <button type="button" onclick="switchWorkStep(4)" id="work-step-btn-4" class="work-step-btn text-left p-5 rounded-2xl border transition-all duration-300 bg-transparent border-transparent hover:bg-gray-100/50 group">
+                        <div class="flex items-start gap-4">
+                            <span class="work-step-num font-mono text-2xl font-black text-gray-400 group-hover:text-red-600 transition">04</span>
+                            <div>
+                                <h3 class="font-bold text-gray-900 text-base mb-1 group-hover:text-red-700 transition">Hubungkan Petugas Resmi</h3>
+                                <p class="text-gray-500 text-xs leading-relaxed">Laporan diteruskan ke dinas atau petugas penyelamat terdekat dalam radius 20 km agar segera ditangani secara resmi.</p>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+
+                {{-- KANAN: Visualisasi Panel Dinamis --}}
+                <div class="lg:col-span-7 bg-white border border-gray-200 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col justify-between min-h-[360px] relative overflow-hidden">
+                    <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-red-500/5 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="absolute -left-10 -top-10 w-48 h-48 bg-purple-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+                    {{-- Content Step 1 --}}
+                    <div id="work-pane-1" class="work-pane space-y-4">
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-xs font-bold text-red-700 px-2.5 py-1 bg-red-50 rounded-full">Kirim Lokasi</span>
+                            <span class="text-xs text-gray-400">GPS Aktif</span>
+                        </div>
+                        <div class="space-y-3">
+                            <p class="text-sm font-semibold text-gray-900">Mencatat Lokasi GPS & Akun Anda</p>
+                            <p class="text-gray-500 text-xs leading-relaxed">Sistem mencatat lokasi GPS Anda dengan akurat. Jika belum masuk akun, laporan terkirim sebagai tamu rahasia (anonim). Jika sudah masuk akun, identitas Anda otomatis terhubung agar memudahkan petugas mengenali Anda.</p>
+                            
+                            {{-- Mockup UI --}}
+                            <div class="bg-gray-50 rounded-xl p-4 border border-gray-150 space-y-2 mt-2">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-2.5 h-2.5 bg-red-600 rounded-full animate-ping"></div>
+                                    <span class="text-xs font-bold text-gray-800">Menghubungkan GPS...</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 text-[11px] pt-1">
+                                    <div class="bg-white border border-red-500 text-red-700 font-bold p-2.5 rounded-lg text-center shadow-sm">👤 Akun Terhubung<br><span class="text-[9px] text-gray-400 font-normal">Identitas Tercatat</span></div>
+                                    <div class="bg-white border border-gray-200 text-gray-500 p-2.5 rounded-lg text-center opacity-65">🕶️ Tamu (Anonim)<br><span class="text-[9px] text-gray-400 font-normal">Identitas Rahasia</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Content Step 2 --}}
+                    <div id="work-pane-2" class="work-pane space-y-4 hidden">
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-xs font-bold text-red-700 px-2.5 py-1 bg-red-50 rounded-full">Telepon Darurat</span>
+                            <span class="text-xs text-gray-400">Panggilan Langsung</span>
+                        </div>
+                        <div class="space-y-3">
+                            <p class="text-sm font-semibold text-gray-900">Layanan Telepon Siap Panggil</p>
+                            <p class="text-gray-500 text-xs leading-relaxed">Sistem memilih nomor layanan darurat terbaik berdasarkan jenis kejadian yang Anda laporkan. Tombol panggil di HP Anda akan langsung terisi nomor tersebut secara otomatis.</p>
+                            
+                            {{-- Mockup UI --}}
+                            <div class="bg-gray-900 text-white rounded-xl p-4 border border-gray-800 flex items-center justify-between mt-2">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 bg-green-500 rounded-full flex items-center justify-center animate-pulse">
+                                        <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/></svg>
+                                    </div>
+                                    <div>
+                                        <p class="text-[10px] text-gray-400 uppercase tracking-wider">Memanggil Layanan</p>
+                                        <p class="text-sm font-bold text-white">Layanan Ambulans 119</p>
+                                    </div>
+                                </div>
+                                <span class="text-xs text-red-400 font-mono animate-pulse font-bold">Panggil...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Content Step 3 --}}
+                    <div id="work-pane-3" class="work-pane space-y-4 hidden">
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-xs font-bold text-red-700 px-2.5 py-1 bg-red-50 rounded-full">Mengabari Sekitar</span>
+                            <span class="text-xs text-gray-400">Pesan WhatsApp</span>
+                        </div>
+                        <div class="space-y-3">
+                            <p class="text-sm font-semibold text-gray-900">Bantuan Cepat dari Warga Terdekat & Keluarga</p>
+                            <p class="text-gray-500 text-xs leading-relaxed">Sistem mengirimkan pesan bantuan darurat secara otomatis ke masyarakat terdekat dalam radius 10 km dan keluarga Anda melalui WhatsApp, agar pertolongan pertama bisa langsung datang.</p>
+                            
+                            {{-- Mockup UI --}}
+                            <div class="bg-[#e5ddd5] rounded-xl p-3 border border-gray-300 space-y-2 text-xs mt-2 relative">
+                                <div class="bg-[#dcf8c6] rounded-lg p-2.5 shadow-sm max-w-[85%] border border-gray-250/30">
+                                    <p class="font-bold text-[10px] text-green-800 mb-0.5">🚨 Safora Emergency Alert</p>
+                                    <p class="text-gray-800 text-[11px] leading-snug">*BUTUH BANTUAN!* Seseorang membutuhkan pertolongan darurat dekat lokasi Anda (radius &lt; 10km). Tolong bantu korban di lokasi berikut: https://safora.id/tracking/e439</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Content Step 4 --}}
+                    <div id="work-pane-4" class="work-pane space-y-4 hidden">
+                        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                            <span class="text-xs font-bold text-red-700 px-2.5 py-1 bg-red-50 rounded-full">Penanganan Resmi</span>
+                            <span class="text-xs text-gray-400">Petugas Terdekat &lt; 20 Km</span>
+                        </div>
+                        <div class="space-y-3">
+                            <p class="text-sm font-semibold text-gray-900">Diteruskan Langsung ke Lembaga Penyelamat</p>
+                            <p class="text-gray-500 text-xs leading-relaxed">Laporan diteruskan ke instansi penyelamat terdekat (Pemadam Kebakaran, Bantuan Hukum, PPPA, dll.) dalam radius maksimal 20 km. Anda dan keluarga dapat memantau status penanganan secara langsung.</p>
+                            
+                            {{-- Mockup UI --}}
+                            <div class="bg-white rounded-xl p-3.5 border border-gray-200 shadow-sm space-y-2 mt-2">
+                                <div class="flex items-center justify-between text-[11px]">
+                                    <span class="text-gray-500">Lembaga Penolong:</span>
+                                    <span class="font-bold text-gray-900">Pemadam Kebakaran & Rescue</span>
+                                </div>
+                                <div class="flex items-center justify-between text-[11px]">
+                                    <span class="text-gray-500">Status Laporan:</span>
+                                    <span class="font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded">Petugas Menuju Lokasi (3.2 km)</span>
+                                </div>
+                                <div class="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                    <div class="bg-red-600 h-full rounded-full w-2/3"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Footer/CTA --}}
+                    <div class="border-t border-gray-100 pt-4 flex items-center justify-between text-xs text-gray-400 mt-4">
+                        <span>Safora System Terintegrasi</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
     {{-- MENGAPA --}}
     <section class="bg-white py-20 px-6">
         <div class="max-w-6xl mx-auto">
             <p class="text-xs font-semibold uppercase tracking-widest text-red-600 mb-4">MENGAPA Safora</p>
-            <h2 class="text-4xl font-black text-gray-900 mb-3">Tiga isu, satu platform.</h2>
+            <h2 class="text-2xl md:text-3xl font-black text-gray-900 mb-3">Tiga isu, satu platform.</h2>
             <div class="grid md:grid-cols-3 gap-6">
                 <div class="border border-gray-200 rounded-2xl p-6 hover:border-orange-200 hover:bg-orange-50/30 transition group">
                     <div class="w-12 h-12 flex items-center justify-center mb-4">
                         <span class="text-2xl">🧭</span>
                     </div>
-                    <h3 class="font-bold text-gray-900 text-lg mb-2">Tidak tahu harus lapor ke mana</h3>
-                    <p class="text-gray-500 text-sm leading-relaxed">Korban panik, tidak tahu harus menghubungi siapa. Safora routing otomatis ke lembaga yang paling sesuai.</p>
+                    <h3 class="font-bold text-gray-900 text-lg mb-2">Kesulitan Menghubungi Instansi</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">Safora langsung menyalurkan laporan Anda ke instansi darurat terdekat secara otomatis. *Masuk akun untuk menyimpan riwayat laporan permanen.*</p>
                 </div>
                 <div class="border border-gray-200 rounded-2xl p-6 hover:border-orange-200 hover:bg-orange-50/30 transition group">
                     <div class="w-12 h-12 flex items-center justify-center mb-4">
                         <span class="text-2xl">🛡️</span>
                     </div>
-                    <h3 class="font-bold text-gray-900 text-lg mb-2">Pelecehan & kekerasan</h3>
-                    <p class="text-gray-500 text-sm leading-relaxed">Mode anonim melindungi identitas. Hanya LBH terverifikasi yang akses. Psikolog tersedia via smart routing.</p>
+                    <h3 class="font-bold text-gray-900 text-lg mb-2">Kekhawatiran Keamanan Identitas</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">Laporan terkirim secara rahasia (anonim) tanpa perlu daftar akun. *Masuk akun untuk membuka akses ke obrolan komunitas.*</p>
                 </div>
                 <div class="border border-gray-200 rounded-2xl p-6 hover:border-orange-200 hover:bg-orange-50/30 transition group">
                     <div class="w-12 h-12 flex items-center justify-center mb-4">
                         <span class="text-2xl">🚑</span>
                     </div>
-                    <h3 class="font-bold text-gray-900 text-lg mb-2">Darurat publik & kecelakaan</h3>
-                    <p class="text-gray-500 text-sm leading-relaxed">Kecelakaan, butuh ambulans cepat, warga sekitar tidak tahu kontak darurat. Safora routing otomatis.</p>
+                    <h3 class="font-bold text-gray-900 text-lg mb-2">Keterlambatan Penanganan Darurat</h3>
+                    <p class="text-gray-500 text-sm leading-relaxed">Warga sekitar otomatis menerima pesan bantuan WhatsApp untuk menolong Anda. *Masuk akun untuk langsung mendaftarkan kontak keluarga.*</p>
                 </div>
             </div>
         </div>
     </section>
 
-    {{-- CARA KERJA --}}
-    <section id="cara-kerja" class="bg-[#faf9f7] py-20 px-6">
-        <div class="max-w-6xl mx-auto">
-            <p class="text-xs font-semibold uppercase tracking-widest text-red-600 mb-4">CARA KERJA</p>
-            <h2 class="text-4xl font-black text-gray-900 mb-3">Tiga langkah. Laporan terkirim.</h2>
-            <div class="grid md:grid-cols-3 gap-6">
-                <div class="bg-white border border-gray-200 rounded-2xl p-6 relative">
-                    <div class="w-10 h-10 bg-red-700 rounded-xl flex items-center justify-center font-black text-white text-sm mb-5">1</div>
-                    <h3 class="font-bold text-gray-900 text-lg mb-2">Tekan tombol DARURAT</h3>
-                    <p class="text-gray-500 text-sm leading-relaxed">Satu klik. Countdown 5 detik dengan opsi batal. GPS & waktu otomatis terekam.</p>
-                </div>
-                <div class="bg-white border border-gray-200 rounded-2xl p-6 relative">
-                    <div class="w-10 h-10 bg-red-700 rounded-xl flex items-center justify-center font-black text-white text-sm mb-5">2</div>
-                    <h3 class="font-bold text-gray-900 text-lg mb-2">Pilih kategori kejadian</h3>
-                    <p class="text-gray-500 text-sm leading-relaxed">Kekerasan, kesehatan, pelecehan, kecelakaan, ancaman, atau lainnya. Smart routing bekerja otomatis.</p>
-                </div>
-                <div class="bg-white border border-gray-200 rounded-2xl p-6 relative">
-                    <div class="w-10 h-10 bg-red-700 rounded-xl flex items-center justify-center font-black text-white text-sm mb-5">3</div>
-                    <h3 class="font-bold text-gray-900 text-lg mb-2">Laporan terkirim & terlindungi</h3>
-                    <p class="text-gray-500 text-sm leading-relaxed">MMitra yang tepat menerima laporan. Saksi sekitar dapat berkontribusi. Bukti digital tersimpan aman.</p>
-                </div>
-            </div>
-        </div>
-    </section>
+    {{-- Script untuk Tab Interaktif Cara Kerja --}}
+    <script>
+        function switchWorkStep(step) {
+            // Remove active style from all buttons
+            document.querySelectorAll('.work-step-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'shadow-md', 'border-red-600');
+                btn.classList.add('bg-transparent', 'border-transparent', 'hover:bg-gray-100/50');
+            });
+            document.querySelectorAll('.work-step-num').forEach(num => {
+                num.classList.remove('text-red-700');
+                num.classList.add('text-gray-400');
+            });
+
+            // Add active style to selected button
+            const activeBtn = document.getElementById('work-step-btn-' + step);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-transparent', 'border-transparent', 'hover:bg-gray-100/50');
+                activeBtn.classList.add('bg-white', 'shadow-md', 'border-red-600');
+                
+                const activeNum = activeBtn.querySelector('.work-step-num');
+                if (activeNum) {
+                    activeNum.classList.remove('text-gray-400');
+                    activeNum.classList.add('text-red-700');
+                }
+            }
+
+            // Hide all panels
+            document.querySelectorAll('.work-pane').forEach(pane => {
+                pane.classList.add('hidden');
+            });
+
+            // Show active panel
+            const activePane = document.getElementById('work-pane-' + step);
+            if (activePane) {
+                activePane.classList.remove('hidden');
+            }
+        }
+    </script>
 
     {{-- FITUR --}}
     <section class="bg-white py-20 px-6">
         <div class="max-w-6xl mx-auto">
             <p class="text-xs font-semibold uppercase tracking-widest text-red-600 mb-4">FITUR UTAMA</p>
-            <h2 class="text-4xl font-black text-gray-900 mb-3">Dirancang untuk keadaan darurat.</h2>
+            <h2 class="text-2xl md:text-3xl font-black text-gray-900 mb-3">Dirancang untuk keadaan darurat.</h2>
             <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div class="border border-gray-200 rounded-2xl p-5 hover:border-red-200 hover:bg-red-50/20 transition">
                     <div class="w-10 h-10 flex items-center justify-center mb-1">
@@ -282,9 +463,9 @@
     {{-- CTA --}}
     <section class=" py-20 px-6">
         <div class="max-w-3xl mx-auto text-center">
-            <h2 class="text-4xl font-black mb-4">Siap ketika kamu butuhkan.</h2>
-            <p class="text-gray-400 mb-8">Tidak perlu login. Tidak perlu bayar. Fokus awal: Semarang & sekitarnya.</p>
-            <a href="/emergency" class="inline-block bg-red-700 hover:bg-red-800 text-white px-8 py-4 rounded-xl font-bold text-lg transition">
+            <h2 class="text-2xl md:text-3xl font-black mb-4">Siap ketika kamu butuhkan.</h2>
+            <p class="text-gray-400 mb-8">Tidak perlu login. Tidak perlu bayar.</p>
+            <a href="#hero-section" class="inline-block bg-red-700 hover:bg-red-800 text-white px-8 py-4 rounded-xl font-bold text-lg transition">
                 Kirim Laporan Sekarang →
             </a>
         </div>
@@ -294,10 +475,10 @@
     <footer class="bg-white border-t border-gray-200 py-8 px-6">
         <div class="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between">
             <div class="flex items-center gap-1">
-                <span class="font-bold text-gray-900 text-md">©</span>
-                <span id="year" class="font-bold text-gray-900 text-sm"></span>
-                <span class="font-bold text-gray-900 text-sm">Nexi Team</span>
-                <span class="text-gray-400 text-sm">— All rights reserved.</span>
+                <span class="text-gray-600 text-md">©</span>
+                <span id="year" class="text-gray-600 text-sm"></span>
+                <span class="text-gray-600 text-sm">Nexi Team</span>
+                <span class="text-gray-600 text-sm">— All rights reserved.</span>
             </div>
         </div>
     </footer>
@@ -362,14 +543,48 @@ function closeEmergencyModal() {
     document.body.style.overflow = '';
 }
 
-function selectCategory(cat) {
+function selectCategory(cat, element) {
     selectedCategory = cat;
+
+    // Reset all category buttons to inactive
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.classList.remove('border-red-600', 'bg-red-50', 'text-red-700');
+        btn.classList.add('bg-gray-50', 'border-gray-200');
+        const nameSpan = btn.querySelector('.category-name');
+        if (nameSpan) {
+            nameSpan.classList.remove('text-red-700');
+            nameSpan.classList.add('text-gray-900');
+        }
+    });
+
+    // Mark current category button as active
+    if (element) {
+        element.classList.remove('bg-gray-50', 'border-gray-200');
+        element.classList.add('border-red-600', 'bg-red-50', 'text-red-700');
+        const nameSpan = element.querySelector('.category-name');
+        if (nameSpan) {
+            nameSpan.classList.remove('text-gray-900');
+            nameSpan.classList.add('text-red-700');
+        }
+    }
+
+    // Enable next button
+    const nextBtn = document.getElementById('btn-next-step');
+    if (nextBtn) {
+        nextBtn.removeAttribute('disabled');
+        nextBtn.classList.remove('bg-gray-300', 'opacity-50', 'cursor-not-allowed');
+        nextBtn.classList.add('bg-red-700', 'hover:bg-red-800');
+    }
+}
+
+function goToSendingStep() {
+    if (!selectedCategory) return;
     requestLocation();
 
     // Switch to step 2
     document.getElementById('step-category').classList.add('hidden');
     document.getElementById('step-sending').classList.remove('hidden');
-    document.getElementById('modal-category-label').textContent = cat;
+    document.getElementById('modal-category-label').textContent = selectedCategory;
     document.getElementById('modal-status').textContent = 'Mengambil lokasi GPS...';
 
     submitEmergency();
@@ -390,6 +605,27 @@ function cancelEmergency() {
     isSubmitting = false;
     selectedCategory = null;
     locationPayload = { latitude: null, longitude: null };
+
+    // Reset all category buttons to inactive
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.classList.remove('border-red-600', 'bg-red-50', 'text-red-700');
+        btn.classList.add('bg-gray-50', 'border-gray-200');
+        const nameSpan = btn.querySelector('.category-name');
+        if (nameSpan) {
+            nameSpan.classList.remove('text-red-700');
+            nameSpan.classList.add('text-gray-900');
+        }
+    });
+
+    // Disable next button
+    const nextBtn = document.getElementById('btn-next-step');
+    if (nextBtn) {
+        nextBtn.setAttribute('disabled', 'true');
+        nextBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        nextBtn.classList.remove('bg-red-700', 'hover:bg-red-800');
+        nextBtn.classList.add('bg-gray-300');
+    }
+
     document.getElementById('step-sending').classList.add('hidden');
     document.getElementById('step-category').classList.remove('hidden');
 }
@@ -436,7 +672,13 @@ async function submitEmergency() {
 
         const data = await res.json();
         document.body.style.overflow = '';
-        window.location.href = data.tracking_url;
+
+        if (data.call_phone) {
+            window.location.href = 'tel:' + data.call_phone;
+        }
+        setTimeout(() => {
+            window.location.href = data.tracking_url;
+        }, 500);
     } catch (e) {
         document.getElementById('modal-status').textContent = e.message;
         isSubmitting = false;

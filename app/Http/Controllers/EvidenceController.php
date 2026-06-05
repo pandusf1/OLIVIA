@@ -8,13 +8,19 @@ use App\Models\Report;
 
 class EvidenceController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $reports = Report::where('user_id', auth()->id())
             ->whereHas('evidences')
             ->with('evidences')
             ->latest()
             ->get();
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'reports' => $reports
+            ]);
+        }
 
         return view('pages.evidence', compact('reports'));
     }

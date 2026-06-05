@@ -61,6 +61,7 @@ Route::post('/emergency', [EmergencyController::class, 'store']);
 Route::get('/tracking-search', [TrackingController::class, 'search'])->name('tracking.search');
 Route::get('/tracking/{id}/live', [TrackingController::class, 'live'])->name('tracking.live');
 Route::post('/tracking/{id}/location', [TrackingController::class, 'updateLocation'])->name('tracking.location');
+Route::post('/tracking/{id}/partner-location', [TrackingController::class, 'updatePartnerLocation'])->name('tracking.partner-location');
 Route::get('/tracking/{id}', [TrackingController::class, 'show'])->name('tracking.show');
 Route::post('/tracking/{reportId}/evidence', [EvidenceController::class, 'store'])->name('evidence.store');
 Route::delete('/evidence/{id}', [EvidenceController::class, 'destroy'])->name('evidence.destroy');
@@ -96,6 +97,7 @@ Route::get('/evidences/view/{filename}', function ($filename) {
 Route::post('/tracking/{id}/resolve', [TrackingController::class, 'resolve'])->name('tracking.resolve');
 Route::post('/tracking/{id}/chronology', [TrackingController::class, 'storeChronology'])->name('tracking.chronology');
 Route::post('/tracking/{id}/re-alert', [TrackingController::class, 'reAlert'])->name('tracking.re-alert');
+Route::post('/tracking/{id}/status', [TrackingController::class, 'updateStatusByVictim'])->name('tracking.status.victim');
 
 
 // Sinkronisasi laporan aktif untuk korban guest/anonim via localStorage
@@ -153,6 +155,7 @@ Route::post('/chat/report/{reportId}/send', [\App\Http\Controllers\ChatControlle
 Route::middleware(['auth', 'phone.required'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/summary-data', [DashboardController::class, 'summaryData'])->name('dashboard.summary-data');
     Route::get('/dashboard/reports', [DashboardController::class, 'reportsJson'])->name('dashboard.reports.json');
     Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
     Route::patch('/settings', [SettingsController::class, 'update'])->name('settings.update');

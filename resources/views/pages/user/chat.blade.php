@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safora — Chat</title>
+    <title>Chat</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap');
@@ -34,65 +34,35 @@
      class="chat-layout {{ $hasSelectedChat ? 'chat-open max-w-6xl' : 'chat-closed max-w-4xl' }} mx-auto w-full px-4 sm:px-6 py-6">
     <div id="chat-grid" class="{{ $hasSelectedChat ? 'lg:grid lg:grid-cols-[30%_70%] lg:gap-4' : '' }} transition-all duration-300">
         <aside id="thread-list" class="thread-list">
-            @if($threads->count() > 0)
-                <div class="space-y-3">
-                    @foreach($threads as $t)
-                        @php
-                            $active = (string) $partnerId === (string) $t->partner_id;
-                            $threadHref = '#';
-                            if ($t->report_id) {
-                                $threadHref = route('chat.report', ['reportId' => $t->report_id]);
-                            } elseif ($t->partner_id) {
-                                $threadHref = route('chat.messages', ['partnerId' => $t->partner_id]);
-                            }
-                            $threadName = $viewerType === 'partner'
-                                ? ($t->user?->name ?? 'Pelapor')
-                                : ($t->partner?->partner_name ?? 'Mitra');
-                            $threadType = $viewerType === 'partner'
-                                ? 'Pelapor'
-                                : match($t->partner?->partner_type ?? '') {
-                                    'ambulance' => 'Medis Darurat',
-                                    'legal' => 'Bantuan Hukum',
-                                    'counselor' => 'Psikososial',
-                                    'pemadam' => 'Pemadam / Rescue',
-                                    default => $t->partner?->partner_type ?? ''
-                                };
-                        @endphp
-                        <a href="{{ $threadHref }}"
-                           data-chat-link
-                           data-partner-id="{{ $t->partner_id }}"
-                           data-report-id="{{ $t->report_id ?? '' }}"
-                           data-user-id="{{ $t->user_id }}"
-                           data-partner-name="{{ $threadName }}"
-                           data-partner-type="{{ $threadType }}"
-                           data-partner-image="{{ $t->partner?->image_url ?? '' }}"
-                           class="block bg-white border {{ $active ? 'border-gray-900' : 'border-gray-200' }} rounded-2xl p-4 hover:bg-gray-50 transition">
-                            <div class="flex items-center gap-3">
-                                @if(!empty($t->partner?->image_url))
-                                    <img src="{{ $t->partner->image_url }}" class="w-10 h-10 rounded-xl object-cover border border-gray-100" alt="">
-                                @else
-                                    <div class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-sm">💬</div>
-                                @endif
-
-                                <div class="min-w-0 flex-1">
-                                    <p class="font-bold text-gray-900 text-sm truncate">{{ $threadName }}</p>
-                                    <p class="text-xs text-gray-400 mt-1 truncate">
-                                        {{ $threadType }} • {{ $t->last_message_at?->format('d M Y, H:i') ?? 'Belum ada pesan' }}
-                                    </p>
-                                </div>
-                            </div>
-                        </a>
-                    @endforeach
-                </div>
-            @else
-                <div class="text-center py-12">
-                    <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>
+            <!-- Skeleton for Thread List -->
+            <div id="threads-skeleton" class="space-y-3">
+                <div class="animate-pulse bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gray-200"></div>
+                    <div class="flex-1 space-y-2">
+                        <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                        <div class="h-3 bg-gray-200 rounded w-2/3"></div>
                     </div>
-                    <p class="text-gray-400 text-sm font-medium">Belum ada chat yang terbuka</p>
-                    <p class="text-gray-300 text-xs mt-1">Pilih layanan mitra dan selesaikan pembayaran dulu.</p>
                 </div>
-            @endif
+                <div class="animate-pulse bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gray-200"></div>
+                    <div class="flex-1 space-y-2">
+                        <div class="h-4 bg-gray-200 rounded w-2/3"></div>
+                        <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Thread List Container (hidden by default) -->
+            <div id="threads-container" class="space-y-3 hidden"></div>
+
+            <!-- Empty Threads State (hidden by default) -->
+            <div id="threads-empty" class="text-center py-12 hidden">
+                <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>
+                </div>
+                <p class="text-gray-400 text-sm font-medium">Belum ada chat yang terbuka</p>
+                <p class="text-gray-300 text-xs mt-1">Pilih layanan mitra dan selesaikan pembayaran dulu.</p>
+            </div>
         </aside>
 
         <main id="chat-panel" class="chat-panel flex flex-col w-full h-[calc(100vh-96px)] lg:h-[calc(100vh-132px)]">
@@ -381,23 +351,102 @@
         syncTimer = setInterval(processPendingMessages, 3000);
     }
 
-    document.querySelectorAll('[data-chat-link]').forEach((link) => {
-        link.addEventListener('click', (event) => {
-            event.preventDefault();
+    // loadThreads dynamically renders the sidebar list
+    async function loadThreads() {
+        const skeleton = document.getElementById('threads-skeleton');
+        const container = document.getElementById('threads-container');
+        const empty = document.getElementById('threads-empty');
 
-            currentPartnerId = link.dataset.partnerId;
-            currentReportId = link.dataset.reportId || null;
-            currentUserId = link.dataset.userId || null;
-            serverMessages = [];
-            pendingMessages = [];
-            
-            setPartnerHeader(link);
-            setActiveLink(currentPartnerId);
-            openLayout();
-            history.pushState({ partnerId: currentPartnerId }, '', link.href);
-            startPolling();
-        });
-    });
+        try {
+            const res = await fetch('/chat/threads', { headers: { 'Accept': 'application/json' } });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            const threads = data.threads || [];
+
+            if (threads.length > 0) {
+                container.innerHTML = threads.map(t => {
+                    const active = String(currentPartnerId) === String(t.partner_id);
+                    const imageHtml = t.partner_image 
+                        ? `<img src="${t.partner_image}" class="w-10 h-10 rounded-xl object-cover border border-gray-100" alt="">`
+                        : `<div class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-sm">💬</div>`;
+                    
+                    return `
+                        <a href="${t.threadHref}"
+                           data-chat-link
+                           data-partner-id="${t.partner_id}"
+                           data-report-id="${t.report_id || ''}"
+                           data-user-id="${t.user_id}"
+                           data-partner-name="${escapeHtml(t.threadName)}"
+                           data-partner-type="${escapeHtml(t.threadType)}"
+                           data-partner-image="${t.partner_image}"
+                           class="block bg-white border ${active ? 'border-gray-900' : 'border-gray-200'} rounded-2xl p-4 hover:bg-gray-50 transition">
+                            <div class="flex items-center gap-3">
+                                ${imageHtml}
+                                <div class="min-w-0 flex-1">
+                                    <p class="font-bold text-gray-900 text-sm truncate">${escapeHtml(t.threadName)}</p>
+                                    <p class="text-xs text-gray-400 mt-1 truncate">
+                                        ${escapeHtml(t.threadType)} • ${escapeHtml(t.last_message_time)}
+                                    </p>
+                                </div>
+                            </div>
+                        </a>
+                    `;
+                }).join('');
+
+                // Re-bind click event listeners to dynamic links
+                container.querySelectorAll('[data-chat-link]').forEach((link) => {
+                    link.addEventListener('click', (event) => {
+                        event.preventDefault();
+
+                        currentPartnerId = link.dataset.partnerId;
+                        currentReportId = link.dataset.reportId || null;
+                        currentUserId = link.dataset.userId || null;
+                        serverMessages = [];
+                        pendingMessages = [];
+                        
+                        setPartnerHeader(link);
+                        setActiveLink(currentPartnerId);
+                        openLayout();
+                        history.pushState({ partnerId: currentPartnerId }, '', link.href);
+                        startPolling();
+                    });
+                });
+
+                if (skeleton) skeleton.classList.add('hidden');
+                if (empty) empty.classList.add('hidden');
+                container.classList.remove('hidden');
+
+                // Initialize chat layout if partnerId is selected in the URL on page load
+                if (currentPartnerId) {
+                    const activeLink = container.querySelector(`[data-chat-link][data-partner-id="${currentPartnerId}"]`);
+                    if (activeLink) {
+                        currentUserId = activeLink.dataset.userId || null;
+                        setPartnerHeader(activeLink);
+                        openLayout();
+                        setActiveLink(currentPartnerId);
+                        updateUI();
+                        startPolling();
+                    }
+                }
+            } else {
+                if (skeleton) skeleton.classList.add('hidden');
+                container.classList.add('hidden');
+                if (empty) empty.classList.remove('hidden');
+            }
+        } catch (e) {
+            console.error('Failed to load threads:', e);
+            if (skeleton) skeleton.classList.add('hidden');
+            if (empty) {
+                empty.innerHTML = `<p class="text-red-500 text-sm">Gagal memuat obrolan: ${e.message}</p>`;
+                empty.classList.remove('hidden');
+            }
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
 
     document.getElementById('btn-back-list')?.addEventListener('click', () => {
         closeMobileChat();
@@ -440,18 +489,8 @@
     window.addEventListener('popstate', () => window.location.reload());
 
     // Initialize layout on page load
-    if (currentPartnerId) {
-        const activeLink = document.querySelector(`[data-chat-link][data-partner-id="${currentPartnerId}"]`);
-        if (activeLink) {
-            currentUserId = activeLink.dataset.userId || null;
-            setPartnerHeader(activeLink);
-        }
-        
-        openLayout();
-        setActiveLink(currentPartnerId);
-        updateUI(); // load initial messages
-        startPolling();
-    } else {
+    loadThreads();
+    if (!currentPartnerId) {
         updateUI(); // show empty state
     }
 </script>

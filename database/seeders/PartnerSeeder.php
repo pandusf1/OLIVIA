@@ -17,7 +17,7 @@ class PartnerSeeder extends Seeder
     public function run(): void
     {
         $now = now();
-        $password = 'Safora2024';
+        $password = 'safora2026';
 
         // Reset isi tabel (requested: reset users, partners, price_lists)
         if (Schema::hasTable('user_partner_payments')) {
@@ -44,7 +44,7 @@ class PartnerSeeder extends Seeder
         User::insert([
             [
                 'id' => $adminId,
-                'email' => 'admin@Safora.id',
+                'email' => 'admin@safora.id',
                 'name' => 'Admin Safora',
                 'password' => Hash::make($password),
                 'role' => 'admin',
@@ -54,7 +54,7 @@ class PartnerSeeder extends Seeder
             ],
             [
                 'id' => $userDemoId,
-                'email' => 'user@Safora.id',
+                'email' => 'user@safora.id',
                 'name' => 'User Demo',
                 'password' => Hash::make($password),
                 'role' => 'user',
@@ -66,11 +66,11 @@ class PartnerSeeder extends Seeder
 
         // Seed user umum (korban/saksi) + lokasi
         $victims = [
-            ['email' => 'korban@Safora.id', 'name' => 'Korban Demo', 'latitude' => -6.966900, 'longitude' => 110.413000],
-            ['email' => 'saksi1@Safora.id', 'name' => 'Saksi Demo 1', 'latitude' => -6.970200, 'longitude' => 110.416000],
-            ['email' => 'saksi2@Safora.id', 'name' => 'Saksi Demo 2', 'latitude' => -6.962800, 'longitude' => 110.419500],
-            ['email' => 'korban2@Safora.id', 'name' => 'Korban Demo 2', 'latitude' => -6.975000, 'longitude' => 110.410800],
-            ['email' => 'korban3@Safora.id', 'name' => 'Korban Demo 3', 'latitude' => -6.958500, 'longitude' => 110.421200],
+            ['email' => 'korban@safora.id', 'name' => 'Korban Demo', 'latitude' => -6.966900, 'longitude' => 110.413000],
+            ['email' => 'saksi1@safora.id', 'name' => 'Saksi Demo 1', 'latitude' => -6.970200, 'longitude' => 110.416000],
+            ['email' => 'saksi2@safora.id', 'name' => 'Saksi Demo 2', 'latitude' => -6.962800, 'longitude' => 110.419500],
+            ['email' => 'korban2@safora.id', 'name' => 'Korban Demo 2', 'latitude' => -6.975000, 'longitude' => 110.410800],
+            ['email' => 'korban3@safora.id', 'name' => 'Korban Demo 3', 'latitude' => -6.958500, 'longitude' => 110.421200],
         ];
 
         $victimRows = [];
@@ -102,43 +102,69 @@ class PartnerSeeder extends Seeder
             UserLocation::insert($victimLocationRows);
         }
 
-        // Partner seed
+        // Expanded list of 35 major cities in Indonesia with their coordinates
         $areaCenters = [
-            'Semarang' => [-6.966667, 110.416664],
-            'Kab. Semarang' => [-7.125000, 110.389000],
-            'Demak' => [-6.892900, 110.634700],
-            'Salatiga' => [-7.327600, 110.500100],
-            'Kendal' => [-6.902100, 110.209500],
-            'Grobogan' => [-7.151500, 110.915700],
-            'Kudus' => [-6.805600, 110.843500],
-            'Pati' => [-6.750000, 111.000000],
-            'Jepara' => [-6.594500, 110.685500],
+            'Jakarta' => [-6.1751, 106.8650],
+            'Surabaya' => [-7.2575, 112.7521],
+            'Bandung' => [-6.9175, 107.6191],
+            'Medan' => [3.5952, 98.6722],
+            'Semarang' => [-6.9667, 110.4166],
+            'Makassar' => [-5.1477, 119.4327],
+            'Palembang' => [-2.9761, 104.7754],
+            'Yogyakarta' => [-7.7956, 110.3695],
+            'Denpasar' => [-8.6705, 115.2126],
+            'Balikpapan' => [-1.2654, 116.8312],
+            'Pontianak' => [-0.0263, 109.3425],
+            'Samarinda' => [-0.5016, 117.1537],
+            'Banjarmasin' => [-3.3186, 114.5944],
+            'Manado' => [1.4748, 124.8428],
+            'Ambon' => [-3.6954, 128.1814],
+            'Jayapura' => [-2.5916, 140.7178],
+            'Banda Aceh' => [5.5483, 95.3238],
+            'Pekanbaru' => [0.5071, 101.4478],
+            'Padang' => [-0.9471, 100.4172],
+            'Bandar Lampung' => [-5.3971, 105.2668],
+            'Kupang' => [-10.1772, 123.6070],
+            'Mataram' => [-8.5833, 116.1167],
+            'Batam' => [1.1301, 104.0529],
+            'Surakarta' => [-7.5666, 110.8167],
+            'Malang' => [-7.9839, 112.6214],
+            'Cirebon' => [-6.7320, 108.5555],
+            'Tasikmalaya' => [-7.3274, 108.2207],
+            'Bogor' => [-6.5971, 106.8060],
+            'Serang' => [-6.1104, 106.1625],
+            'Jambi' => [-1.6101, 103.6131],
+            'Bengkulu' => [-3.7928, 102.2608],
+            'Palu' => [-0.8917, 119.8707],
+            'Kendari' => [-3.9722, 122.5149],
+            'Gorontalo' => [0.5435, 123.0568],
+            'Sorong' => [-0.8762, 131.2558],
         ];
 
         $cityNames = array_keys($areaCenters);
-        $perCityCountPerType = 3;
 
-        $legalConfig = [
-            'partner_type' => 'legal',
-            'prefixes' => ['LBH', 'YLBH', 'Klinik Hukum', 'Bantuan Hukum'],
+        $configs = [
+            [
+                'partner_type' => 'ambulance',
+                'prefixes' => ['PSC 119', 'Ambulans PMI', 'Layanan Medis Darurat', 'Ambulans Gawat Darurat'],
+            ],
+            [
+                'partner_type' => 'legal',
+                'prefixes' => ['LBH', 'Posbakum Pengadilan', 'LPSK Cabang', 'Layanan Advokasi Hukum'],
+            ],
+            [
+                'partner_type' => 'counselor',
+                'prefixes' => ['Layanan SEJIWA', 'Pusat Konseling & Trauma Healing', 'Dinas Sosial (Rehabilitasi ODGJ)', 'Layanan Psikologi Klinik'],
+            ],
+            [
+                'partner_type' => 'pemadam',
+                'prefixes' => ['Dinas Pemadam Kebakaran & Penyelamatan', 'Damkar Rescue', 'Satpol PP & Penyelamatan', 'Posko Evakuasi BPBD'],
+            ],
+            [
+                'partner_type' => 'pppa',
+                'prefixes' => ['UPTD PPA', 'P2TP2A', 'Layanan PPA (Sahabat Perempuan & Anak)', 'Dinas Sosial (Perlindungan Anak)'],
+            ]
         ];
-
-        $counselorConfig = [
-            'partner_type' => 'counselor',
-            'prefixes' => ['Psikolog', 'Konselor', 'Layanan Psikososial', 'Tim Konseling'],
-        ];
-
-        $ambulanceConfig = [
-            'partner_type' => 'ambulance',
-            'prefixes' => ['Ambulans', 'Unit Medis', 'Layanan Darurat', 'Respon Cepat'],
-        ];
-
-        $pemadamConfig = [
-            'partner_type' => 'pemadam',
-            'prefixes' => ['Pemadam Kebakaran', 'Damkar Kota', 'Unit Pemadam', 'Satuan Pemadam'],
-        ];
-
-        $types = [$legalConfig, $counselorConfig, $ambulanceConfig, $pemadamConfig];
 
         $partnersToInsert = [];
         $usersToInsert = [];
@@ -146,75 +172,104 @@ class PartnerSeeder extends Seeder
         foreach ($cityNames as $cityIndex => $cityName) {
             [$cLat, $cLng] = $areaCenters[$cityName];
 
-            foreach ($types as $typeConfig) {
-                $partnerType = $typeConfig['partner_type'];
-                $prefixes = $typeConfig['prefixes'];
+            foreach ($configs as $typeIndex => $config) {
+                $partnerType = $config['partner_type'];
+                $prefixes = $config['prefixes'];
 
-                for ($i = 0; $i < $perCityCountPerType; $i++) {
-                    $prefix = $prefixes[($cityIndex + $i) % count($prefixes)];
+                $prefix = $prefixes[($cityIndex + $typeIndex) % count($prefixes)];
+                $partnerId = (string) Str::uuid();
+                $partnerName = $prefix . ' ' . $cityName;
 
-                    $partnerId = (string) Str::uuid();
-                    $partnerName = $prefix . ' ' . $cityName . ' ' . ($i + 1);
+                // Unique clean email & phone
+                $cleanName = preg_replace('/[^a-z0-9_]/', '', strtolower(str_replace([' ', 'Kab.'], ['_', 'Kab'], $partnerName)));
+                $email = $cleanName . '@safora.id';
+                $phone = '62' . str_pad((string) (80000000 + ($cityIndex * 100 + $typeIndex * 19) % 99999999), 10, '0', STR_PAD_LEFT);
 
-                    $email = strtolower(str_replace([' ', 'Kab.'], ['_', 'Kab'], $partnerName)) . '@Safora.id';
-                    $phone = '62' . str_pad((string) (80000000 + ($cityIndex * 100 + $i * 19) % 99999999), 10, '0', STR_PAD_LEFT);
+                // Use circular distribution to prevent overlapping coordinates
+                $angle = ($typeIndex * (360 / count($configs))) * M_PI / 180;
+                $radius = 0.015 + ($cityIndex % 3) * 0.005; // ~1.5km to ~2.5km radius offset
+                $lat = $cLat + sin($angle) * $radius;
+                $lng = $cLng + cos($angle) * $radius;
 
-                    $lat = $cLat + ((($cityIndex + 1) % 11) - 5) * 0.03 + ($i % 3) * 0.008;
-                    $lng = $cLng + ((($cityIndex + 7) % 13) - 6) * 0.03 + ($i % 4) * 0.006;
+                $streetNo = 10 + (($cityIndex * 7 + $typeIndex) % 90);
+                $address = "Jl. Veteran No. {$streetNo}, {$cityName}";
 
-                    // dummy 1x1 building + address for tooltip
-                    $streetNo = 10 + (($cityIndex * 7 + $i) % 90);
-                    $district = match(true){
-                        $cityName === 'Semarang' => 'Tembalang',
-                        $cityName === 'Kab. Semarang' => 'Banyubiru',
-                        $cityName === 'Demak' => 'Sayung',
-                        $cityName === 'Salatiga' => 'Sidomukti',
-                        $cityName === 'Kendal' => 'Kaliwungu',
-                        $cityName === 'Grobogan' => 'Grobogan',
-                        $cityName === 'Kudus' => 'Kota',
-                        $cityName === 'Pati' => 'Pati',
-                        $cityName === 'Jepara' => 'Jepara',
-                        default => 'Kecamatan',
-                    };
+                $img = match(true){
+                    $partnerType === 'legal' => '/192.jpg',
+                    $partnerType === 'counselor' => '/512.jpg',
+                    $partnerType === 'ambulance' => '/192.jpg',
+                    default => '/512.jpg',
+                };
 
-                    // Reuse existing public placeholder images (1x1-ish). You can replace with real ones later.
-                    $img = match(true){
-                        $partnerType === 'legal' => '/192.jpg',
-                        $partnerType === 'counselor' => '/512.jpg',
-                        $partnerType === 'ambulance' => '/192.jpg',
-                        default => '/512.jpg',
-                    };
+                $partnersToInsert[] = [
+                    'id' => $partnerId,
+                    'partner_name' => $partnerName,
+                    'partner_type' => $partnerType,
+                    'city' => $cityName,
+                    'address' => $address,
+                    'image_url' => $img,
+                    'phone' => $phone,
+                    'email' => $email,
+                    'verified' => true,
+                    'latitude' => $lat,
+                    'longitude' => $lng,
+                    'created_at' => $now,
+                ];
 
-                    $address = "$district, Jalan Veteran No. {$streetNo}, {$cityName}";
-
-                    $partnersToInsert[] = [
-                        'id' => $partnerId,
-                        'partner_name' => $partnerName,
-                        'partner_type' => $partnerType,
-                        'city' => $cityName,
-                        'address' => $address,
-                        'image_url' => $img,
-                        'phone' => $phone,
-                        'email' => $email,
-                        'verified' => true,
-                        'latitude' => $lat,
-                        'longitude' => $lng,
-                        'created_at' => $now,
-                    ];
-
-
-                    $usersToInsert[] = [
-                        'id' => (string) Str::uuid(),
-                        'email' => $email,
-                        'name' => $partnerName,
-                        'password' => Hash::make($password),
-                        'role' => 'partner',
-                        'partner_id' => $partnerId,
-                        'created_at' => $now,
-                        'updated_at' => $now,
-                    ];
-                }
+                $usersToInsert[] = [
+                    'id' => (string) Str::uuid(),
+                    'email' => $email,
+                    'name' => $partnerName,
+                    'password' => Hash::make($password),
+                    'role' => 'partner',
+                    'partner_id' => $partnerId,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
             }
+        }
+
+        // Seed 7 PPPA Semarang partners to preserve specific local requirements
+        $pppaPartners = [
+            ['name' => 'PPPA Kota Semarang Utama', 'lat' => -6.980000, 'lng' => 110.420000, 'address' => 'Jl. Pemuda No. 148, Sekayu, Kec. Semarang Tengah, Kota Semarang'],
+            ['name' => 'PPPA Semarang Barat', 'lat' => -6.995000, 'lng' => 110.380000, 'address' => 'Jl. Bojong Salaman No. 2, Salamanmloyo, Kec. Semarang Barat, Kota Semarang'],
+            ['name' => 'PPPA Semarang Timur', 'lat' => -6.985000, 'lng' => 110.440000, 'address' => 'Jl. Majapahit No. 110, Gayamsari, Kec. Semarang Timur, Kota Semarang'],
+            ['name' => 'PPPA Semarang Selatan', 'lat' => -7.010000, 'lng' => 110.425000, 'address' => 'Jl. Sriwijaya No. 29, Tegalsari, Kec. Candisari, Kota Semarang'],
+            ['name' => 'PPPA Semarang Utara', 'lat' => -6.955000, 'lng' => 110.410000, 'address' => 'Jl. Kakap No. 50, Kuningan, Kec. Semarang Utara, Kota Semarang'],
+            ['name' => 'PPPA Tembalang', 'lat' => -7.050000, 'lng' => 110.438000, 'address' => 'Jl. Prof. Soedarto No. 12, Tembalang, Kec. Tembalang, Kota Semarang'],
+            ['name' => 'PPPA Banyumanik', 'lat' => -7.065000, 'lng' => 110.425000, 'address' => 'Jl. Perintis Kemerdekaan No. 88, Kec. Banyumanik, Kota Semarang'],
+        ];
+
+        foreach ($pppaPartners as $i => $pppa) {
+            $partnerId = (string) Str::uuid();
+            $email = 'pppa_semarang_' . ($i + 1) . '@safora.id';
+            $phone = '628512401935' . ($i + 1);
+
+            $partnersToInsert[] = [
+                'id' => $partnerId,
+                'partner_name' => $pppa['name'],
+                'partner_type' => 'pppa',
+                'city' => 'Semarang',
+                'address' => $pppa['address'],
+                'image_url' => '/512.jpg',
+                'phone' => $phone,
+                'email' => $email,
+                'verified' => true,
+                'latitude' => $pppa['lat'],
+                'longitude' => $pppa['lng'],
+                'created_at' => $now,
+            ];
+
+            $usersToInsert[] = [
+                'id' => (string) Str::uuid(),
+                'email' => $email,
+                'name' => $pppa['name'],
+                'password' => Hash::make($password),
+                'role' => 'partner',
+                'partner_id' => $partnerId,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
         }
 
         DB::table('partners')->insert($partnersToInsert);
@@ -226,7 +281,7 @@ class PartnerSeeder extends Seeder
             );
         }
 
-        // Price list hanya untuk partner pengacara (legal) dan psikolog (counselor)
+        // Price list only for legal and counselor partners
         $priceCatalog = [
             'legal' => [
                 ['service_name' => 'Konsultasi Pengacara (20 menit)', 'price' => 150000, 'duration' => '20 menit'],
@@ -239,8 +294,8 @@ class PartnerSeeder extends Seeder
             'counselor' => [
                 ['service_name' => 'Konsultasi Psikolog (30 menit)', 'price' => 120000, 'duration' => '30 menit'],
                 ['service_name' => 'Asesmen Awal Psikologis (45 menit)', 'price' => 200000, 'duration' => '45 menit'],
-                ['service_name' => 'Sesi Konseling (45 menit)', 'price' => 250000, 'duration' => '45 menit'],
-                ['service_name' => 'Sesi Konseling (60 menit)', 'price' => 300000, 'duration' => '60 menit'],
+                ['service_name' => 'Sesi Konseling (45 session)', 'price' => 250000, 'duration' => '45 menit'],
+                ['service_name' => 'Sesi Konseling (60 session)', 'price' => 300000, 'duration' => '60 menit'],
                 ['service_name' => 'Rencana Pendampingan (paket 3 sesi)', 'price' => 650000, 'duration' => '3 x 45 menit'],
                 ['service_name' => 'Pendampingan Berkelanjutan (paket 6 sesi)', 'price' => 1200000, 'duration' => '6 x 45 menit'],
             ],

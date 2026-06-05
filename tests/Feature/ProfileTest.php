@@ -96,4 +96,66 @@ class ProfileTest extends TestCase
 
         $this->assertNotNull($user->fresh());
     }
+
+    public function test_google_user_setting_phone_redirects_to_dashboard_and_is_verified(): void
+    {
+        $user = User::factory()->create([
+            'google_id' => '123456789',
+            'phone' => null,
+            'phone_is_verified' => false,
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->patch('/profile', [
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => '628123456789',
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/dashboard');
+
+        $user->refresh();
+        $this->assertSame('628123456789', $user->phone);
+        $this->assertTrue($user->phone_is_verified);
+    }
+
+    public function test_regular_user_setting_phone_requires_otp_verification(): void
+    {
+        $user = User::factory()->create([
+            'phone' => null,
+            'phone_is_verified' => false,
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->patch('/profile', [
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => '628123456789',
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/settings');
+
+        $user->refresh();
+        $this->assertSame('628123456789', $user->phone);
+        $this->assertFalse($user->phone_is_verified);
+        $this->assertNotNull($user->phone_verification_code);
+
+        // Verify phone with OTP
+        $verifyResponse = $this
+            ->actingAs($user)
+            ->post('/profile/phone/verify', [
+                'code' => $user->phone_verification_code,
+            ]);
+
+        $verifyResponse->assertRedirect('/dashboard');
+
+        $user->refresh();
+        $this->assertTrue($user->phone_is_verified);
+    }
 }

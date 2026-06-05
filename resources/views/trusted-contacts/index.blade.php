@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safora — Trusted Contact</title>
+    <title>Kontak Terpercaya</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');*{font-family:'Inter',sans-serif;} h1,.font-unbounded{font-family:'Space Grotesk',sans-serif!important;}</style>
 </head>
@@ -42,36 +42,39 @@
             </form>
         </div>
 
-        @if($contacts->count() > 0)
-        <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-<div class="px-5 py-3 border-b border-gray-100">
-                <p class="font-semibold text-gray-900 text-sm">Kontak Tersimpan ({{ $contacts->count() }})</p>
+        <!-- Skeleton Loading for Contacts -->
+        <div id="contacts-skeleton" class="bg-white border border-gray-200 rounded-2xl overflow-hidden divide-y divide-gray-50 mb-6">
+            <div class="px-5 py-3 border-b border-gray-100 animate-pulse">
+                <div class="h-4 bg-gray-200 rounded w-1/3"></div>
             </div>
-            <div class="divide-y divide-gray-50">
-                @foreach($contacts as $c)
-                <div class="flex items-center justify-between px-5 py-4">
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <p class="font-semibold text-gray-900">{{ $c->contact_name }}</p>
-                        </div>
-                        <p class="text-gray-400 text-sm">{{ $c->contact_phone }}</p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <a href="{{ route('trusted-contact.edit', $c->id) }}" class="text-gray-600 hover:text-gray-900 text-sm font-semibold transition">Edit</a>
-                        <form action="/trusted-contact/{{ $c->id }}" method="POST">
-                            @csrf @method('DELETE')
-                            <button class="text-red-500 hover:text-red-700 text-sm font-semibold transition">Hapus</button>
-                        </form>
-                    </div>
+            <div class="p-5 flex items-center justify-between animate-pulse">
+                <div class="space-y-2 flex-1">
+                    <div class="h-4 bg-gray-200 rounded w-1/4"></div>
+                    <div class="h-3 bg-gray-200 rounded w-1/3"></div>
                 </div>
-                @endforeach
+                <div class="h-4 bg-gray-200 rounded w-12"></div>
+            </div>
+            <div class="p-5 flex items-center justify-between animate-pulse">
+                <div class="space-y-2 flex-1">
+                    <div class="h-4 bg-gray-200 rounded w-1/3"></div>
+                    <div class="h-3 bg-gray-200 rounded w-1/4"></div>
+                </div>
+                <div class="h-4 bg-gray-200 rounded w-12"></div>
             </div>
         </div>
-        @else
-        <div class="bg-white border border-gray-200 rounded-2xl p-8 text-center">
+
+        <!-- Real Contacts List (hidden by default) -->
+        <div id="contacts-list" class="bg-white border border-gray-200 rounded-2xl overflow-hidden hidden mb-6">
+            <div class="px-5 py-3 border-b border-gray-100">
+                <p id="contacts-count-label" class="font-semibold text-gray-900 text-sm">Kontak Tersimpan (0)</p>
+            </div>
+            <div id="contacts-items" class="divide-y divide-gray-50"></div>
+        </div>
+
+        <!-- Empty State (hidden by default) -->
+        <div id="contacts-empty" class="bg-white border border-gray-200 rounded-2xl p-8 text-center hidden mb-6">
             <p class="text-gray-400 text-sm">Belum ada kontak tersimpan.</p>
         </div>
-        @endif
 
         <div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mt-6">
             <p class="text-amber-800 text-xs">💡 Tambahkan keluarga, pasangan, atau teman dekat. Mereka akan menerima lokasi GPS, status darurat, dan link tracking otomatis saat kamu panic.</p>
@@ -107,7 +110,7 @@
             <form action="{{ route('trusted-contact.destroy', session('verify_contact_id')) }}" method="POST" class="mt-3">
                 @csrf
                 @method('DELETE')
-                <button type="submit" class="w-full text-gray-500 hover:text-gray-700 py-2 rounded-xl text-sm transition">Batal & Hapus</button>
+                <button type="submit" class="w-full text-gray-500 hover:text-gray-700 py-2 rounded-xl text-sm transition">Batal</button>
             </form>
         </div>
     </div>
@@ -148,6 +151,68 @@
             label.textContent = 'Mengirim kode...';
         });
     });
+
+    const csrf = '{{ csrf_token() }}';
+
+    async function loadContacts() {
+        const skeleton = document.getElementById('contacts-skeleton');
+        const list = document.getElementById('contacts-list');
+        const itemsEl = document.getElementById('contacts-items');
+        const countLabel = document.getElementById('contacts-count-label');
+        const empty = document.getElementById('contacts-empty');
+
+        try {
+            const res = await fetch('/trusted-contacts', { headers: { 'Accept': 'application/json' } });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            const contacts = data.contacts || [];
+
+            if (contacts.length > 0) {
+                if (countLabel) countLabel.textContent = `Kontak Tersimpan (${contacts.length})`;
+                if (itemsEl) {
+                    itemsEl.innerHTML = contacts.map(c => `
+                        <div class="flex items-center justify-between px-5 py-4">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <p class="font-semibold text-gray-900">${escapeHtml(c.contact_name)}</p>
+                                </div>
+                                <p class="text-gray-400 text-sm">${escapeHtml(c.contact_phone)}</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <a href="/trusted-contact/${c.id}/edit" class="text-gray-600 hover:text-gray-900 text-sm font-semibold transition">Edit</a>
+                                <form action="/trusted-contact/${c.id}" method="POST" data-confirm="Apakah Anda yakin ingin menghapus kontak ini?" class="inline">
+                                    <input type="hidden" name="_token" value="${csrf}">
+                                    <input type="hidden" name="_method" value="DELETE">
+                                    <button type="submit" class="text-red-500 hover:text-red-700 text-sm font-semibold transition">Hapus</button>
+                                </form>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                if (skeleton) skeleton.classList.add('hidden');
+                if (empty) empty.classList.add('hidden');
+                if (list) list.classList.remove('hidden');
+            } else {
+                if (skeleton) skeleton.classList.add('hidden');
+                if (list) list.classList.add('hidden');
+                if (empty) empty.classList.remove('hidden');
+            }
+        } catch (e) {
+            console.error('Failed to load contacts:', e);
+            if (skeleton) skeleton.classList.add('hidden');
+            if (empty) {
+                empty.innerHTML = `<p class="text-red-500 text-sm">Gagal memuat kontak terpercaya: ${e.message}</p>`;
+                empty.classList.remove('hidden');
+            }
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    loadContacts();
     </script>
 </body>
 </html>

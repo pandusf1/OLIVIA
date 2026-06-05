@@ -51,6 +51,25 @@ class TrackingController extends Controller
             $report->load($relations);
         }
 
+        // Add report to session and queue cookie to grant creator/observer access
+        try {
+            $sessionReports = session()->get('my_reports', []);
+            if (!in_array($report->id, $sessionReports)) {
+                $sessionReports[] = $report->id;
+                session()->put('my_reports', $sessionReports);
+            }
+
+            $cookieReports = request()->hasCookie('safora_my_reports')
+                ? json_decode(request()->cookie('safora_my_reports'), true) ?: []
+                : [];
+            if (!in_array($report->id, $cookieReports)) {
+                $cookieReports[] = $report->id;
+                cookie()->queue(cookie('safora_my_reports', json_encode($cookieReports), 60 * 24 * 30));
+            }
+        } catch (\Exception $e) {
+            // ignore session/cookie issues
+        }
+
         return $report;
     }
 
@@ -297,12 +316,28 @@ class TrackingController extends Controller
     {
         $report = Report::findOrFail($id);
 
-        // Allow resolve if auth user is the creator or session has the report id
+        // Allow resolve if auth user is the creator, session has the report id, or user is a verified trusted contact
         $isCreator = (auth()->check() && auth()->id() === $report->user_id) 
             || in_array($report->id, $request->session()->get('my_reports', []));
 
-        if (!$isCreator) {
+        $isTrustedContact = false;
+        if (auth()->check() && $report->user_id) {
+            $userPhone = auth()->user()->phone;
+            if ($userPhone) {
+                $isTrustedContact = \App\Models\TrustedContact::where('user_id', $report->user_id)
+                    ->where('contact_phone', $userPhone)
+                    ->where('is_verified', true)
+                    ->exists();
+            }
+        }
+
+        if (!$isCreator && !$isTrustedContact) {
             return redirect()->back()->with('error', 'Anda tidak berhak menyelesaikan laporan ini.');
+        }
+
+        // Only allow resolving if currently handled by a partner (In Progress or Assigned)
+        if (!in_array($report->status, ['In Progress', 'Assigned'])) {
+            return redirect()->back()->with('error', 'Laporan hanya bisa diselesaikan jika sedang ditangani oleh mitra.');
         }
 
         if ($report->status !== 'Resolved') {
@@ -517,6 +552,8 @@ class TrackingController extends Controller
                 'verified' => (bool) $assignedPartner->verified,
                 'handler_name' => $report->handlerUser?->name,
                 'assigned_at' => optional($report->assigned_at)->format('d M Y, H:i'),
+                'latitude' => $assignedPartner->latitude,
+                'longitude' => $assignedPartner->longitude,
             ] : null,
             'routed_partners' => $relevantRoutings
                 ->sortByDesc(fn ($routing) => $routing->status === 'accepted')
@@ -749,6 +786,70 @@ class TrackingController extends Controller
                 'created_at' => $chronology->created_at->format('d M Y, H:i'),
             ]
         ]);
+    }
+
+    public function updateStatusByVictim(Request $request, $id)
+    {
+        $report = Report::findOrFail($id);
+
+        $isCreator = (auth()->check() && auth()->id() === $report->user_id) 
+            || in_array($report->id, $request->session()->get('my_reports', []));
+
+        if (!$isCreator) {
+            return response()->json(['error' => 'Akses ditolak.'], 403);
+        }
+
+        $request->validate([
+            'status' => 'required|string|in:In Progress,Resolved',
+        ]);
+
+        $oldStatus = $report->status;
+        $report->status = $request->input('status');
+        $report->last_activity_at = now();
+        $report->save();
+
+        \App\Models\ReportStatusLog::create([
+            'report_id' => $report->id,
+            'old_status' => $oldStatus,
+            'new_status' => $request->input('status'),
+            'changed_by' => auth()->id(),
+            'changed_at' => now(),
+        ]);
+
+        $report->timelineEvents()->create([
+            'event_type' => 'status_updated_by_victim',
+            'event_message' => 'Status laporan diperbarui oleh pelapor menjadi ' . ($request->input('status') === 'Resolved' ? 'Selesai' : 'Diproses') . '.',
+            'actor_type' => 'user',
+            'actor_id' => auth()->id(),
+        ]);
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function updatePartnerLocation(Request $request, $id)
+    {
+        $report = Report::findOrFail($id);
+
+        $user = auth()->user();
+        $isHandlerPartner = $user && $user->role === 'partner' && $report->handler_partner_id === $user->partner_id;
+
+        if (!$isHandlerPartner) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'latitude' => 'required|numeric|between:-90,90',
+            'longitude' => 'required|numeric|between:-180,180',
+        ]);
+
+        $partner = $report->assignedPartner;
+        if ($partner) {
+            $partner->latitude = $request->input('latitude');
+            $partner->longitude = $request->input('longitude');
+            $partner->save();
+        }
+
+        return response()->json(['ok' => true]);
     }
 
     private function haversineKm(float $lat1, float $lon1, float $lat2, float $lon2): float

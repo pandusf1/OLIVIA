@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safora — Pengaturan</title>
+    <title>Pengaturan</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
         <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
         * { font-family: 'Space Grotesk', sans-serif; }
@@ -196,7 +196,7 @@
             <form action="{{ route('profile.phone.remove') }}" method="POST" class="mt-3">
                 @csrf
                 @method('DELETE')
-                <button type="submit" class="w-full text-gray-500 hover:text-gray-700 py-2 rounded-xl text-sm transition">Batal & Hapus</button>
+                <button type="submit" class="w-full text-gray-500 hover:text-gray-700 py-2 rounded-xl text-sm transition">Batal</button>
             </form>
         </div>
     </div>

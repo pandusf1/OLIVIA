@@ -66,15 +66,21 @@
             $isPartnerHandling = ($isPartnerUser && $report->handler_partner_id === $pId);
         @endphp
 
-        @if(!$isPartnerUser && ((auth()->check() && auth()->id() === $report->user_id) || in_array($report->id, session('my_reports', []))))
-            @if(in_array($report->status, ['In Progress', 'Assigned']))
-                <div class="mt-4">
-                    <form action="/tracking/{{ $report->id }}/resolve" method="POST" data-confirm="Apakah Anda yakin laporan ini telah tertangani dan Anda sudah aman?">
-                        @csrf
-                        <button type="submit" class="w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-black text-white hover:bg-green-700 transition">Laporan Selesai</button>
-                    </form>
-                </div>
-            @endif
+        @php
+            $isCreator = !$isPartnerUser && (
+                (auth()->check() && auth()->id() === $report->user_id)
+                || in_array($report->id, session('my_reports', []))
+            );
+            $showResolveButton = ($isCreator || $isTrustedContact) && in_array($report->status, ['In Progress', 'Assigned']);
+        @endphp
+
+        @if($showResolveButton)
+            <div class="mt-4">
+                <form action="/tracking/{{ $report->id }}/resolve" method="POST" data-confirm="Apakah Anda yakin laporan ini telah tertangani dan Anda sudah aman?">
+                    @csrf
+                    <button type="submit" class="w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-black text-white hover:bg-green-700 transition">Laporan Selesai</button>
+                </form>
+            </div>
         @endif
 
         @if($isPartnerUser)
@@ -354,6 +360,7 @@
     const hasDirectChatAccess = @json($hasDirectChatAccess);
     const isLoggedIn = @json(auth()->check());
     const isPartner = @json($isPartner);
+    const isPartnerHandling = @json($isPartnerHandling);
     let lastPayload = null;
 
     // Sync session my_reports dengan localStorage agar ketahanan 100% terjamin (misal habis login/logout)
@@ -388,22 +395,63 @@
     let map = null;
     let marker = null;
 
-    function initMap(lat, lng) {
-        if (!lat || !lng) return;
+    let partnerMarker = null;
+
+    function updateMapMarkers(victimLat, victimLng, partnerLat, partnerLng) {
+        if (!victimLat || !victimLng) return;
+        
+        const victimLatLng = [victimLat, victimLng];
+        
         if (!map) {
-            map = L.map('tracking-map', { zoomControl: false }).setView([lat, lng], 15);
+            map = L.map('tracking-map', { zoomControl: false }).setView(victimLatLng, 15);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
                 attribution: '&copy; OpenStreetMap'
             }).addTo(map);
-            marker = L.circleMarker([lat, lng], {
+            
+            // Victim marker
+            marker = L.circleMarker(victimLatLng, {
                 color: 'red',
                 fillColor: '#f03',
                 fillOpacity: 0.5,
                 radius: 8
             }).addTo(map);
         } else {
-            map.setView([lat, lng]);
-            if (marker) marker.setLatLng([lat, lng]);
+            if (marker) marker.setLatLng(victimLatLng);
+        }
+        
+        if (partnerLat && partnerLng) {
+            const partnerLatLng = [partnerLat, partnerLng];
+            if (!partnerMarker) {
+                // Partner marker (blue div icon with pulsating effect)
+                partnerMarker = L.marker(partnerLatLng, {
+                    icon: L.divIcon({
+                        className: 'partner-map-icon',
+                        html: `
+                            <div class="relative flex items-center justify-center">
+                                <div class="absolute w-6 h-6 bg-blue-500 rounded-full animate-ping opacity-75"></div>
+                                <div class="relative w-5 h-5 bg-blue-600 border-2 border-white rounded-full flex items-center justify-center shadow-lg">
+                                    <span class="text-[10px] text-white font-black">M</span>
+                                </div>
+                            </div>
+                        `,
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    })
+                }).addTo(map);
+                partnerMarker.bindPopup("<b>Lokasi Mitra</b><br>Sedang menuju ke lokasi Anda.").openPopup();
+            } else {
+                partnerMarker.setLatLng(partnerLatLng);
+            }
+            
+            // Fit bounds to show both
+            const bounds = L.latLngBounds([victimLatLng, partnerLatLng]);
+            map.fitBounds(bounds, { padding: [30, 30] });
+        } else {
+            if (partnerMarker) {
+                map.removeLayer(partnerMarker);
+                partnerMarker = null;
+            }
+            map.setView(victimLatLng, 15);
         }
     }
 
@@ -457,7 +505,17 @@
         }
 
         if (payload.report.location.latitude && payload.report.location.longitude) {
-            initMap(payload.report.location.latitude, payload.report.location.longitude);
+            const victimLat = parseFloat(payload.report.location.latitude);
+            const victimLng = parseFloat(payload.report.location.longitude);
+            let partnerLat = null;
+            let partnerLng = null;
+            
+            if (payload.assigned_partner && payload.assigned_partner.latitude && payload.assigned_partner.longitude) {
+                partnerLat = parseFloat(payload.assigned_partner.latitude);
+                partnerLng = parseFloat(payload.assigned_partner.longitude);
+            }
+            
+            updateMapMarkers(victimLat, victimLng, partnerLat, partnerLng);
         }
 
         const assigned = document.getElementById('assigned-card');
@@ -1327,6 +1385,48 @@
         document.getElementById('upload-list').innerHTML = '';
     }
 
+
+
+    // Partner live location push
+    let partnerWatchId = null;
+    function pushPartnerLocation() {
+        if (!navigator.geolocation) return;
+
+        const updatePartnerCoords = async (pos) => {
+            try {
+                await fetch(`/tracking/${reportId}/partner-location`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        latitude: pos.coords.latitude,
+                        longitude: pos.coords.longitude
+                    })
+                });
+            } catch (e) {}
+        };
+
+        // Get initial position
+        navigator.geolocation.getCurrentPosition(updatePartnerCoords, () => {}, {
+            enableHighAccuracy: true,
+            timeout: 5000
+        });
+
+        // Watch position
+        partnerWatchId = navigator.geolocation.watchPosition(updatePartnerCoords, (err) => {}, {
+            enableHighAccuracy: true,
+            maximumAge: 0,
+            timeout: 10000
+        });
+    }
+
+    if (isPartner && isPartnerHandling) {
+        pushPartnerLocation();
+    }
+
     function openChronologyModal() {
         const m = document.getElementById('chronology-modal');
         if (!m) return;
@@ -1480,5 +1580,6 @@
         </form>
     </div>
 </div>
+
 </body>
 </html>
