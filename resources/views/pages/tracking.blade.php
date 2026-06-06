@@ -380,7 +380,12 @@
         const urlParams = new URLSearchParams(window.location.search);
         const callPhone = urlParams.get('call');
         if (callPhone) {
-            window.location.href = 'tel:' + callPhone;
+            const hasTriggered = sessionStorage.getItem('safora_call_triggered_' + reportId);
+            if (!hasTriggered) {
+                window.location.href = 'tel:' + callPhone;
+            } else {
+                sessionStorage.removeItem('safora_call_triggered_' + reportId);
+            }
             // Clean up the URL search param so refresh doesn't trigger dialer again
             urlParams.delete('call');
             const searchString = urlParams.toString();

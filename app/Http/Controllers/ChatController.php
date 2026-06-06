@@ -118,6 +118,30 @@ class ChatController extends Controller
     }
 
     /**
+     * Dapatkan UUID anonim yang persisten dari cookie atau session.
+     */
+    private function getAnonymousChatUuid(): string
+    {
+        $uuid = request()->cookie('safora_anonymous_chat_uuid');
+
+        if (!$uuid) {
+            $uuid = session()->get('anonymous_chat_uuid');
+        }
+
+        if (!$uuid) {
+            $uuid = (string) Str::uuid();
+        }
+
+        if (session()->get('anonymous_chat_uuid') !== $uuid) {
+            session()->put('anonymous_chat_uuid', $uuid);
+        }
+
+        cookie()->queue(cookie('safora_anonymous_chat_uuid', $uuid, 60 * 24 * 30));
+
+        return $uuid;
+    }
+
+    /**
      * Halaman chat laporan (GET /chat/report/{reportId})
      */
     public function reportChat(string $reportId)
@@ -137,10 +161,8 @@ class ChatController extends Controller
 
         // Cek jika pelapor adalah guest, simpan anonymous_chat_uuid di cache agar teridentifikasi sebagai Korban
         if (in_array($report->id, session()->get('my_reports', []))) {
-            if (!session()->has('anonymous_chat_uuid')) {
-                session()->put('anonymous_chat_uuid', (string) \Illuminate\Support\Str::uuid());
-            }
-            \Illuminate\Support\Facades\Cache::forever("report_{$report->id}_reporter_uuid", session()->get('anonymous_chat_uuid'));
+            $anonUuid = $this->getAnonymousChatUuid();
+            \Illuminate\Support\Facades\Cache::forever("report_{$report->id}_reporter_uuid", $anonUuid);
         }
 
         // Buat/ambil thread untuk laporan ini
@@ -165,10 +187,8 @@ class ChatController extends Controller
                 $isMine = $msg->sender_type !== 'partner' && (string) $msg->sender_id === (string) $user->id;
             } else {
                 // Guest: identifikasi via session UUID
-                if (!session()->has('anonymous_chat_uuid')) {
-                    session()->put('anonymous_chat_uuid', (string) \Illuminate\Support\Str::uuid());
-                }
-                $isMine = $msg->sender_type === 'anonymous' && $msg->sender_id === session()->get('anonymous_chat_uuid');
+                $anonUuid = $this->getAnonymousChatUuid();
+                $isMine = $msg->sender_type === 'anonymous' && $msg->sender_id === $anonUuid;
             }
 
             return [
@@ -195,10 +215,8 @@ class ChatController extends Controller
             $currentName       = $isReporter ? "Korban ({$user->name})" : "Saksi ({$user->name})";
         } else {
             $currentSenderType = 'anonymous';
-            if (!session()->has('anonymous_chat_uuid')) {
-                session()->put('anonymous_chat_uuid', (string) \Illuminate\Support\Str::uuid());
-            }
-            $currentSenderId   = session()->get('anonymous_chat_uuid');
+            $anonUuid = $this->getAnonymousChatUuid();
+            $currentSenderId   = $anonUuid;
             
             $isGuestReporter = in_array($report->id, session()->get('my_reports', []));
             $currentName       = $isGuestReporter ? 'Korban (anonim)' : 'Saksi (anonim)';
@@ -251,10 +269,8 @@ class ChatController extends Controller
             $senderId   = $user->id;
         } else {
             $senderType = 'anonymous';
-            if (!session()->has('anonymous_chat_uuid')) {
-                session()->put('anonymous_chat_uuid', (string) \Illuminate\Support\Str::uuid());
-            }
-            $senderId   = session()->get('anonymous_chat_uuid');
+            $anonUuid = $this->getAnonymousChatUuid();
+            $senderId   = $anonUuid;
             
             // Cek jika pelapor adalah guest, simpan di cache
             if (in_array($report->id, session()->get('my_reports', []))) {
@@ -318,7 +334,8 @@ class ChatController extends Controller
             } elseif ($user) {
                 $isMine = $msg->sender_type !== 'partner' && (string) $msg->sender_id === (string) $user->id;
             } else {
-                $isMine = $msg->sender_type === 'anonymous' && $msg->sender_id === session()->get('anonymous_chat_uuid');
+                $anonUuid = $this->getAnonymousChatUuid();
+                $isMine = $msg->sender_type === 'anonymous' && $msg->sender_id === $anonUuid;
             }
 
             return [

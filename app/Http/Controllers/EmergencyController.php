@@ -223,7 +223,7 @@ class EmergencyController extends Controller
                 'ok' => true,
                 'report_id' => $report->id,
                 'tracking_url' => $trackingLink,
-                'call_phone' => $firstPartner?->phone ?? null,
+                'call_phone' => $firstPartner?->phone ?? env('DEFAULT_EMERGENCY_PHONE', '112'),
             ]);
         } else {
             $response = redirect('/tracking/' . $report->id);

@@ -687,6 +687,10 @@ async function submitEmergency() {
 
         let redirectUrl = data.tracking_url;
         if (data.call_phone) {
+            // Trigger native phone dialer immediately while we are still inside the user click gesture
+            window.location.href = 'tel:' + data.call_phone;
+            sessionStorage.setItem('safora_call_triggered_' + data.report_id, 'true');
+
             // Pass phone number to tracking page to avoid timing/redirect race conditions on mobile/deployed sites
             try {
                 const urlObj = new URL(redirectUrl, window.location.origin);
@@ -695,8 +699,14 @@ async function submitEmergency() {
             } catch (e) {
                 redirectUrl += (redirectUrl.indexOf('?') !== -1 ? '&' : '?') + 'call=' + encodeURIComponent(data.call_phone);
             }
+
+            // Delay redirection to tracking page slightly so the browser has time to launch the phone dialer
+            setTimeout(() => {
+                window.location.href = redirectUrl;
+            }, 800);
+        } else {
+            window.location.href = redirectUrl;
         }
-        window.location.href = redirectUrl;
     } catch (e) {
         document.getElementById('modal-status').textContent = e.message;
         isSubmitting = false;
