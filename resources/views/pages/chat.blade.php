@@ -82,7 +82,6 @@
                     </svg>
                 </button>
             </div>
-            <p class="text-center text-xs text-gray-400 mt-2">Mengirim sebagai <span class="font-semibold">{{ $currentName }}</span></p>
         </div>
         @else
         <div class="bg-gray-50 border-t border-gray-200 px-4 py-4 flex-shrink-0 text-center text-sm font-semibold text-gray-500">
