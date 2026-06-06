@@ -190,6 +190,9 @@
                             >
                                 <div class="min-w-0 flex-1">
                                     <p class="font-semibold text-gray-900 text-sm sm:text-base break-words leading-tight">{{ $pl->service_name }}</p>
+                                    @if($pl->duration && (str_contains(strtolower($pl->duration), 'sesi') || str_contains(strtolower($pl->duration), 'session')))
+                                        <p class="text-xs text-gray-500 mt-1">⏱️ {{ $pl->duration }}</p>
+                                    @endif
                                 </div>
                                 <div class="text-right shrink-0">
                                     <p class="font-black text-gray-900 text-sm sm:text-base">Rp {{ number_format($pl->price, 0, ',', '.') }}</p>
@@ -360,7 +363,7 @@
             row.innerHTML = `
                 <div class="min-w-0 flex-1">
                     <p class="font-semibold text-gray-900 text-sm sm:text-base break-words leading-tight">${escapeHtml(item.serviceName)}</p>
-                    ${item.durationText && !item.durationText.toLowerCase().includes('menit') ? `<p class="text-xs text-gray-500 mt-1">${escapeHtml(item.durationText)}</p>` : ''}
+                    ${item.durationText && (item.durationText.toLowerCase().includes('sesi') || item.durationText.toLowerCase().includes('session')) ? `<p class="text-xs text-gray-500 mt-1">${escapeHtml(item.durationText)}</p>` : ''}
                     <p class="text-xs text-gray-400 mt-1">${escapeHtml(item.currencyText)}</p>
                 </div>
                 <div class="text-right shrink-0">

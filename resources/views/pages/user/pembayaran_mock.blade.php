@@ -66,7 +66,7 @@
                     <div class="flex justify-between items-start gap-4 py-3 first:pt-0">
                         <div>
                             <p class="font-semibold text-gray-950 text-sm leading-snug">{{ $pl->service_name }}</p>
-                            @if($pl->duration && !str_contains(strtolower($pl->duration), 'menit'))
+                            @if($pl->duration && (str_contains(strtolower($pl->duration), 'sesi') || str_contains(strtolower($pl->duration), 'session')))
                                 <p class="text-xs text-gray-400 mt-0.5">⏱ {{ $pl->duration }}</p>
                             @endif
                         </div>

@@ -121,20 +121,20 @@ class AdditionalMitraSeeder extends Seeder
 
         $priceCatalog = [
             'legal' => [
-                ['service_name' => 'Konsultasi Pengacara (20 menit)', 'price' => 150000, 'duration' => '20 menit'],
-                ['service_name' => 'Penjelasan Kasus & Strategi Awal (45 menit)', 'price' => 300000, 'duration' => '45 menit'],
-                ['service_name' => 'Penyusunan Surat Kuasa / Dokumen', 'price' => 300000, 'duration' => '1-2 hari'],
-                ['service_name' => 'Pembuatan Surat Keberatan / Bantahan', 'price' => 400000, 'duration' => '1-3 hari'],
-                ['service_name' => 'Pendampingan Pemeriksaan (1 sesi)', 'price' => 500000, 'duration' => '±3 jam'],
-                ['service_name' => 'Pendampingan Persidangan / Sidang (1 sesi)', 'price' => 750000, 'duration' => '±1 hari'],
+                ['service_name' => 'Konsultasi Pengacara (20 menit)', 'price' => 150000, 'duration' => null],
+                ['service_name' => 'Penjelasan Kasus & Strategi Awal (45 menit)', 'price' => 300000, 'duration' => null],
+                ['service_name' => 'Penyusunan Surat Kuasa / Dokumen', 'price' => 300000, 'duration' => null],
+                ['service_name' => 'Pembuatan Surat Keberatan / Bantahan', 'price' => 400000, 'duration' => null],
+                ['service_name' => 'Pendampingan Pemeriksaan (1 sesi)', 'price' => 500000, 'duration' => '1 sesi'],
+                ['service_name' => 'Pendampingan Persidangan / Sidang (1 sesi)', 'price' => 750000, 'duration' => '1 sesi'],
             ],
             'counselor' => [
-                ['service_name' => 'Konsultasi Psikolog (30 menit)', 'price' => 120000, 'duration' => '30 menit'],
-                ['service_name' => 'Asesmen Awal Psikologis (45 menit)', 'price' => 200000, 'duration' => '45 menit'],
-                ['service_name' => 'Sesi Konseling (45 session)', 'price' => 250000, 'duration' => '45 menit'],
-                ['service_name' => 'Sesi Konseling (60 session)', 'price' => 300000, 'duration' => '60 menit'],
-                ['service_name' => 'Rencana Pendampingan (paket 3 sesi)', 'price' => 650000, 'duration' => '3 x 45 menit'],
-                ['service_name' => 'Pendampingan Berkelanjutan (paket 6 sesi)', 'price' => 1200000, 'duration' => '6 x 45 menit'],
+                ['service_name' => 'Konsultasi Psikolog (30 menit)', 'price' => 120000, 'duration' => null],
+                ['service_name' => 'Asesmen Awal Psikologis (45 menit)', 'price' => 200000, 'duration' => null],
+                ['service_name' => 'Sesi Konseling (45 session)', 'price' => 250000, 'duration' => '1 sesi'],
+                ['service_name' => 'Sesi Konseling (60 session)', 'price' => 300000, 'duration' => '1 sesi'],
+                ['service_name' => 'Rencana Pendampingan (paket 3 sesi)', 'price' => 650000, 'duration' => '3 sesi'],
+                ['service_name' => 'Pendampingan Berkelanjutan (paket 6 sesi)', 'price' => 1200000, 'duration' => '6 sesi'],
             ],
         ];
 

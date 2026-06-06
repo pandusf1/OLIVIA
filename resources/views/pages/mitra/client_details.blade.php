@@ -97,8 +97,10 @@
                                 <div>
                                     <h3 class="font-bold text-gray-950 text-sm leading-snug">{{ $ps->priceList?->service_name ?: 'Layanan Umum' }}</h3>
                                     <p class="text-xs text-gray-400 mt-1 flex items-center gap-2">
-                                        <span>⏱️ {{ $ps->priceList?->duration ?: 'Durasi tidak ditentukan' }}</span>
-                                        <span>•</span>
+                                        @if($ps->priceList?->duration && (str_contains(strtolower($ps->priceList->duration), 'sesi') || str_contains(strtolower($ps->priceList->duration), 'session')))
+                                            <span>⏱️ {{ $ps->priceList->duration }}</span>
+                                            <span>•</span>
+                                        @endif
                                         <span>📅 {{ $ps->paid_at ? $ps->paid_at->format('d M Y, H:i') : '-' }}</span>
                                     </p>
                                 </div>

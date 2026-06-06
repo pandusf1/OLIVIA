@@ -98,8 +98,10 @@
                                 <div>
                                     <h3 class="font-bold text-gray-950 text-sm leading-snug"><?php echo e($ps->priceList?->service_name ?: 'Layanan Umum'); ?></h3>
                                     <p class="text-xs text-gray-400 mt-1 flex items-center gap-2">
-                                        <span>⏱️ <?php echo e($ps->priceList?->duration ?: 'Durasi tidak ditentukan'); ?></span>
-                                        <span>•</span>
+                                        <?php if($ps->priceList?->duration && (str_contains(strtolower($ps->priceList->duration), 'sesi') || str_contains(strtolower($ps->priceList->duration), 'session'))): ?>
+                                            <span>⏱️ <?php echo e($ps->priceList->duration); ?></span>
+                                            <span>•</span>
+                                        <?php endif; ?>
                                         <span>📅 <?php echo e($ps->paid_at ? $ps->paid_at->format('d M Y, H:i') : '-'); ?></span>
                                     </p>
                                 </div>

@@ -39,104 +39,124 @@
 <main class="max-w-6xl mx-auto px-6 py-10 fade-in">
 
     @if(in_array($mitra->mitra_type, ['legal', 'counselor'], true))
-    <section class="mb-8 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-        <h2 class="text-lg font-black text-gray-950 mb-5 pb-3 border-b border-gray-100 flex items-center gap-2">
-            <span>⚙️</span> Kelola Profil & Informasi Pembayaran
+    <style>
+        .accordion-content {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease-out, margin-top 0.35s ease-out;
+        }
+        .accordion-content.open {
+            opacity: 1;
+        }
+    </style>
+    <section class="mb-8 bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 shadow-sm">
+        <h2 onclick="toggleProfilPembayaran()" class="text-lg font-black text-gray-950 flex items-center justify-between cursor-pointer select-none">
+            <div class="flex items-center gap-2">
+                Kelola Profil & Informasi Pembayaran
+            </div>
+            <svg id="profil-pembayaran-arrow" class="w-5 h-5 text-gray-500 transition-transform duration-300 transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
+            </svg>
         </h2>
         
-        <div class="grid md:grid-cols-12 gap-8">
-            <!-- Form Update Profil & Pembayaran (Kiri) -->
-            <div class="md:col-span-6 space-y-4">
-                <h3 class="font-bold text-gray-900 text-sm uppercase tracking-wider text-gray-400 mb-3">Informasi Umum & Rekening</h3>
-                
-                <form method="POST" action="{{ route('mitra.profile.update') }}" class="space-y-4">
-                    @csrf
-                    <div>
-                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Catatan Mitra (Jam Kerja/Keterangan)</label>
-                        <textarea name="catatan" rows="4" placeholder="Masukkan deskripsi layanan, jam kerja, atau catatan penting..." class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-xs focus:border-gray-900 focus:outline-none leading-relaxed">{{ $mitra->catatan }}</textarea>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Nama Bank</label>
-                            <select name="bank_name" class="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-xs focus:border-gray-900 focus:outline-none">
-                                <option value="">-- Pilih Bank --</option>
-                                @foreach(['BCA', 'Mandiri', 'BNI', 'BRI', 'CIMB Niaga', 'Permata', 'Danamon'] as $b)
-                                    <option value="{{ $b }}" {{ $mitra->bank_name === $b ? 'selected' : '' }}>{{ $b }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">No. Rekening</label>
-                            <input type="text" name="nomor_rekening" placeholder="1234567890" value="{{ $mitra->nomor_rekening }}" class="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-xs focus:border-gray-900 focus:outline-none">
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">E-Wallet</label>
-                            <select name="ewallet_name" class="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-xs focus:border-gray-900 focus:outline-none">
-                                <option value="">-- Pilih E-Wallet --</option>
-                                @foreach(['GoPay', 'OVO', 'DANA', 'LinkAja', 'ShopeePay'] as $ew)
-                                    <option value="{{ $ew }}" {{ $mitra->ewallet_name === $ew ? 'selected' : '' }}>{{ $ew }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">No. HP E-Wallet</label>
-                            <input type="text" name="nomor_ewallet" placeholder="08123456789" value="{{ $mitra->nomor_ewallet }}" class="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-xs focus:border-gray-900 focus:outline-none">
-                        </div>
-                    </div>
-
-                    <button type="submit" class="w-full bg-gray-900 hover:bg-black text-white font-bold py-2.5 px-4 rounded-xl transition text-xs shadow-sm">
-                        Simpan Perubahan
-                    </button>
-                </form>
-            </div>
-
-            <!-- Manage Price Lists (Kanan) -->
-            <div class="md:col-span-6 space-y-6">
-                <div class="space-y-3">
-                    <h3 class="font-bold text-gray-900 text-sm uppercase tracking-wider text-gray-400">Daftar Pricelist Layanan</h3>
-                    
-                    @php
-                        $currentPricelists = \App\Models\PriceList::where('mitra_id', $mitra->id)->get();
-                    @endphp
-
-                    <div class="max-h-56 overflow-y-auto border border-gray-200 rounded-xl divide-y divide-gray-100 bg-white">
-                        @forelse($currentPricelists as $pl)
-                            <div class="flex justify-between items-center p-3 hover:bg-gray-50/50">
-                                <div class="min-w-0 flex-1 pr-3">
-                                    <p class="font-bold text-gray-950 text-xs truncate leading-snug">{{ $pl->service_name }}</p>
-                                    <p class="text-[11px] text-gray-400 mt-0.5">Rp {{ number_format($pl->price, 0, ',', '.') }} {{ $pl->duration ? '• ' . $pl->duration : '' }}</p>
-                                </div>
-                                <form method="POST" action="{{ route('mitra.price-list.destroy', $pl->id) }}" onsubmit="return confirm('Hapus pricelist ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-[10px] font-bold text-red-600 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg transition">Hapus</button>
-                                </form>
+        <div id="profil-pembayaran-content" class="accordion-content">
+            <div class="border-t border-gray-100 pt-5 mt-4">
+                <div class="grid md:grid-cols-12 gap-6 md:gap-8">
+                    <!-- Form Update Profil & Pembayaran (Kiri) -->
+                    <div class="md:col-span-6 space-y-4">
+                        <h3 class="font-bold text-gray-900 text-sm uppercase tracking-wider text-gray-400 mb-3">Informasi Umum & Rekening</h3>
+                        
+                        <form method="POST" action="{{ route('mitra.profile.update') }}" class="space-y-4">
+                            @csrf
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Catatan Mitra (Jam Kerja/Keterangan)</label>
+                                <textarea name="catatan" rows="8" placeholder="Masukkan deskripsi layanan, jam kerja, atau catatan penting..." class="w-full rounded-xl border border-gray-300 px-4 py-2.5 text-xs focus:border-gray-900 focus:outline-none leading-relaxed h-52">{{ $mitra->catatan }}</textarea>
                             </div>
-                        @empty
-                            <div class="p-4 text-center text-xs text-gray-400">Belum ada layanan terdaftar.</div>
-                        @endforelse
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Nama Bank</label>
+                                    <select name="bank_name" class="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-xs focus:border-gray-900 focus:outline-none">
+                                        <option value="">-- Pilih Bank --</option>
+                                        @foreach(['BCA', 'Mandiri', 'BNI', 'BRI', 'CIMB Niaga', 'Permata', 'Danamon'] as $b)
+                                            <option value="{{ $b }}" {{ $mitra->bank_name === $b ? 'selected' : '' }}>{{ $b }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">No. Rekening</label>
+                                    <input type="text" name="nomor_rekening" placeholder="1234567890" value="{{ $mitra->nomor_rekening }}" class="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-xs focus:border-gray-900 focus:outline-none">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">E-Wallet</label>
+                                    <select name="ewallet_name" class="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-xs focus:border-gray-900 focus:outline-none">
+                                        <option value="">-- Pilih E-Wallet --</option>
+                                        @foreach(['GoPay', 'OVO', 'DANA', 'LinkAja', 'ShopeePay'] as $ew)
+                                            <option value="{{ $ew }}" {{ $mitra->ewallet_name === $ew ? 'selected' : '' }}>{{ $ew }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">No. HP E-Wallet</label>
+                                    <input type="text" name="nomor_ewallet" placeholder="08123456789" value="{{ $mitra->nomor_ewallet }}" class="w-full rounded-xl border border-gray-300 px-3 py-2.5 text-xs focus:border-gray-900 focus:outline-none">
+                                </div>
+                            </div>
+
+                            <button type="submit" class="w-full bg-gray-900 hover:bg-black text-white font-bold py-2.5 px-4 rounded-xl transition text-xs shadow-sm">
+                                Simpan Perubahan
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Manage Price Lists (Kanan) -->
+                    <div class="md:col-span-6 space-y-6">
+                        <div class="space-y-3">
+                            <h3 class="font-bold text-gray-900 text-sm uppercase tracking-wider text-gray-400">Daftar Pricelist Layanan</h3>
+                            
+                            @php
+                                $currentPricelists = \App\Models\PriceList::where('mitra_id', $mitra->id)->get();
+                            @endphp
+
+                            <div class="max-h-56 overflow-y-auto border border-gray-200 rounded-xl divide-y divide-gray-100 bg-white">
+                                @forelse($currentPricelists as $pl)
+                                    <div class="flex justify-between items-center p-3 hover:bg-gray-50/50">
+                                        <div class="min-w-0 flex-1 pr-3">
+                                            <p class="font-bold text-gray-950 text-xs truncate leading-snug">{{ $pl->service_name }}</p>
+                                            <p class="text-[11px] text-gray-400 mt-0.5">Rp {{ number_format($pl->price, 0, ',', '.') }} {{ ($pl->duration && (str_contains(strtolower($pl->duration), 'sesi') || str_contains(strtolower($pl->duration), 'session'))) ? '• ' . $pl->duration : '' }}</p>
+                                        </div>
+                                        <form method="POST" action="{{ route('mitra.price-list.destroy', $pl->id) }}" onsubmit="return confirm('Hapus pricelist ini?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-[10px] font-bold text-red-600 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg transition">Hapus</button>
+                                        </form>
+                                    </div>
+                                @empty
+                                    <div class="p-4 text-center text-xs text-gray-400">Belum ada layanan terdaftar.</div>
+                                @endforelse
+                            </div>
+                        </div>
+
+                        <!-- Form Tambah Pricelist -->
+                        <form method="POST" action="{{ route('mitra.price-list.store') }}" class="p-4 border border-dashed border-gray-300 bg-gray-50/30 rounded-xl space-y-3">
+                            @csrf
+                            <h4 class="font-bold text-gray-950 text-xs uppercase tracking-wider">Tambah Layanan Baru</h4>
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <input type="text" name="service_name" placeholder="Nama Layanan (cth. Konsultasi Hukum)" required class="col-span-2 rounded-xl border border-gray-300 px-3 py-2 text-xs focus:border-gray-950 focus:outline-none">
+                                <input type="number" name="price" placeholder="Harga (Rp)" required class="rounded-xl border border-gray-300 px-3 py-2 text-xs focus:border-gray-950 focus:outline-none">
+                                <input type="text" name="duration" placeholder="Durasi (khusus sesi, cth. 1 sesi)" class="rounded-xl border border-gray-300 px-3 py-2 text-xs focus:border-gray-950 focus:outline-none">
+                            </div>
+
+                            <button type="submit" class="w-full bg-gray-950 hover:bg-gray-800 text-white font-bold py-2.5 rounded-xl transition text-xs shadow-sm">
+                                Tambah Layanan
+                            </button>
+                        </form>
                     </div>
                 </div>
-
-                <!-- Form Tambah Pricelist -->
-                <form method="POST" action="{{ route('mitra.price-list.store') }}" class="p-4 border border-dashed border-gray-300 bg-gray-50/30 rounded-xl space-y-3">
-                    @csrf
-                    <h4 class="font-bold text-gray-950 text-xs uppercase tracking-wider">Tambah Layanan Baru</h4>
-                    
-                    <div class="grid grid-cols-2 gap-3">
-                        <input type="text" name="service_name" placeholder="Nama Layanan (cth. Konsultasi Hukum)" required class="col-span-2 rounded-xl border border-gray-300 px-3 py-2 text-xs focus:border-gray-950 focus:outline-none">
-                        <input type="number" name="price" placeholder="Harga (Rp)" required class="rounded-xl border border-gray-300 px-3 py-2 text-xs focus:border-gray-950 focus:outline-none">
-                        <input type="text" name="duration" placeholder="Durasi (cth. 60 menit)" class="rounded-xl border border-gray-300 px-3 py-2 text-xs focus:border-gray-950 focus:outline-none">
-                    </div>
-
-                    <button type="submit" class="w-full bg-gray-950 hover:bg-gray-800 text-white font-bold py-2.5 rounded-xl transition text-xs shadow-sm">
-                        Tambah Layanan
-                    </button>
-                </form>
             </div>
         </div>
     </section>
@@ -316,6 +336,29 @@
 </main>
 
 <script>
+    function toggleProfilPembayaran() {
+        const content = document.getElementById('profil-pembayaran-content');
+        const arrow = document.getElementById('profil-pembayaran-arrow');
+        if (!content || !arrow) return;
+        const isOpen = content.classList.contains('open');
+        
+        if (isOpen) {
+            content.style.maxHeight = '0px';
+            content.classList.remove('open');
+            arrow.style.transform = 'rotate(0deg)';
+        } else {
+            content.classList.add('open');
+            content.style.maxHeight = content.scrollHeight + 'px';
+            arrow.style.transform = 'rotate(180deg)';
+            
+            setTimeout(() => {
+                if (content.classList.contains('open')) {
+                    content.style.maxHeight = 'none';
+                }
+            }, 350);
+        }
+    }
+
     // Auto-refresh (AJAX Polling) to feel real-time
     setInterval(async function() {
         try {

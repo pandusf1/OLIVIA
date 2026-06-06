@@ -423,11 +423,16 @@ class MitraController extends Controller
             'duration' => 'nullable|string|max:255',
         ]);
 
+        $duration = $request->duration;
+        if ($duration && !\Illuminate\Support\Str::contains(\Illuminate\Support\Str::lower($duration), ['sesi', 'session'])) {
+            $duration = null;
+        }
+
         \App\Models\PriceList::create([
             'mitra_id' => $mitraId,
             'service_name' => $request->service_name,
             'price' => $request->price,
-            'duration' => $request->duration,
+            'duration' => $duration,
             'currency' => 'IDR',
         ]);
 
