@@ -38,9 +38,9 @@
 
         <!-- Email or Phone -->
         <div>
-            <label class="block text-gray-600 text-xs font-semibold mb-1.5 uppercase tracking-wider">Email atau Nomor WhatsApp</label>
+            <label class="block text-gray-600 text-xs font-semibold mb-1.5 uppercase tracking-wider">Nomor WhatsApp</label>
             <input type="text" name="identity" value="<?php echo e(old('identity')); ?>" required autofocus
-                placeholder="email@example.com atau 628xxxxxxxxx"
+                placeholder="628xxxxxxxxx"
                 class="w-full border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-3 text-sm focus:outline-none transition bg-white">
             <?php if (isset($component)) { $__componentOriginalf94ed9c5393ef72725d159fe01139746 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginalf94ed9c5393ef72725d159fe01139746 = $attributes; } ?>

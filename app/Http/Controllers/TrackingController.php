@@ -184,10 +184,10 @@ class TrackingController extends Controller
                     (float) $report->longitude
                 );
                 
-                // Filter within 10 km
+                // Filter within 20 km
                 $partners = $partners->filter(function($p) use ($report) {
                     $dist = Partner::distanceKm((float) $report->latitude, (float) $report->longitude, (float) $p->latitude, (float) $p->longitude);
-                    return $dist <= 10.0;
+                    return $dist <= 20.0;
                 });
 
                 if ($partners->isNotEmpty()) {

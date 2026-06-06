@@ -6,16 +6,16 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
     <style>*{font-family:'Inter',sans-serif;} h1,.font-unbounded{font-family:'Space Grotesk',sans-serif!important;}</style>
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
-    @php
+    <?php
         $backUrl = request()->headers->get('referer') ?: route('dashboard');
         $backLabel = 'Kembali';
         $showBrand = false;
-    @endphp
-    @include('partials.nav-auth')
+    ?>
+    <?php echo $__env->make('partials.nav-auth', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
     <div class="max-w-3xl mx-auto px-6 py-10">
         <div class="mb-8">
@@ -57,7 +57,7 @@
     </div>
 
     <script>
-        const reports = @json($reports);
+        const reports = <?php echo json_encode($reports, 15, 512) ?>;
 
         function formatDate(dateStr) {
             if (!dateStr) return '-';
@@ -284,3 +284,4 @@
 </body>
 </html>
 
+<?php /**PATH D:\CODING\olivia_final\resources\views/pages/evidence.blade.php ENDPATH**/ ?>

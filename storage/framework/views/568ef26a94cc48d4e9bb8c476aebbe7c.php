@@ -24,13 +24,14 @@
         @keyframes modalIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:scale(1)} }
         .modal-in { animation: modalIn 0.25s ease forwards; }
     </style>
+    <?php echo $__env->make('partials.vercel-analytics', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 </head>
 <body class="bg-[#f5f4f1] text-gray-900 antialiased min-h-screen">
 
     <?php $backUrl = null; ?>
     <?php echo $__env->make('partials.nav-auth', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
  
-    <div class="max-w-6xl mx-auto px-6 py-10 fade-in">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 fade-in">
   
         
         <div class="flex justify-center mb-10 mt-6 fade-in">
@@ -97,7 +98,7 @@
                             </div>
 
                             <div class="flex items-center gap-2 mb-3 mt-3">
-                                <select id="map-search-type" class="w-1/2 border border-gray-200 rounded-2xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
+                                <select id="map-search-type" class="w-1/2 min-w-0 border border-gray-200 rounded-2xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
                                     <option value="">Semua</option>
                                     <option value="ambulance">Medis Darurat</option>
                                     <option value="legal">Bantuan Hukum</option>
@@ -105,7 +106,7 @@
                                     <option value="pemadam">Pemadam / Rescue</option>
                                     <option value="pppa">Layanan PPPA</option>
                                 </select>
-                                <input id="map-search-query" type="text" placeholder="Cari (cth. lbh semarang)" class="w-1/2 border border-gray-200 rounded-2xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
+                                <input id="map-search-query" type="text" placeholder="Cari (cth. lbh semarang)" class="w-1/2 min-w-0 border border-gray-200 rounded-2xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
                             </div>
 
                             <div id="nearby-partners" class="space-y-2">
@@ -139,7 +140,7 @@
             <div class="space-y-6">
                 
                 <div class="bg-white border border-gray-100 rounded-2xl p-4 sm:p-6 shadow-sm">
-                    <div class="flex items-center justify-between mb-5">
+                    <div class="flex items-center justify-between flex-wrap gap-3 mb-5">
                         <div>
                             <h2 class="font-semibold text-gray-900">Riwayat Laporan</h2>
                             <p id="total-reports-text" class="text-gray-400 text-xs mt-0.5">Memuat laporan...</p>
@@ -148,20 +149,20 @@
                             <button type="button" id="btn-view-all-reports" onclick="openAllReportsModal()" class="hidden sm:inline-flex text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full transition border border-gray-150">
                                 Lihat Semua
                             </button>
-                            <a href="<?php echo e(route('report.create')); ?>" class="text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition border border-red-100">+ Laporan Baru</a>
+                            <a href="<?php echo e(route('report.create')); ?>" class="text-xs font-semibold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-full transition border border-red-100 whitespace-nowrap">+ Laporan Baru</a>
                         </div>
                     </div>
 
                     
                     <div class="mb-5">
                         <form action="/tracking-search" method="GET" class="flex gap-2">
-                            <div class="relative flex-1">
+                            <div class="relative flex-1 min-w-0">
                                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                                    <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                                 </span>
-                                <input type="text" name="id" placeholder="Cari ID / Kode Laporan (cth. e439d57a)..." class="w-full border border-gray-200 focus:border-gray-400 rounded-xl pl-4 pr-4 py-2.5 text-xs focus:outline-none transition bg-white" required>
+                                <input type="text" name="id" placeholder="Cari ID / Kode Laporan (cth. e439d57a)..." class="w-full border border-gray-200 focus:border-gray-400 rounded-xl pl-9 pr-4 py-2.5 text-xs focus:outline-none transition bg-white min-w-0" required>
                             </div>
-                            <button type="submit" class="text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-4 py-2.5 rounded-xl transition border border-gray-150 flex items-center justify-center shadow-sm">
+                            <button type="submit" class="text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-4 py-2.5 rounded-xl transition border border-gray-150 flex items-center justify-center shadow-sm flex-shrink-0">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                             </button>
                         </form>
@@ -259,7 +260,7 @@
             
             <div class="p-4 border-b border-gray-100 space-y-2">
                 <div class="flex gap-2">
-                    <select id="all-reports-category" class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
+                    <select id="all-reports-category" class="flex-1 min-w-0 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
                         <option value="">Semua Kategori</option>
                         <option value="ambulance">Medis Darurat</option>
                         <option value="legal">Bantuan Hukum</option>
@@ -267,7 +268,7 @@
                         <option value="pemadam">Pemadam / Rescue</option>
                         <option value="pppa">Layanan PPPA</option>
                     </select>
-                    <select id="all-reports-status" class="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
+                    <select id="all-reports-status" class="flex-1 min-w-0 border border-gray-200 rounded-xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
                         <option value="">Semua Status</option>
                         <option value="Submitted">Submitted</option>
                         <option value="Routed">Routed</option>
@@ -277,18 +278,18 @@
                     </select>
                 </div>
                 <div class="flex gap-2 items-center">
-                    <div class="relative flex-1">
+                    <div class="relative flex-1 min-w-0">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         </span>
-                        <input id="all-reports-start" type="date" class="w-full border border-gray-200 rounded-xl pl-8 pr-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400" placeholder="Dari tanggal">
+                        <input id="all-reports-start" type="date" class="w-full border border-gray-200 rounded-xl pl-8 pr-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400 min-w-0" placeholder="Dari tanggal">
                     </div>
                     <span class="text-gray-400 text-xs flex-shrink-0">s/d</span>
-                    <div class="relative flex-1">
+                    <div class="relative flex-1 min-w-0">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         </span>
-                        <input id="all-reports-end" type="date" class="w-full border border-gray-200 rounded-xl pl-8 pr-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400" placeholder="Sampai tanggal">
+                        <input id="all-reports-end" type="date" class="w-full border border-gray-200 rounded-xl pl-8 pr-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400 min-w-0" placeholder="Sampai tanggal">
                     </div>
                 </div>
             </div>
@@ -418,6 +419,43 @@
 
     <script>
     const csrf = '<?php echo e(csrf_token()); ?>';
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '-';
+        try {
+            const cleanStr = String(dateStr).replace(' ', 'T');
+            const d = new Date(cleanStr);
+            if (isNaN(d.getTime())) {
+                const parts = String(dateStr).split(/[-T :.]/);
+                if (parts.length >= 3) {
+                    const year = parseInt(parts[0], 10);
+                    const month = parseInt(parts[1], 10) - 1;
+                    const day = parseInt(parts[2], 10);
+                    const hour = parts[3] ? parseInt(parts[3], 10) : 0;
+                    const minute = parts[4] ? parseInt(parts[4], 10) : 0;
+                    const second = parts[5] ? parseInt(parts[5], 10) : 0;
+                    const parsedDate = new Date(year, month, day, hour, minute, second);
+                    if (!isNaN(parsedDate.getTime())) {
+                        return formatLocalDate(parsedDate);
+                    }
+                }
+                return String(dateStr);
+            }
+            return formatLocalDate(d);
+        } catch (e) {
+            return String(dateStr);
+        }
+    }
+
+    function formatLocalDate(d) {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = months[d.getMonth()];
+        const year = d.getFullYear();
+        const hour = String(d.getHours()).padStart(2, '0');
+        const minute = String(d.getMinutes()).padStart(2, '0');
+        return `${day} ${month} ${year} ${hour}:${minute}`;
+    }
 
     function dismissDashboardHelper() {
         const card = document.getElementById('dashboard-helper-guide');
@@ -873,7 +911,7 @@
                     }
 
                     return `
-                        <a href="/tracking/${r.id}" class="flex items-center justify-between p-6 bg-[#faf9f7] hover:bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition group gap-4">
+                        <a href="/tracking/${r.id}" class="flex items-center justify-between p-4 sm:p-5 bg-[#faf9f7] hover:bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition group gap-3">
                             <div class="min-w-0 flex-1">
                                 <div class="flex items-center gap-2 flex-wrap">
                                     <p class="font-semibold text-gray-900 text-sm truncate">${r.category}</p>
@@ -1354,12 +1392,39 @@
             const data = await res.json();
             document.body.style.overflow = '';
 
-            if (data.call_phone) {
-                window.location.href = 'tel:' + data.call_phone;
+            // Save report ID directly to localStorage before redirecting to support transient sessions/cookies on mobile
+            if (data.report_id) {
+                try {
+                    let storedReports = JSON.parse(localStorage.getItem('safora_guest_reports') || '[]');
+                    storedReports.push(data.report_id);
+                    localStorage.setItem('safora_guest_reports', JSON.stringify(Array.from(new Set(storedReports))));
+                } catch (err) {
+                    console.error('Error saving to localStorage:', err);
+                }
             }
-            setTimeout(() => {
-                window.location.href = data.tracking_url;
-            }, 500);
+
+            let redirectUrl = data.tracking_url;
+            if (data.call_phone) {
+                // Trigger native phone dialer immediately while we are still inside the user click gesture
+                window.location.href = 'tel:' + data.call_phone;
+                sessionStorage.setItem('safora_call_triggered_' + data.report_id, 'true');
+
+                // Pass phone number to tracking page to avoid timing/redirect race conditions on mobile/deployed sites
+                try {
+                    const urlObj = new URL(redirectUrl, window.location.origin);
+                    urlObj.searchParams.set('call', data.call_phone);
+                    redirectUrl = urlObj.toString();
+                } catch (e) {
+                    redirectUrl += (redirectUrl.indexOf('?') !== -1 ? '&' : '?') + 'call=' + encodeURIComponent(data.call_phone);
+                }
+
+                // Delay redirection slightly to allow native dialer to launch
+                setTimeout(() => {
+                    window.location.href = redirectUrl;
+                }, 800);
+            } else {
+                window.location.href = redirectUrl;
+            }
         } catch (e) {
             document.getElementById('modal-status').textContent = e.message;
             isSubmitting = false;
@@ -1498,13 +1563,13 @@
                 const html = items.map(r => {
                     const s   = _arStatusColors[r.status] || _arStatusColors['Submitted'];
                     const date = r.incident_date
-                        ? new Date(r.incident_date).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
-                        : new Date(r.created_at).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+                        ? formatDate(r.incident_date)
+                        : formatDate(r.created_at);
                     const catLabel = { ambulance:'Medis Darurat', legal:'Bantuan Hukum', counselor:'Psikososial', pemadam:'Pemadam / Rescue' }[r.category] || r.category;
                     const anonBadge = r.anonymous ? `<span class="text-[10px] bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full font-semibold">Anonim</span>` : '';
                     const evBadge  = r.evidences_count > 0 ? `<span class="text-[10px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-semibold">${r.evidences_count} bukti</span>` : '';
                     return `
-                    <a href="/tracking/${r.id}" class="flex items-center justify-between p-6 bg-[#faf9f7] hover:bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition group gap-4">
+                    <a href="/tracking/${r.id}" class="flex items-center justify-between p-4 sm:p-5 bg-[#faf9f7] hover:bg-gray-50 rounded-xl border border-gray-100 hover:border-gray-200 transition group gap-3">
                         <div class="min-w-0 flex-1">
                             <div class="flex items-center gap-2 flex-wrap">
                                 <p class="font-semibold text-gray-900 text-sm truncate">${catLabel}</p>

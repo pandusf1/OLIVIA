@@ -21,7 +21,10 @@ class DatabaseSeeder extends Seeder
         );
 
         // Seed demo users biasa + partner + lokasi + price_lists dilakukan oleh PartnerSeeder.
-        $this->call(PartnerSeeder::class);
+        $this->call([
+            PartnerSeeder::class,
+            AdditionalPartnerSeeder::class,
+        ]);
 
     }
 }
