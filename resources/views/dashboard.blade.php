@@ -79,7 +79,7 @@
                             <p class="text-gray-400 text-xs mt-0.5">Urut berdasarkan jarak dari lokasi kamu.</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button type="button" id="btn-view-all-partners" aria-label="Lihat semua mitra" title="Lihat semua mitra"
+                            <button type="button" id="btn-view-all-mitras" aria-label="Lihat semua mitra" title="Lihat semua mitra"
                                 class="hidden sm:inline-flex text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 px-3 py-1.5 rounded-full transition border border-gray-150">
                                 Lihat Semua
                             </button>
@@ -110,7 +110,7 @@
                                 <input id="map-search-query" type="text" placeholder="Cari (cth. lbh semarang)" class="w-1/2 min-w-0 border border-gray-200 rounded-2xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
                             </div>
 
-                            <div id="nearby-partners" class="space-y-2">
+                            <div id="nearby-mitras" class="space-y-2">
                                 <div class="animate-pulse flex items-center justify-between p-3 bg-[#faf9f7] border border-gray-100 rounded-xl">
                                     <div class="flex-1 space-y-2">
                                         <div class="h-4 bg-gray-200 rounded w-2/3"></div>
@@ -141,7 +141,7 @@
                                 </div>
                             </div>
 
-                            <button type="button" onclick="openAllPartnersModal()" class="w-full mt-3 sm:hidden text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 py-2.5 rounded-xl transition border border-gray-150 text-center block">
+                            <button type="button" onclick="openAllMitrasModal()" class="w-full mt-3 sm:hidden text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 py-2.5 rounded-xl transition border border-gray-150 text-center block">
                                 Lihat Semua Mitra
                             </button>
 
@@ -223,19 +223,19 @@
     </div>
 
     {{-- ===== KATEGORI MODAL ===== --}}
-    <div id="all-partners-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center px-4">
+    <div id="all-mitras-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 items-center justify-center px-4">
         <div class="bg-white rounded-2xl w-full max-w-lg p-5 shadow-2xl max-h-[85vh] overflow-hidden flex flex-col">
             <div class="flex items-start justify-between gap-3 mb-3">
                 <div class="min-w-0">
                     <h2 class="font-black text-xl text-gray-900 mb-1 font-unbounded leading-tight">Mitra</h2>
                 </div>
-                <button type="button" onclick="closeAllPartnersModal()" class="text-gray-400 hover:text-gray-600 transition p-2 rounded-full">
+                <button type="button" onclick="closeAllMitrasModal()" class="text-gray-400 hover:text-gray-600 transition p-2 rounded-full">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
 
             <div class="flex items-center gap-2 mb-3">
-                <select id="all-partners-type" class="w-1/2 border border-gray-200 rounded-2xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
+                <select id="all-mitras-type" class="w-1/2 border border-gray-200 rounded-2xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
                     <option value="">Semua</option>
                     <option value="ambulance">Medis Darurat</option>
                     <option value="legal">Bantuan Hukum</option>
@@ -243,17 +243,17 @@
                     <option value="pemadam">Pemadam / Rescue</option>
                     <option value="pppa">Layanan PPPA</option>
                 </select>
-                <input id="all-partners-query" type="text" placeholder="Cari (cth. lbh semarang)" class="w-1/2 border border-gray-200 rounded-2xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
+                <input id="all-mitras-query" type="text" placeholder="Cari (cth. lbh semarang)" class="w-1/2 border border-gray-200 rounded-2xl px-3 py-2 text-xs bg-white focus:outline-none focus:border-gray-400">
             </div>
 
-            <div id="all-partners-scroll-container" class="flex-1 overflow-auto" onscroll="handleAllPartnersScroll()">
-                <div id="all-partners-list" class="space-y-2">
+            <div id="all-mitras-scroll-container" class="flex-1 overflow-auto" onscroll="handleAllMitrasScroll()">
+                <div id="all-mitras-list" class="space-y-2">
                     <div class="text-sm text-gray-400">Memuat mitra...</div>
                 </div>
             </div>
 
             <div class="mt-3">
-                <button type="button" onclick="closeAllPartnersModal()" class="w-full bg-gray-900 hover:bg-gray-700 text-white py-3 rounded-xl font-semibold text-sm transition">Tutup</button>
+                <button type="button" onclick="closeAllMitrasModal()" class="w-full bg-gray-900 hover:bg-gray-700 text-white py-3 rounded-xl font-semibold text-sm transition">Tutup</button>
             </div>
         </div>
     </div>
@@ -393,7 +393,7 @@
             <div class="flex items-start justify-between gap-3 mb-4">
                 <div>
                     <h2 class="font-black text-xl text-gray-900 mb-1 font-unbounded">Edit Laporan</h2>
-                    <p class="text-gray-500 text-xs">Perbarui laporan. Sistem otomatis mengirim ulang notifikasi ke partner.</p>
+                    <p class="text-gray-500 text-xs">Perbarui laporan. Sistem otomatis mengirim ulang notifikasi ke mitra.</p>
                 </div>
                 <button type="button" onclick="closeEditReportModal()" class="text-gray-400 hover:text-gray-600 transition p-2 rounded-full">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -514,7 +514,7 @@
     let cdInterval=null, lat=null, lng=null;
     let map = null;
     let userMarker = null;
-    let partnerMarkers = [];
+    let mitraMarkers = [];
     let watchId = null;
 
     function initMap(initialLat, initialLng) {
@@ -556,8 +556,8 @@
         }
     }
 
-    function openAllPartnersModal(){
-        const m = document.getElementById('all-partners-modal');
+    function openAllMitrasModal(){
+        const m = document.getElementById('all-mitras-modal');
         if(!m) return;
         document.body.style.overflow = 'hidden';
         m.classList.remove('hidden');
@@ -566,18 +566,18 @@
         const mapType = document.getElementById('map-search-type')?.value || '';
         const mapQuery = document.getElementById('map-search-query')?.value || '';
         
-        const allType = document.getElementById('all-partners-type');
-        const allQuery = document.getElementById('all-partners-query');
+        const allType = document.getElementById('all-mitras-type');
+        const allQuery = document.getElementById('all-mitras-query');
         if(allType) allType.value = mapType;
         if(allQuery) allQuery.value = mapQuery;
 
         const items = (window.__lastNearbyItems || []).slice(0, 20);
-        renderAllPartners(items);
-        fetchAllPartners(1, false);
+        renderAllMitras(items);
+        fetchAllMitras(1, false);
     }
 
-    function closeAllPartnersModal(){
-        const m = document.getElementById('all-partners-modal');
+    function closeAllMitrasModal(){
+        const m = document.getElementById('all-mitras-modal');
         if(!m) return;
         m.classList.remove('flex');
         m.classList.add('hidden');
@@ -612,7 +612,7 @@
                             },
                             body: JSON.stringify({ latitude: lat, longitude: lng })
                         }).then(() => {
-                            loadNearbyPartners({
+                            loadNearbyMitras({
                                 type: document.getElementById('map-search-type')?.value || '',
                                 query: document.getElementById('map-search-query')?.value || ''
                             });
@@ -634,7 +634,7 @@
 
     let emergencyMarkers = [];
 
-    function partnerMarkerVisual(type) {
+    function mitraMarkerVisual(type) {
         const normalized = String(type || '').toLowerCase();
         let key = 'default';
         if (normalized.includes('ambulance') || normalized.includes('ambulans')) {
@@ -682,8 +682,8 @@
     function renderMapMarkers(items, emergencies = []) {
         if (!map) return;
         
-        partnerMarkers.forEach(m => map.removeLayer(m));
-        partnerMarkers = [];
+        mitraMarkers.forEach(m => map.removeLayer(m));
+        mitraMarkers = [];
 
         emergencyMarkers.forEach(m => map.removeLayer(m));
         emergencyMarkers = [];
@@ -692,16 +692,16 @@
         if (lat && lng) bounds.push([lat, lng]);
 
         items.forEach((x, i) => {
-            const p = x.partner;
+            const p = x.mitra;
             const km = Number(x.distance_km) || 0;
             if (p.latitude && p.longitude) {
                 if (km <= 30) {
                     bounds.push([p.latitude, p.longitude]);
                 }
-                const visual = partnerMarkerVisual(p.partner_type);
+                const visual = mitraMarkerVisual(p.mitra_type);
                 
-                const partnerIcon = L.divIcon({
-                    className: 'custom-partner-marker',
+                const mitraIcon = L.divIcon({
+                    className: 'custom-mitra-marker',
                     html: `<div class="w-7 h-7 rounded-full ${visual.bg} border-2 border-white shadow-md flex items-center justify-center text-white relative z-20">${visual.svg}</div>`,
                     iconSize: [28, 28],
                     iconAnchor: [14, 14]
@@ -709,16 +709,16 @@
 
                 const popupHtml = `
                     <div class="text-xs p-1">
-                        <div class="font-bold">${String(p.partner_name).replace(/</g,'&lt;')}</div>
-                        <div class="text-gray-500">${getMitraTypeLabel(p.partner_type)} • ${km.toFixed(2)} km</div>
-                        <a href="/data-partner/${p.id}" class="text-blue-600 hover:underline mt-1 block">Lihat Detail &rarr;</a>
+                        <div class="font-bold">${String(p.mitra_name).replace(/</g,'&lt;')}</div>
+                        <div class="text-gray-500">${getMitraTypeLabel(p.mitra_type)} • ${km.toFixed(2)} km</div>
+                        <a href="/data-mitra/${p.id}" class="text-blue-600 hover:underline mt-1 block">Lihat Detail &rarr;</a>
                     </div>
                 `;
 
-                const m = L.marker([p.latitude, p.longitude], {icon: partnerIcon})
+                const m = L.marker([p.latitude, p.longitude], {icon: mitraIcon})
                     .bindPopup(popupHtml)
                     .addTo(map);
-                partnerMarkers.push(m);
+                mitraMarkers.push(m);
             }
         });
 
@@ -764,9 +764,9 @@
         }
     }
 
-    // Load partner gabungan (ambulans + LBH + psikolog + dll) + marker + search
-    async function loadNearbyPartners({type = '', query = ''} = {}){
-        const el = document.getElementById('nearby-partners');
+    // Load mitra gabungan (ambulans + LBH + psikolog + dll) + marker + search
+    async function loadNearbyMitras({type = '', query = ''} = {}){
+        const el = document.getElementById('nearby-mitras');
 
         if(!el) return;
 
@@ -816,8 +816,8 @@
             if(items.length===0){
                 el.innerHTML = '<div class="text-sm text-gray-400">Belum ada mitra yang cocok.</div>';
                 if (map) {
-                    partnerMarkers.forEach(m => map.removeLayer(m));
-                    partnerMarkers = [];
+                    mitraMarkers.forEach(m => map.removeLayer(m));
+                    mitraMarkers = [];
                     emergencyMarkers.forEach(m => map.removeLayer(m));
                     emergencyMarkers = [];
                     
@@ -836,17 +836,17 @@
                 renderMapMarkers(items, emergencies);
             }
 
-            // Di bawah map hanya tampilkan 4 partner terdekat (preview)
+            // Di bawah map hanya tampilkan 4 mitra terdekat (preview)
             const previewTop = items.slice(0,4);
 
             el.innerHTML = previewTop.map((x,i)=>{
-                const p = x.partner;
+                const p = x.mitra;
                 return `
-                    <a href="/data-partner/${p.id}" class="block bg-white border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition group">
+                    <a href="/data-mitra/${p.id}" class="block bg-white border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition group">
                         <div class="flex items-center justify-between gap-3">
                             <div class="min-w-0 flex-1">
-                                <p class="font-bold text-gray-900 text-sm truncate">${p.partner_name}</p>
-                                <p class="text-xs text-gray-500 mt-1">${getMitraTypeLabel(p.partner_type)} • ${Number(x.distance_km).toFixed(2)} km</p>
+                                <p class="font-bold text-gray-900 text-sm truncate">${p.mitra_name}</p>
+                                <p class="text-xs text-gray-500 mt-1">${getMitraTypeLabel(p.mitra_type)} • ${Number(x.distance_km).toFixed(2)} km</p>
                             </div>
                             <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </div>
@@ -856,9 +856,9 @@
 
 
         }catch(e){
-            const el = document.getElementById('nearby-partners');
+            const el = document.getElementById('nearby-mitras');
             if(el){
-                el.innerHTML = `<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">Gagal memuat partner: ${String(e && e.message ? e.message : e)}</div>`;
+                el.innerHTML = `<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">Gagal memuat mitra: ${String(e && e.message ? e.message : e)}</div>`;
             }
         }
     }
@@ -871,13 +871,13 @@
     function triggerMapSearch(){
         const t = mapTypeEl?.value || '';
         const q = mapQueryEl?.value || '';
-        loadNearbyPartners({ type: t, query: q });
+        loadNearbyMitras({ type: t, query: q });
 
         // jika modal sedang terbuka, ikut refresh juga
-        const allModal = document.getElementById('all-partners-modal');
+        const allModal = document.getElementById('all-mitras-modal');
         if(allModal && !allModal.classList.contains('hidden')){
             const items = window.__lastNearbyItems || [];
-            renderAllPartners(items);
+            renderAllMitras(items);
         }
     }
 
@@ -995,33 +995,33 @@
 
 
     // initial load (semua)
-    loadNearbyPartners();
+    loadNearbyMitras();
     fetchDashboardSummary();
 
     // Lihat Semua
-    const btnViewAll = document.getElementById('btn-view-all-partners');
-    const allTypeEl = document.getElementById('all-partners-type');
-    const allQueryEl = document.getElementById('all-partners-query');
+    const btnViewAll = document.getElementById('btn-view-all-mitras');
+    const allTypeEl = document.getElementById('all-mitras-type');
+    const allQueryEl = document.getElementById('all-mitras-query');
 
-    let allPartnersPage = 1;
-    let allPartnersHasMore = false;
-    let isFetchingAllPartners = false;
+    let allMitrasPage = 1;
+    let allMitrasHasMore = false;
+    let isFetchingAllMitras = false;
 
-    function handleAllPartnersScroll() {
-        const container = document.getElementById('all-partners-scroll-container');
+    function handleAllMitrasScroll() {
+        const container = document.getElementById('all-mitras-scroll-container');
         if(!container) return;
         
         // If scrolled to bottom (within 50px)
         if(container.scrollHeight - container.scrollTop - container.clientHeight < 50) {
-            if(allPartnersHasMore && !isFetchingAllPartners) {
-                fetchAllPartners(allPartnersPage + 1, true);
+            if(allMitrasHasMore && !isFetchingAllMitras) {
+                fetchAllMitras(allMitrasPage + 1, true);
             }
         }
     }
 
-    function renderAllPartners(items, append = false){
-        const listEl = document.getElementById('all-partners-list');
-        const subtitleEl = document.getElementById('all-partners-subtitle');
+    function renderAllMitras(items, append = false){
+        const listEl = document.getElementById('all-mitras-list');
+        const subtitleEl = document.getElementById('all-mitras-subtitle');
         if(!listEl) return;
 
         if(!append && (!items || items.length === 0)){
@@ -1031,14 +1031,14 @@
         }
 
         const html = items.map((x, i)=>{
-            const p = x.partner;
+            const p = x.mitra;
             const km = Number(x.distance_km) || 0;
             return `
-                <a href="/data-partner/${p.id}" class="block bg-white border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition group">
+                <a href="/data-mitra/${p.id}" class="block bg-white border border-gray-100 rounded-xl p-3 hover:bg-gray-50 transition group">
                     <div class="flex items-center justify-between gap-3">
                         <div class="min-w-0 flex-1">
-                            <p class="font-bold text-gray-900 text-sm truncate">${p.partner_name}</p>
-                            <p class="text-xs text-gray-500 mt-1">${getMitraTypeLabel(p.partner_type)} • ${km.toFixed(2)} km</p>
+                            <p class="font-bold text-gray-900 text-sm truncate">${p.mitra_name}</p>
+                            <p class="text-xs text-gray-500 mt-1">${getMitraTypeLabel(p.mitra_type)} • ${km.toFixed(2)} km</p>
                         </div>
                         <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </div>
@@ -1053,12 +1053,12 @@
         }
     }
 
-    async function fetchAllPartners(page = 1, append = false) {
-        if(isFetchingAllPartners) return;
-        isFetchingAllPartners = true;
-        allPartnersPage = page;
+    async function fetchAllMitras(page = 1, append = false) {
+        if(isFetchingAllMitras) return;
+        isFetchingAllMitras = true;
+        allMitrasPage = page;
         
-        const listEl = document.getElementById('all-partners-list');
+        const listEl = document.getElementById('all-mitras-list');
         const t = allTypeEl?.value || '';
         const q = allQueryEl?.value || '';
 
@@ -1067,7 +1067,7 @@
         } else {
             if(listEl) {
                 const loadingEl = document.createElement('div');
-                loadingEl.id = 'all-partners-loading-indicator';
+                loadingEl.id = 'all-mitras-loading-indicator';
                 loadingEl.className = 'text-sm text-center text-gray-400 py-3';
                 loadingEl.innerHTML = '<div class="animate-pulse">Memuat lebih banyak...</div>';
                 listEl.appendChild(loadingEl);
@@ -1085,26 +1085,26 @@
             if(!res.ok) throw new Error('HTTP '+res.status);
             const json = await res.json();
             const items = json.data || [];
-            allPartnersHasMore = json.has_more || false;
+            allMitrasHasMore = json.has_more || false;
             
-            document.getElementById('all-partners-loading-indicator')?.remove();
+            document.getElementById('all-mitras-loading-indicator')?.remove();
             
-            renderAllPartners(items, append);
+            renderAllMitras(items, append);
             
             if(page === 1) window.__lastNearbyItems = items;
         }catch(e){
-            document.getElementById('all-partners-loading-indicator')?.remove();
+            document.getElementById('all-mitras-loading-indicator')?.remove();
             if(page === 1 && listEl) {
-                listEl.innerHTML = `<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">Gagal memuat partner: ${String(e && e.message ? e.message : e)}</div>`;
+                listEl.innerHTML = `<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">Gagal memuat mitra: ${String(e && e.message ? e.message : e)}</div>`;
             }
         }finally{
-            isFetchingAllPartners = false;
+            isFetchingAllMitras = false;
         }
     }
 
     // open modal sync input ke filter map yang aktif
     btnViewAll && btnViewAll.addEventListener('click', () => {
-        openAllPartnersModal();
+        openAllMitrasModal();
     });
 
     // modal search realtime (gunakan API yang sama)
@@ -1112,11 +1112,11 @@
     const allTriggerSearch = ()=>{
         if(allDebounceTimer) clearTimeout(allDebounceTimer);
         allDebounceTimer = setTimeout(async ()=>{
-            fetchAllPartners(1, false);
+            fetchAllMitras(1, false);
             // refresh map juga agar marker & preview sesuai modal
             const t = allTypeEl?.value || '';
             const q = allQueryEl?.value || '';
-            loadNearbyPartners({ type: t, query: q });
+            loadNearbyMitras({ type: t, query: q });
         }, 250);
     };
 
@@ -1124,13 +1124,13 @@
     if(allQueryEl) allQueryEl.addEventListener('input', ()=>allTriggerSearch());
 
     // close on backdrop click
-    const allModal = document.getElementById('all-partners-modal');
+    const allModal = document.getElementById('all-mitras-modal');
     allModal && allModal.addEventListener('click', function(e){
-        if(e.target === this) closeAllPartnersModal();
+        if(e.target === this) closeAllMitrasModal();
     });
 
 
-    // Reload lokasi user -> simpan ke backend -> reload partner
+    // Reload lokasi user -> simpan ke backend -> reload mitra
     const reloadBtn = document.getElementById('btn-reload-location');
     if(reloadBtn){
         reloadBtn.addEventListener('click', async () => {
@@ -1179,7 +1179,7 @@
                 console.log('attempt reload location', { latitude, longitude });
 
                 // Pastikan request benar-benar terkirim, dan jangan silent fallback bila reload lokasi gagal.
-                // (Jika lokasi belum tersimpan, fallback loadNearbyPartners akan menampilkan error dari API map-search)
+                // (Jika lokasi belum tersimpan, fallback loadNearbyMitras akan menampilkan error dari API map-search)
                 const res = await fetch('/user-location/reload', {
                     method: 'POST',
                     headers: {
@@ -1203,15 +1203,15 @@
                     throw new Error('HTTP ' + res.status + ' body=' + JSON.stringify(reloadJson));
                 }
 
-                // Setelah lokasi tersimpan di backend, langsung reload partner & marker.
+                // Setelah lokasi tersimpan di backend, langsung reload mitra & marker.
                 // Menghapus quickCheck `/map-search` supaya 1 klik tidak melakukan request tambahan.
 
 
 
 
 
-                // reload partner list/map
-                await loadNearbyPartners({
+                // reload mitra list/map
+                await loadNearbyMitras({
                     type: mapTypeEl?.value || '',
                     query: mapQueryEl?.value || ''
                 });
@@ -1225,13 +1225,13 @@
                 console.error('Reload lokasi gagal:', msg);
 
                 // tampilkan error agar tidak silent fallback
-                const el = document.getElementById('nearby-partners');
+                const el = document.getElementById('nearby-mitras');
                 if(el){
                     el.innerHTML = `<div class="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-3 py-2">Gagal menyimpan lokasi: ${msg}</div>`;
                 }
 
-                // fallback tetap mencoba reload partner (tapi UI error sudah ditampilkan)
-                await loadNearbyPartners({
+                // fallback tetap mencoba reload mitra (tapi UI error sudah ditampilkan)
+                await loadNearbyMitras({
                     type: mapTypeEl?.value || '',
                     query: mapQueryEl?.value || ''
                 });
@@ -1382,7 +1382,7 @@
         if (isSubmitting) return;
         isSubmitting = true;
 
-        document.getElementById('modal-status').textContent = 'Mengirim laporan ke partner terdekat...';
+        document.getElementById('modal-status').textContent = 'Mengirim laporan ke mitra terdekat...';
 
         await Promise.race([
             locationPromise,

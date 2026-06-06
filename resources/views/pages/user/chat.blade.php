@@ -24,7 +24,7 @@
     $showBrand = false;
     $backUrl = $backUrl ?? route('dashboard');
     $backLabel = $backLabel ?? 'Dashboard';
-    $hasSelectedChat = filled($partnerId);
+    $hasSelectedChat = filled($mitraId);
     $viewerType = $viewerType ?? 'user';
     $reportContext = $reportContext ?? null;
 @endphp
@@ -69,31 +69,31 @@
             <section class="bg-white border border-gray-200 rounded-2xl flex flex-col overflow-hidden h-full">
                 <div class="px-4 py-3 border-b border-gray-100 flex items-center gap-3 justify-between">
                     <div class="flex items-center gap-3 flex-1 min-w-0">
-                        <div id="partner-avatar-wrap">
-                            @if(!empty($partner->image_url ?? null))
-                                <img id="partner-avatar" src="{{ $partner->image_url }}" class="w-9 h-9 rounded-xl object-cover border border-gray-100" alt="">
+                        <div id="mitra-avatar-wrap">
+                            @if(!empty($mitra->image_url ?? null))
+                                <img id="mitra-avatar" src="{{ $mitra->image_url }}" class="w-9 h-9 rounded-xl object-cover border border-gray-100" alt="">
                             @else
-                                <div id="partner-avatar" class="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-sm">💬</div>
+                                <div id="mitra-avatar" class="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-sm">💬</div>
                             @endif
                         </div>
 
                         <div class="flex-1 min-w-0">
-                            <p id="partner-name" class="font-bold text-gray-900 text-sm truncate">{{ $viewerType === 'partner' ? (($reportContext?->anonymous ?? false) ? 'Anonim' : ($reportContext?->user?->name ?? 'Pelapor')) : ($partner->partner_name ?? 'Pilih mitra') }}</p>
+                            <p id="mitra-name" class="font-bold text-gray-900 text-sm truncate">{{ $viewerType === 'mitra' ? (($reportContext?->anonymous ?? false) ? 'Anonim' : ($reportContext?->user?->name ?? (($thread ?? null) && $thread->user ? $thread->user->name : 'Pelapor'))) : ($mitra->mitra_name ?? 'Pilih mitra') }}</p>
                             @php
                                 $headerType = '';
-                                if ($viewerType === 'partner') {
-                                    $headerType = 'Pelapor laporan';
+                                if ($viewerType === 'mitra') {
+                                    $headerType = 'Pelapor';
                                 } else {
-                                    $headerType = match($partner->partner_type ?? '') {
+                                    $headerType = match($mitra->mitra_type ?? '') {
                                         'ambulance' => 'Medis Darurat',
                                         'legal' => 'Bantuan Hukum',
                                         'counselor' => 'Psikososial',
                                         'pemadam' => 'Pemadam / Rescue',
-                                        default => $partner->partner_type ?? ''
+                                        default => $mitra->mitra_type ?? ''
                                     };
                                 }
                             @endphp
-                            <p id="partner-type" class="text-xs text-gray-400">{{ $headerType }}</p>
+                            <p id="mitra-type" class="text-xs text-gray-400">{{ $headerType }}</p>
                         </div>
                     </div>
 
@@ -133,7 +133,7 @@
 </div>
 
 <script>
-    let currentPartnerId = {!! json_encode($partnerId) !!};
+    let currentMitraId = {!! json_encode($mitraId) !!};
     let currentReportId = {!! json_encode($reportContext ? $reportContext->id : null) !!};
     let currentUserId = null;
     const viewerType = {!! json_encode($viewerType) !!};
@@ -149,9 +149,9 @@
     const container = document.getElementById('msg-container');
     const form = document.getElementById('chat-send-form');
     const input = document.getElementById('msg-input');
-    const partnerName = document.getElementById('partner-name');
-    const partnerType = document.getElementById('partner-type');
-    const avatarWrap = document.getElementById('partner-avatar-wrap');
+    const mitraName = document.getElementById('mitra-name');
+    const mitraType = document.getElementById('mitra-type');
+    const avatarWrap = document.getElementById('mitra-avatar-wrap');
     const btnTracking = document.getElementById('btn-tracking');
 
     // Load initial messages populated by PHP
@@ -223,21 +223,21 @@
         page.classList.add('chat-closed');
     }
 
-    function setActiveLink(partnerId) {
+    function setActiveLink(mitraId) {
         document.querySelectorAll('[data-chat-link]').forEach((link) => {
-            link.classList.toggle('border-gray-900', link.dataset.partnerId === partnerId);
-            link.classList.toggle('border-gray-200', link.dataset.partnerId !== partnerId);
+            link.classList.toggle('border-gray-900', link.dataset.mitraId === mitraId);
+            link.classList.toggle('border-gray-200', link.dataset.mitraId !== mitraId);
         });
     }
 
-    function setPartnerHeader(link) {
-        partnerName.textContent = link.dataset.partnerName || 'Mitra';
-        partnerType.textContent = link.dataset.partnerType || '';
+    function setMitraHeader(link) {
+        mitraName.textContent = link.dataset.mitraName || 'Mitra';
+        mitraType.textContent = link.dataset.mitraType || '';
 
-        if (link.dataset.partnerImage) {
-            avatarWrap.innerHTML = `<img id="partner-avatar" src="${escapeHtml(link.dataset.partnerImage)}" class="w-9 h-9 rounded-xl object-cover border border-gray-100" alt="">`;
+        if (link.dataset.mitraImage) {
+            avatarWrap.innerHTML = `<img id="mitra-avatar" src="${escapeHtml(link.dataset.mitraImage)}" class="w-9 h-9 rounded-xl object-cover border border-gray-100" alt="">`;
         } else {
-            avatarWrap.innerHTML = `<div id="partner-avatar" class="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-sm">💬</div>`;
+            avatarWrap.innerHTML = `<div id="mitra-avatar" class="w-9 h-9 rounded-xl bg-gray-100 flex items-center justify-center text-sm">💬</div>`;
         }
 
         if (currentReportId) {
@@ -268,7 +268,7 @@
     }
 
     async function processPendingMessages() {
-        if (!currentPartnerId || pendingMessages.length === 0) return;
+        if (!currentMitraId || pendingMessages.length === 0) return;
         
         for (let i = 0; i < pendingMessages.length; i++) {
             let msg = pendingMessages[i];
@@ -284,7 +284,7 @@
                     const suffix = params.toString() ? `?${params.toString()}` : '';
                     
                     const csrf = document.querySelector('input[name="_token"]')?.value;
-                    const response = await fetch(`/chat/send/${currentPartnerId}${suffix}`, {
+                    const response = await fetch(`/chat/send/${currentMitraId}${suffix}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -313,7 +313,7 @@
     }
 
     async function fetchMessages() {
-        if (!currentPartnerId) return;
+        if (!currentMitraId) return;
 
         try {
             const params = new URLSearchParams();
@@ -321,7 +321,7 @@
             if (currentUserId) params.append('user_id', currentUserId);
             
             const suffix = params.toString() ? `?${params.toString()}` : '';
-            const response = await fetch(`/chat/messages/${currentPartnerId}${suffix}`, {
+            const response = await fetch(`/chat/messages/${currentMitraId}${suffix}`, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
             });
 
@@ -344,7 +344,7 @@
         if (pollTimer) clearInterval(pollTimer);
         if (syncTimer) clearInterval(syncTimer);
         
-        if (!currentPartnerId) return;
+        if (!currentMitraId) return;
 
         fetchMessages();
         pollTimer = setInterval(fetchMessages, 2000);
@@ -365,20 +365,20 @@
 
             if (threads.length > 0) {
                 container.innerHTML = threads.map(t => {
-                    const active = String(currentPartnerId) === String(t.partner_id);
-                    const imageHtml = t.partner_image 
-                        ? `<img src="${t.partner_image}" class="w-10 h-10 rounded-xl object-cover border border-gray-100" alt="">`
+                    const active = String(currentMitraId) === String(t.mitra_id);
+                    const imageHtml = t.mitra_image 
+                        ? `<img src="${t.mitra_image}" class="w-10 h-10 rounded-xl object-cover border border-gray-100" alt="">`
                         : `<div class="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-sm">💬</div>`;
                     
                     return `
                         <a href="${t.threadHref}"
                            data-chat-link
-                           data-partner-id="${t.partner_id}"
+                           data-mitra-id="${t.mitra_id}"
                            data-report-id="${t.report_id || ''}"
                            data-user-id="${t.user_id}"
-                           data-partner-name="${escapeHtml(t.threadName)}"
-                           data-partner-type="${escapeHtml(t.threadType)}"
-                           data-partner-image="${t.partner_image}"
+                           data-mitra-name="${escapeHtml(t.threadName)}"
+                           data-mitra-type="${escapeHtml(t.threadType)}"
+                           data-mitra-image="${t.mitra_image}"
                            class="block bg-white border ${active ? 'border-gray-900' : 'border-gray-200'} rounded-2xl p-4 hover:bg-gray-50 transition">
                             <div class="flex items-center gap-3">
                                 ${imageHtml}
@@ -398,16 +398,16 @@
                     link.addEventListener('click', (event) => {
                         event.preventDefault();
 
-                        currentPartnerId = link.dataset.partnerId;
+                        currentMitraId = link.dataset.mitraId;
                         currentReportId = link.dataset.reportId || null;
                         currentUserId = link.dataset.userId || null;
                         serverMessages = [];
                         pendingMessages = [];
                         
-                        setPartnerHeader(link);
-                        setActiveLink(currentPartnerId);
+                        setMitraHeader(link);
+                        setActiveLink(currentMitraId);
                         openLayout();
-                        history.pushState({ partnerId: currentPartnerId }, '', link.href);
+                        history.pushState({ mitraId: currentMitraId }, '', link.href);
                         startPolling();
                     });
                 });
@@ -416,14 +416,14 @@
                 if (empty) empty.classList.add('hidden');
                 container.classList.remove('hidden');
 
-                // Initialize chat layout if partnerId is selected in the URL on page load
-                if (currentPartnerId) {
-                    const activeLink = container.querySelector(`[data-chat-link][data-partner-id="${currentPartnerId}"]`);
+                // Initialize chat layout if mitraId is selected in the URL on page load
+                if (currentMitraId) {
+                    const activeLink = container.querySelector(`[data-chat-link][data-mitra-id="${currentMitraId}"]`);
                     if (activeLink) {
                         currentUserId = activeLink.dataset.userId || null;
-                        setPartnerHeader(activeLink);
+                        setMitraHeader(activeLink);
                         openLayout();
-                        setActiveLink(currentPartnerId);
+                        setActiveLink(currentMitraId);
                         updateUI();
                         startPolling();
                     }
@@ -464,7 +464,7 @@
         event.preventDefault();
 
         const message = input.value.trim();
-        if (!currentPartnerId || !message) return;
+        if (!currentMitraId || !message) return;
 
         input.value = '';
         input.style.height = 'auto';
@@ -490,7 +490,7 @@
 
     // Initialize layout on page load
     loadThreads();
-    if (!currentPartnerId) {
+    if (!currentMitraId) {
         updateUI(); // show empty state
     }
 </script>

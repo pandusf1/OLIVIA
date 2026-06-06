@@ -7,7 +7,7 @@
     <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');*{font-family:'Inter',sans-serif;}</style>
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased min-h-screen">
-    @php $backUrl = route('partner.index'); $backLabel = 'Kembali'; @endphp
+    @php $backUrl = route('mitra.index'); $backLabel = 'Kembali'; @endphp
     @include('partials.nav-auth')
 
     <div class="max-w-3xl mx-auto px-6 py-10">
@@ -55,7 +55,7 @@
             <div class="mt-6 flex flex-wrap gap-3">
                 <a href="/chat/report/{{ $report->id }}" class="bg-gray-900 hover:bg-gray-700 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition text-center">💬 Lanjut Chat</a>
                 @if($report->status !== 'Resolved')
-                <form method="POST" action="{{ route('partner.status', $report->id) }}" class="inline-block">
+                <form method="POST" action="{{ route('mitra.status', $report->id) }}" class="inline-block">
                     @csrf
                     <input type="hidden" name="status" value="Resolved">
                     <button type="submit" class="bg-green-700 hover:bg-green-800 text-white px-6 py-2.5 rounded-xl font-semibold text-sm transition">✅ Tandai Selesai</button>
@@ -64,9 +64,9 @@
             </div>
             @endif
 
-            @if($report->handler_partner_id === null && isset($isPending) && $isPending)
+            @if($report->handler_mitra_id === null && isset($isPending) && $isPending)
             <div class="mt-6">
-                <form method="POST" action="{{ route('partner.report.accept', $report->id) }}">
+                <form method="POST" action="{{ route('mitra.report.accept', $report->id) }}">
                     @csrf
                     <button type="submit" class="bg-red-700 hover:bg-red-800 text-white px-6 py-3 rounded-xl font-black text-sm transition shadow-md">
                         TERIMA KASUS
@@ -87,7 +87,7 @@
         @if($isHandling)
         <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
             <h2 class="font-bold text-gray-900 mb-4">Update Status</h2>
-            <form action="/partner/report/{{ $report->id }}/status" method="POST" class="flex gap-3">
+            <form action="/mitra/report/{{ $report->id }}/status" method="POST" class="flex gap-3">
                 @csrf
                 <select name="status" class="flex-1 border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-2.5 text-sm focus:outline-none bg-white">
                     @foreach(['Submitted' => 'Diajukan', 'Routed' => 'Diteruskan', 'Viewed' => 'Ditinjau', 'In Progress' => 'Diproses', 'Resolved' => 'Selesai'] as $val => $lbl)

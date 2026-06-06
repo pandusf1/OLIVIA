@@ -26,12 +26,12 @@
         @if($threads->count() > 0)
             <div class="space-y-3">
                 @foreach($threads as $t)
-                    <a href="{{ route('chat.start', ['partnerId' => $t->partner_id]) }}" class="block bg-white border border-gray-200 rounded-2xl p-4 hover:bg-gray-50 transition">
+                    <a href="{{ route('chat.start', ['mitraId' => $t->mitra_id]) }}" class="block bg-white border border-gray-200 rounded-2xl p-4 hover:bg-gray-50 transition">
                         <div class="flex items-center justify-between gap-3">
                             <div class="min-w-0">
-                                <p class="font-bold text-gray-900 truncate">{{ $t->partner?->partner_name ?? 'Mitra' }}</p>
+                                <p class="font-bold text-gray-900 truncate">{{ $t->mitra?->mitra_name ?? 'Mitra' }}</p>
                                 @php
-                                    $typeLabel = match($t->partner?->partner_type ?? '') {
+                                    $typeLabel = match($t->mitra?->mitra_type ?? '') {
                                         'ambulance' => 'Medis Darurat',
                                         'legal' => 'Bantuan Hukum',
                                         'counselor' => 'Psikososial',

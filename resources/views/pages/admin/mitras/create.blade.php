@@ -17,7 +17,7 @@
 
 <main class="max-w-4xl mx-auto px-4 py-10 sm:px-6">
     <div class="mb-8">
-        <a href="{{ route('admin.partners') }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900 transition flex items-center gap-1.5">
+        <a href="{{ route('admin.mitras') }}" class="text-sm font-semibold text-gray-600 hover:text-gray-900 transition flex items-center gap-1.5">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             Kembali ke Daftar Mitra
         </a>
@@ -25,7 +25,7 @@
         <p class="text-sm text-gray-500 mt-1">Daftarkan institusi atau responder krisis baru ke dalam sistem Safora.</p>
     </div>
 
-    <form method="POST" action="{{ route('admin.partners.store') }}" class="grid gap-6 md:grid-cols-2">
+    <form method="POST" action="{{ route('admin.mitras.store') }}" class="grid gap-6 md:grid-cols-2">
         @csrf
 
         {{-- Kolom Kiri: Data Profil & Login --}}
@@ -36,13 +36,13 @@
                 <div class="space-y-4">
                     <div>
                         <label class="text-xs font-bold uppercase tracking-wider text-gray-500">Nama Mitra / Instansi *</label>
-                        <input type="text" name="partner_name" required value="{{ old('partner_name') }}" placeholder="Contoh: LBH Semarang Utama"
+                        <input type="text" name="mitra_name" required value="{{ old('mitra_name') }}" placeholder="Contoh: LBH Semarang Utama"
                                class="w-full mt-1.5 border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-3 text-sm focus:outline-none transition">
                     </div>
 
                     <div>
                         <label class="text-xs font-bold uppercase tracking-wider text-gray-500">Kategori Mitra *</label>
-                        <select name="partner_type" required
+                        <select name="mitra_type" required
                                 class="w-full mt-1.5 border border-gray-200 focus:border-gray-400 rounded-xl px-4 py-3 text-sm focus:outline-none transition bg-white">
                             <option value="ambulance">Medis Darurat (Ambulans)</option>
                             <option value="legal">Bantuan Hukum (LBH/Pengacara)</option>
@@ -127,7 +127,7 @@
 
         {{-- Form Submit Action --}}
         <div class="md:col-span-2 flex justify-end gap-3 mt-2">
-            <a href="{{ route('admin.partners') }}" class="px-6 py-3.5 border border-gray-200 hover:bg-gray-100 transition rounded-xl font-bold text-sm text-gray-700">Batal</a>
+            <a href="{{ route('admin.mitras') }}" class="px-6 py-3.5 border border-gray-200 hover:bg-gray-100 transition rounded-xl font-bold text-sm text-gray-700">Batal</a>
             <button type="submit" class="px-8 py-3.5 bg-gray-900 hover:bg-black text-white transition rounded-xl font-bold text-sm shadow-md">Simpan Mitra</button>
         </div>
     </form>

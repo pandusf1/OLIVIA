@@ -123,16 +123,16 @@
                     }
 
                     return items.map((x,i)=>{
-                        const p = x.partner;
+                        const p = x.mitra;
                         const km = Number(x.distance_km) || 0;
                         const no = i+1;
 
                         return `
-                            <a href="/data-partner/${p.id}" class="block bg-[#faf9f7] hover:bg-gray-50 border border-gray-100 rounded-xl p-3 transition">
+                            <a href="/data-mitra/${p.id}" class="block bg-[#faf9f7] hover:bg-gray-50 border border-gray-100 rounded-xl p-3 transition">
                                 <div class="flex items-center justify-between gap-3">
                                     <div class="min-w-0">
-                                        <p class="font-bold text-gray-900 text-sm truncate">${p.partner_name}</p>
-                                        <p class="text-xs text-gray-500 mt-1">${getMitraTypeLabel(p.partner_type)} • ${km.toFixed(2)} km</p>
+                                        <p class="font-bold text-gray-900 text-sm truncate">${p.mitra_name}</p>
+                                        <p class="text-xs text-gray-500 mt-1">${getMitraTypeLabel(p.mitra_type)} • ${km.toFixed(2)} km</p>
                                     </div>
                                     <span class="text-xs font-semibold px-2 py-1 rounded-full bg-red-50 text-red-700 shrink-0">${no}</span>
                                 </div>

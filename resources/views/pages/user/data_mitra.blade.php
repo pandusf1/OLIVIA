@@ -38,13 +38,13 @@
             $showBrand = false;
         @endphp
 
-        {{-- Header: gambar partner di luar container, diikuti teks nama partner --}}
+        {{-- Header: gambar mitra di luar container, diikuti teks nama mitra --}}
         <div class="mb-6">
             <div class="flex items-center gap-4">
                 <div class="w-16 h-16 rounded-2xl border border-gray-100 bg-gray-100 overflow-hidden flex-shrink-0">
-                    @if(!empty($partner->image_url))
-                        <a href="{{ $partner->image_url }}" target="_blank" rel="noopener noreferrer" class="block w-full h-full">
-                            <img src="{{ $partner->image_url }}" alt="{{ $partner->partner_name }}" class="w-full h-full object-cover"/>
+                    @if(!empty($mitra->image_url))
+                        <a href="{{ $mitra->image_url }}" target="_blank" rel="noopener noreferrer" class="block w-full h-full">
+                            <img src="{{ $mitra->image_url }}" alt="{{ $mitra->mitra_name }}" class="w-full h-full object-cover"/>
                         </a>
                     @else
                         <div class="w-full h-full flex items-center justify-center text-gray-400">—</div>
@@ -54,9 +54,9 @@
 
                 <div class="min-w-0 flex-1">
                     <p class="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-1">INFORMASI DATA MITRA</p>
-                    <p class="text-gray-900 font-bold text-lg sm:text-xl md:text-2xl break-words leading-tight">{{ $partner->partner_name }}</p>
+                    <p class="text-gray-900 font-bold text-lg sm:text-xl md:text-2xl break-words leading-tight">{{ $mitra->mitra_name }}</p>
                     @php
-                        $typeLabel = match($partner->partner_type) {
+                        $typeLabel = match($mitra->mitra_type) {
                             'ambulance' => 'Medis Darurat',
                             'legal' => 'Bantuan Hukum',
                             'counselor' => 'Psikososial',
@@ -69,10 +69,10 @@
             </div>
         </div>
 
-        {{-- Wrapper: Map (kiri) + Informasi data partner (kanan) --}}
+        {{-- Wrapper: Map (kiri) + Informasi data mitra (kanan) --}}
         <div class="bg-white border border-gray-200 rounded-2xl p-4 sm:p-6 mb-4">
             @php
-                $hasLatLng = filled($partner->latitude) && filled($partner->longitude);
+                $hasLatLng = filled($mitra->latitude) && filled($mitra->longitude);
             @endphp
 
             <div>
@@ -100,11 +100,11 @@
                                 <p class="text-xs font-semibold text-gray-600">Lokasi mitra</p>
                             </div>
 
-                            <div id="partner-location-map" class="relative w-full h-48 sm:h-56 md:h-64 rounded-xl border border-gray-100 bg-white/40 overflow-hidden z-0">
+                            <div id="mitra-location-map" class="relative w-full h-48 sm:h-56 md:h-64 rounded-xl border border-gray-100 bg-white/40 overflow-hidden z-0">
 
                                 @if($hasLatLng)
                                     <div class="absolute left-3 bottom-3 text-[11px] text-gray-600 bg-white/90 border border-gray-100 rounded-lg px-3 py-2">
-                                        {{ $partner->latitude }}, {{ $partner->longitude }}
+                                        {{ $mitra->latitude }}, {{ $mitra->longitude }}
                                     </div>
                                 @else
                                     <div class="absolute left-3 bottom-3 text-[11px] text-gray-500 bg-white/90 border border-gray-100 rounded-lg px-3 py-2">
@@ -116,7 +116,7 @@
 
                             @if($hasLatLng)
                                 <div class="mt-3">
-                                    <a href="https://www.openstreetmap.org/?mlat={{ $partner->latitude }}&mlon={{ $partner->longitude }}#map=16/{{ $partner->latitude }}/{{ $partner->longitude }}" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold text-red-700 hover:text-red-800 transition underline">
+                                    <a href="https://www.openstreetmap.org/?mlat={{ $mitra->latitude }}&mlon={{ $mitra->longitude }}#map=16/{{ $mitra->latitude }}/{{ $mitra->longitude }}" target="_blank" class="inline-flex items-center gap-2 text-sm font-semibold text-red-700 hover:text-red-800 transition underline">
                                         <span>📍</span>
                                         Lihat di OpenStreetMap
                                     </a>
@@ -126,35 +126,33 @@
                     </div>
                 </div>
 
-                {{-- Informasi data partner (kanan) --}}
+                {{-- Informasi data mitra (kanan) --}}
                 <div class="md:col-span-7 w-full">
                     <div class="flex flex-col divide-y divide-gray-100">
                         <div class="py-3 first:pt-0 last:pb-0">
                             <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Email</p>
-                            <p class="text-gray-800 font-semibold mt-1 break-all text-sm sm:text-base">{{ $partner->email ? $partner->email : '-' }}</p>
+                            <p class="text-gray-800 font-semibold mt-1 break-all text-sm sm:text-base">{{ $mitra->email ? $mitra->email : '-' }}</p>
                         </div>
 
                         <div class="py-3 first:pt-0 last:pb-0">
                             <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Kontak</p>
-                            <p class="text-gray-800 font-semibold mt-1 break-all text-sm sm:text-base">{{ $partner->phone ? $partner->phone : '-' }}</p>
+                            <p class="text-gray-800 font-semibold mt-1 break-all text-sm sm:text-base">{{ $mitra->phone ? $mitra->phone : '-' }}</p>
                         </div>
 
                         <div class="py-3 first:pt-0 last:pb-0">
                             <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Kota</p>
-                            <p class="text-gray-800 font-semibold mt-1 break-words text-sm sm:text-base">{{ $partner->city ? $partner->city : '-' }}</p>
+                            <p class="text-gray-800 font-semibold mt-1 break-words text-sm sm:text-base">{{ $mitra->city ? $mitra->city : '-' }}</p>
                         </div>
 
                         <div class="py-3 first:pt-0 last:pb-0">
                             <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Alamat</p>
-                            <p class="text-gray-800 font-semibold mt-1 break-words text-sm sm:text-base leading-relaxed whitespace-pre-line">{{ $partner->address ? $partner->address : '-' }}</p>
+                            <p class="text-gray-800 font-semibold mt-1 break-words text-sm sm:text-base leading-relaxed whitespace-pre-line">{{ $mitra->address ? $mitra->address : '-' }}</p>
                         </div>
                     </div>
 
                     <div class="mt-4 bg-[#faf9f7] border border-gray-100 rounded-xl p-3 sm:p-4">
                         <p class="text-xs font-semibold uppercase tracking-widest text-gray-400">Catatan</p>
-                        <p class="text-gray-500 text-xs sm:text-sm mt-1 leading-relaxed">
-                            Jam kerja atau informasi lainnya.
-                        </p>
+                        <p class="text-gray-800 text-xs sm:text-sm mt-1 leading-relaxed whitespace-pre-line">{{ $mitra->catatan ?: 'Tidak ada catatan tambahan.' }}</p>
                     </div>
                 </div>
             </div>
@@ -163,7 +161,7 @@
 
 
             @php
-                $canShowPriceList = in_array($partner->partner_type, ['legal', 'counselor'], true);
+                $canShowPriceList = in_array($mitra->mitra_type, ['legal', 'counselor'], true);
             @endphp
 
             @if(!$canShowPriceList)
@@ -268,9 +266,9 @@
 <script>
 @if($hasLatLng)
 (function () {
-    const lat = @json((float) $partner->latitude);
-    const lng = @json((float) $partner->longitude);
-    const mapEl = document.getElementById('partner-location-map');
+    const lat = @json((float) $mitra->latitude);
+    const lng = @json((float) $mitra->longitude);
+    const mapEl = document.getElementById('mitra-location-map');
     if (!mapEl || !window.L) return;
 
     const map = L.map(mapEl, { scrollWheelZoom: false }).setView([lat, lng], 16);
@@ -279,14 +277,14 @@
         attribution: '© OpenStreetMap'
     }).addTo(map);
 
-    const partnerIcon = L.divIcon({
-        className: 'custom-partner-location-marker',
+    const mitraIcon = L.divIcon({
+        className: 'custom-mitra-location-marker',
         html: '<div class="w-4 h-4 rounded-full bg-red-700 border-2 border-white shadow-md shadow-red-200"></div>',
         iconSize: [16, 16],
         iconAnchor: [8, 8]
     });
 
-    L.marker([lat, lng], { icon: partnerIcon }).addTo(map);
+    L.marker([lat, lng], { icon: mitraIcon }).addTo(map);
 })();
 @endif
 
@@ -438,9 +436,9 @@
     modalBackBtn && modalBackBtn.addEventListener('click', closeModal);
 
     modalContinueBtn && modalContinueBtn.addEventListener('click', () => {
-        const firstId = Array.from(selected)[0];
-        if (!firstId) return;
-        const url = `{{ url('/pembayaran') }}/${firstId}`;
+        const ids = Array.from(selected).join(',');
+        if (!ids) return;
+        const url = `{{ url('/pembayaran') }}/${ids}`;
         window.location.href = url;
     });
 })();

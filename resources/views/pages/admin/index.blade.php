@@ -29,7 +29,7 @@
             <h1 class="mt-1 text-3xl font-black text-gray-950">Dashboard Admin</h1>
             <p class="mt-1 text-sm text-gray-500">Pantau laporan, respons mitra, dan aktivitas platform Safora.</p>
         </div>
-        <a href="{{ route('admin.partners') }}" class="rounded-lg bg-gray-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-gray-800">Manajemen Mitra</a>
+        <a href="{{ route('admin.mitras') }}" class="rounded-lg bg-gray-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-gray-800">Manajemen Mitra</a>
     </header>
 
     <section class="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-6">
@@ -39,7 +39,7 @@
             ['Laporan Darurat', $stats['emergency'], 'text-red-700'],
             ['Belum Ditangani', $stats['unhandled'], 'text-orange-700'],
             ['Selesai', $stats['resolved'], 'text-green-700'],
-            ['Mitra Aktif', $stats['active_partners'], 'text-indigo-700'],
+            ['Mitra Aktif', $stats['active_mitras'], 'text-indigo-700'],
         ] as [$label, $value, $color])
             <div class="rounded-lg border border-gray-200 bg-white p-4">
                 <p class="text-xs font-bold uppercase text-gray-500">{{ $label }}</p>
@@ -107,9 +107,9 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                    @foreach($partners as $partner)
+                    @foreach($mitras as $mitra)
                         @php
-                            $pTypeLabel = match($partner->partner_type) {
+                            $pTypeLabel = match($mitra->mitra_type) {
                                 'ambulance' => 'Medis Darurat',
                                 'legal' => 'Bantuan Hukum',
                                 'counselor' => 'Psikososial',
@@ -119,15 +119,15 @@
                             };
                         @endphp
                         <tr class="hover:bg-gray-50">
-                            <td class="px-4 py-3 font-bold">{{ $partner->partner_name }}</td>
+                            <td class="px-4 py-3 font-bold">{{ $mitra->mitra_name }}</td>
                             <td class="px-4 py-3">{{ $pTypeLabel }}</td>
-                            <td class="px-4 py-3">{{ $partner->city }}</td>
-                            <td class="px-4 py-3">{{ $partner->verified ? 'Ya' : 'Tidak' }}</td>
-                            <td class="px-4 py-3">{{ $partner->accepted_count }}</td>
-                            <td class="px-4 py-3">{{ $partner->average_response_minutes !== null ? $partner->average_response_minutes . ' menit' : '-' }}</td>
-                            <td class="px-4 py-3">{{ $partner->active_reports_count }}</td>
+                            <td class="px-4 py-3">{{ $mitra->city }}</td>
+                            <td class="px-4 py-3">{{ $mitra->verified ? 'Ya' : 'Tidak' }}</td>
+                            <td class="px-4 py-3">{{ $mitra->accepted_count }}</td>
+                            <td class="px-4 py-3">{{ $mitra->average_response_minutes !== null ? $mitra->average_response_minutes . ' menit' : '-' }}</td>
+                            <td class="px-4 py-3">{{ $mitra->active_reports_count }}</td>
                             <td class="px-4 py-3">
-                                <span class="rounded-full px-3 py-1 text-xs font-bold {{ $partner->activity_status === 'Aktif' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700' }}">{{ $partner->activity_status }}</span>
+                                <span class="rounded-full px-3 py-1 text-xs font-bold {{ $mitra->activity_status === 'Aktif' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700' }}">{{ $mitra->activity_status }}</span>
                             </td>
                         </tr>
                     @endforeach
@@ -162,10 +162,10 @@
                 </select>
                 <input type="date" name="date_from" value="{{ request('date_from') }}" class="rounded-lg border border-gray-200 px-3 py-2 text-sm">
                 <input type="date" name="date_to" value="{{ request('date_to') }}" class="rounded-lg border border-gray-200 px-3 py-2 text-sm">
-                <select name="partner_id" class="rounded-lg border border-gray-200 px-3 py-2 text-sm">
+                <select name="mitra_id" class="rounded-lg border border-gray-200 px-3 py-2 text-sm">
                     <option value="">Semua Mitra</option>
-                    @foreach($partners as $partner)
-                        <option value="{{ $partner->id }}" @selected(request('partner_id') === $partner->id)>{{ $partner->partner_name }}</option>
+                    @foreach($mitras as $mitra)
+                        <option value="{{ $mitra->id }}" @selected(request('mitra_id') === $mitra->id)>{{ $mitra->mitra_name }}</option>
                     @endforeach
                 </select>
                 <button class="rounded-lg bg-gray-950 px-4 py-2 text-sm font-bold text-white lg:col-span-6">Terapkan Filter</button>
@@ -189,7 +189,7 @@
                 <tbody class="divide-y divide-gray-100">
                     @foreach($reports as $report)
                         @php
-                            $handler = $report->partnerRoutings->firstWhere('status', 'accepted')?->partner;
+                            $handler = $report->mitraRoutings->firstWhere('status', 'accepted')?->mitra;
                             $statusIndo = match($report->status) {
                                 'Submitted' => 'Diajukan',
                                 'Routed' => 'Diteruskan',
@@ -207,7 +207,7 @@
                             <td class="px-4 py-3 font-semibold">{{ $report->category }}</td>
                             <td class="px-4 py-3"><span class="rounded-full px-3 py-1 text-xs font-bold {{ $statusClass[$report->status] ?? 'bg-gray-100 text-gray-700' }}">{{ $statusIndo }}</span></td>
                             <td class="px-4 py-3">{{ $report->anonymous ? 'Anonim' : ($report->user?->name ?? 'Tanpa user') }}</td>
-                            <td class="px-4 py-3">{{ $handler?->partner_name ?? '-' }}</td>
+                            <td class="px-4 py-3">{{ $handler?->mitra_name ?? '-' }}</td>
                             <td class="px-4 py-3">{{ $report->created_at->format('d M Y, H:i') }}</td>
                             <td class="px-4 py-3">
                                 <div class="flex flex-wrap gap-2">

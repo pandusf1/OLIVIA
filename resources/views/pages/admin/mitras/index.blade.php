@@ -35,7 +35,7 @@
             </p>
         </div>
 
-        <a href="{{ route('admin.partners.create') }}"
+        <a href="{{ route('admin.mitras.create') }}"
            class="bg-gray-900 text-white px-5 py-3 rounded-xl text-sm font-bold hover:bg-black transition">
             + Tambah Mitra
         </a>
@@ -43,9 +43,9 @@
 
     <div class="space-y-3">
 
-        @foreach($partners as $partner)
+        @foreach($mitras as $mitra)
         @php
-            $typeLabel = match($partner->partner_type) {
+            $typeLabel = match($mitra->mitra_type) {
                 'ambulance' => 'Medis Darurat',
                 'legal' => 'Bantuan Hukum',
                 'counselor' => 'Psikososial',
@@ -61,14 +61,14 @@
                 <div class="flex items-center gap-2 flex-wrap">
 
                     <h2 class="font-bold text-lg">
-                        {{ $partner->partner_name }}
+                        {{ $mitra->mitra_name }}
                     </h2>
 
                     <span class="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
                         {{ $typeLabel }}
                     </span>
 
-                    @if($partner->verified)
+                    @if($mitra->verified)
                         <span class="text-xs px-2 py-1 rounded-full bg-green-50 text-green-700">
                             Terverifikasi
                         </span>
@@ -78,7 +78,7 @@
                         </span>
                     @endif
 
-                    @if($partner->is_active ?? true)
+                    @if($mitra->is_active ?? true)
                         <span class="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-700">
                             Aktif
                         </span>
@@ -90,36 +90,36 @@
                 </div>
 
                 <p class="text-sm text-gray-400 mt-1">
-                    {{ $partner->city }}
+                    {{ $mitra->city }}
                 </p>
 
                 <p class="text-sm text-gray-500">
-                    {{ $partner->email }}
+                    {{ $mitra->email }}
                 </p>
             </div>
 
             <div class="flex flex-wrap justify-end gap-2">
                 <form method="POST"
-                      action="{{ route('admin.partners.verify', $partner->id) }}">
+                      action="{{ route('admin.mitras.verify', $mitra->id) }}">
                     @csrf
                     @method('PATCH')
 
                     <button
                         class="px-4 py-2 rounded-xl text-sm font-semibold border border-gray-200 hover:border-gray-400 transition">
 
-                        {{ $partner->verified ? 'Cabut Verifikasi' : 'Verifikasi' }}
+                        {{ $mitra->verified ? 'Cabut Verifikasi' : 'Verifikasi' }}
 
                     </button>
                 </form>
 
                 <form method="POST"
-                      action="{{ route('admin.partners.active', $partner->id) }}">
+                      action="{{ route('admin.mitras.active', $mitra->id) }}">
                     @csrf
                     @method('PATCH')
 
                     <button
                         class="px-4 py-2 rounded-xl text-sm font-semibold border border-gray-200 hover:border-gray-400 transition">
-                        {{ ($partner->is_active ?? true) ? 'Nonaktifkan' : 'Aktifkan' }}
+                        {{ ($mitra->is_active ?? true) ? 'Nonaktifkan' : 'Aktifkan' }}
                     </button>
                 </form>
             </div>
