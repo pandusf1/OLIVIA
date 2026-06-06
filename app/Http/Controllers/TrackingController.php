@@ -755,7 +755,7 @@ class TrackingController extends Controller
         ]);
 
         $role = 'Saksi';
-        $writerName = 'Anonim';
+        $writerName = 'anonim';
 
         if (auth()->check() && auth()->user()->role === 'partner') {
             $role = 'Mitra';
@@ -763,13 +763,13 @@ class TrackingController extends Controller
             $writerName = $partner ? $partner->partner_name : auth()->user()->name;
         } elseif ($isCreator) {
             $role = 'Korban';
-            $writerName = auth()->check() ? auth()->user()->name : 'Korban (anonim)';
+            $writerName = auth()->check() ? auth()->user()->name : 'anonim';
         } elseif ($isTrustedContact) {
             $role = 'Kontak Terpercaya';
             $writerName = auth()->user()->name;
         } else {
             $role = 'Saksi';
-            $writerName = auth()->check() ? auth()->user()->name : 'Saksi (anonim)';
+            $writerName = auth()->check() ? auth()->user()->name : 'anonim';
         }
 
         $chronology = \App\Models\ReportChronology::create([
@@ -780,11 +780,17 @@ class TrackingController extends Controller
             'description' => $request->description,
         ]);
 
+        $writerLabel = $chronology->role === 'Korban'
+            ? "Korban ({$chronology->writer_name})"
+            : ($chronology->role === 'Saksi'
+                ? "Saksi ({$chronology->writer_name})"
+                : "{$chronology->role} ({$chronology->writer_name})");
+
         return response()->json([
             'ok' => true,
             'chronology' => [
                 'id' => $chronology->id,
-                'writer_name' => $chronology->role === 'Korban' ? "Korban ({$chronology->writer_name})" : ($chronology->role === 'Saksi' ? "Saksi ({$chronology->writer_name})" : "{$chronology->role} ({$chronology->writer_name})"),
+                'writer_name' => $writerLabel,
                 'description' => $chronology->description,
                 'created_at' => $chronology->created_at->format('d M Y, H:i'),
             ]
