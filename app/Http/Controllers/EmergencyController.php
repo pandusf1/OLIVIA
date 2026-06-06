@@ -61,10 +61,11 @@ class EmergencyController extends Controller
         }
 
         $idempotencyKey = $request->header('Idempotency-Key') ?: $request->input('idempotency_key');
+        $anonymous = filter_var($request->anonymous ?? false, FILTER_VALIDATE_BOOLEAN);
 
         \Log::info("Safora Emergency: Memulai proses penyimpanan laporan darurat.", [
             'category' => $request->category,
-            'anonymous' => $request->anonymous ?? false,
+            'anonymous' => $anonymous,
             'user_id' => $userId ?: 'Guest/Anonim',
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
@@ -113,7 +114,7 @@ class EmergencyController extends Controller
             }
         }
 
-        $report = DB::transaction(function () use ($request, $partners, $firstPartner, $expiresAt, $urgency, $idempotencyKey) {
+        $report = DB::transaction(function () use ($request, $partners, $firstPartner, $expiresAt, $urgency, $idempotencyKey, $anonymous) {
             $report = Report::create([
                 'user_id' => auth()->id(),
                 'report_type' => 'Emergency',
@@ -122,7 +123,7 @@ class EmergencyController extends Controller
                 'latitude' => $request->latitude,
                 'longitude' => $request->longitude,
                 'location_text' => $request->location_text,
-                'anonymous' => $request->anonymous ?? false,
+                'anonymous' => $anonymous,
                 'idempotency_key' => $idempotencyKey,
 
 

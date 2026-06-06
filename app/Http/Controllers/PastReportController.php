@@ -79,7 +79,7 @@ class PastReportController extends Controller
             'description' => $request->description,
             'location_text' => $request->location_text,
             'incident_date' => $request->incident_date,
-            'anonymous' => $request->has('anonymous') ? 1 : 0,
+            'anonymous' => $request->has('anonymous') ? true : false,
             'status' => 'Submitted',
         ]);
 
