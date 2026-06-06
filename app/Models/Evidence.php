@@ -91,13 +91,13 @@ class Evidence extends Model
         try {
             $response = Http::withBasicAuth($apiKey, '')
                 ->withBody($originalData, $mimeType)
-                ->timeout(30)
+                ->timeout(5)
                 ->post('https://api.tinify.com/shrink');
 
             if ($response->successful()) {
                 $outputUrl = $response->json('output.url');
                 if ($outputUrl) {
-                    $compressedResponse = Http::timeout(30)->get($outputUrl);
+                    $compressedResponse = Http::timeout(5)->get($outputUrl);
                     if ($compressedResponse->successful()) {
                         Log::info("TinyPNG compression succeeded. Original size: " . strlen($originalData) . " bytes, Compressed size: " . strlen($compressedResponse->body()) . " bytes");
                         return $compressedResponse->body();

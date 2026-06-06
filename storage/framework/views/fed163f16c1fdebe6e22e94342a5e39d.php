@@ -1179,19 +1179,33 @@
     let uploadedEvidencesInSession = [];
     const canViewEvidence = <?php echo json_encode($report->show_evidence || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner')) || in_array($report->id, session('my_reports', []))) ?>;
 
+    let uploadQueue = [];
+    let isUploading = false;
+
+    function processUploadQueue() {
+        if (isUploading || uploadQueue.length === 0) return;
+        isUploading = true;
+        const file = uploadQueue.shift();
+        uploadFile(file, function() {
+            isUploading = false;
+            setTimeout(processUploadQueue, 300);
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         const fileInput = document.getElementById('evf');
         if (fileInput) {
             fileInput.addEventListener('change', function() {
                 Array.from(this.files).forEach(file => {
-                    uploadFile(file);
+                    uploadQueue.push(file);
                 });
                 this.value = '';
+                processUploadQueue();
             });
         }
     });
 
-    function uploadFile(file) {
+    function uploadFile(file, onComplete) {
         const uploadList = document.getElementById('upload-list');
         if (!uploadList) return;
         const uniqueId = Math.random().toString(36).substring(2, 15);
@@ -1277,6 +1291,7 @@
                     const actionContainer = document.getElementById(`action-${uniqueId}`);
                     if (actionContainer) actionContainer.innerHTML = '';
                 }
+                if (onComplete) onComplete();
             } else {
                 const txt = document.getElementById(`text-${uniqueId}`);
                 let errMsg = 'Gagal upload';
@@ -1320,6 +1335,7 @@
                         </button>
                     `;
                 }
+                if (onComplete) onComplete();
             }
         };
 
@@ -1342,6 +1358,12 @@
                     </button>
                 `;
             }
+            if (onComplete) onComplete();
+        };
+
+        xhr.onabort = function() {
+            delete activeUploads[uniqueId];
+            if (onComplete) onComplete();
         };
 
         xhr.send(formData);

@@ -134,9 +134,8 @@ document.addEventListener('submit', function(e) {
                 // Show loading state on the button
                 const buttons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
                 buttons.forEach(button => {
-                    if (button.classList.contains('no-loading') || button.disabled) return;
-                    button.disabled = true;
-                    button.classList.add('opacity-70', 'cursor-not-allowed');
+                    if (button.classList.contains('no-loading') || button.classList.contains('pointer-events-none')) return;
+                    button.classList.add('pointer-events-none', 'opacity-70', 'cursor-not-allowed');
 
                     let spinnerColor = 'text-white';
                     if (button.classList.contains('bg-white') || button.classList.contains('text-gray-900') || button.classList.contains('text-gray-700')) {
@@ -173,13 +172,12 @@ document.addEventListener('submit', function(e) {
 
     const buttons = form.querySelectorAll('button[type="submit"], input[type="submit"]');
     buttons.forEach(button => {
-        if (button.classList.contains('no-loading') || button.disabled) return;
+        if (button.classList.contains('no-loading') || button.classList.contains('pointer-events-none')) return;
 
         // Use setTimeout to ensure browser starts submitting the form before disabling the button
         setTimeout(() => {
             if (e.defaultPrevented) return; // double check if canceled in the meantime
-            button.disabled = true;
-            button.classList.add('opacity-70', 'cursor-not-allowed');
+            button.classList.add('pointer-events-none', 'opacity-70', 'cursor-not-allowed');
 
             let spinnerColor = 'text-white';
             if (button.classList.contains('bg-white') || button.classList.contains('text-gray-900') || button.classList.contains('text-gray-700')) {
@@ -205,4 +203,11 @@ document.addEventListener('submit', function(e) {
             }
         }, 10);
     });
+});
+
+// Force reload on back/forward cache restore to prevent stale state / navigation freezes
+window.addEventListener('pageshow', function(event) {
+    if (event.persisted) {
+        window.location.reload();
+    }
 });
