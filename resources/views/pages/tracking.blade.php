@@ -1260,7 +1260,7 @@
                 </div>
                 <div class="flex items-center gap-1 mt-1">
                     <svg class="w-3 h-3 text-green-500 hidden" id="check-${uniqueId}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                    <p class="text-[10px] text-gray-500" id="text-${uniqueId}">Antre dalam antrean...</p>
+                    <p class="text-[10px] text-gray-500" id="text-${uniqueId}">Dalam antrean...</p>
                 </div>
             </div>
             <div class="flex items-center gap-2" id="action-${uniqueId}">
