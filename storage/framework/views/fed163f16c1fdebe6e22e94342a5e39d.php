@@ -1182,13 +1182,80 @@
     let uploadQueue = [];
     let isUploading = false;
 
+    function compressImageOnClient(file, maxWidth = 1920, maxHeight = 1920, quality = 0.75) {
+        return new Promise((resolve) => {
+            if (!file.type.startsWith('image/') || file.type === 'image/gif') {
+                resolve(file);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = function() {
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > maxWidth || height > maxHeight) {
+                        if (width > height) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        } else {
+                            width = Math.round((width * maxHeight) / height);
+                            height = maxHeight;
+                        }
+                    }
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    const outputType = 'image/jpeg';
+                    canvas.toBlob(function(blob) {
+                        if (!blob) {
+                            resolve(file);
+                            return;
+                        }
+                        let newName = file.name;
+                        if (!newName.endsWith('.jpg') && !newName.endsWith('.jpeg')) {
+                            newName = newName.replace(/\.[a-zA-Z0-9]+$/, '.jpg');
+                        }
+                        const compressedFile = new File([blob], newName, {
+                            type: outputType,
+                            lastModified: Date.now()
+                        });
+                        
+                        if (compressedFile.size >= file.size) {
+                            resolve(file);
+                        } else {
+                            resolve(compressedFile);
+                        }
+                    }, outputType, quality);
+                };
+                img.onerror = function() {
+                    resolve(file);
+                };
+            };
+            reader.onerror = function() {
+                resolve(file);
+            };
+        });
+    }
+
     function processUploadQueue() {
         if (isUploading || uploadQueue.length === 0) return;
         isUploading = true;
         const file = uploadQueue.shift();
-        uploadFile(file, function() {
-            isUploading = false;
-            setTimeout(processUploadQueue, 300);
+        compressImageOnClient(file).then(processedFile => {
+            uploadFile(processedFile, function() {
+                isUploading = false;
+                setTimeout(processUploadQueue, 300);
+            });
         });
     }
 
