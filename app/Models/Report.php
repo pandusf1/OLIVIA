@@ -5,8 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use App\Models\ReportStatusLog;
-use App\Models\Partner;
-use App\Models\ReportPartnerRouting;
+use App\Models\Mitra;
+use App\Models\ReportMitraRouting;
 use App\Models\ReportTimelineEvent;
 class Report extends Model
 {
@@ -26,8 +26,8 @@ class Report extends Model
         'anonymous',
         'status',
         'urgency_level',
-        'routed_partner_id',
-        'handler_partner_id',
+        'routed_mitra_id',
+        'handler_mitra_id',
         'handler_user_id',
         'assigned_at',
         'location_verified_at',
@@ -51,11 +51,6 @@ class Report extends Model
         return $this->hasMany(Evidence::class);
     }
 
-    public function witnessReports()
-    {
-        return $this->hasMany(WitnessReport::class);
-    }
-
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -67,14 +62,14 @@ class Report extends Model
         ->orderBy('changed_at', 'asc');
 }
 
-public function partner()
+public function mitra()
 {
-    return $this->belongsTo(Partner::class, 'routed_partner_id');
+    return $this->belongsTo(Mitra::class, 'routed_mitra_id');
 }
 
-public function partnerRoutings()
+public function mitraRoutings()
 {
-    return $this->hasMany(ReportPartnerRouting::class);
+    return $this->hasMany(ReportMitraRouting::class, 'report_id');
 }
 
 public function timelineEvents()
@@ -87,16 +82,16 @@ public function chronologies()
     return $this->hasMany(ReportChronology::class)->latest();
 }
 
-public function routingPartners()
+public function routingMitras()
 {
-    return $this->belongsToMany(Partner::class, 'report_partner_routings')
+    return $this->belongsToMany(Mitra::class, 'report_mitra_routings', 'report_id', 'mitra_id')
         ->withPivot(['status', 'routed_at', 'responded_at', 'expires_at'])
         ->withTimestamps();
 }
 
-public function assignedPartner()
+public function assignedMitra()
 {
-    return $this->belongsTo(Partner::class, 'handler_partner_id');
+    return $this->belongsTo(Mitra::class, 'handler_mitra_id');
 }
 
     public function handlerUser()

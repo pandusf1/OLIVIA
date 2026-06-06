@@ -6,15 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Support\Facades\Schema;
 
-class Partner extends Model
+class Mitra extends Model
 {
     use HasUuids;
 
-    protected $table = 'partners';
+    protected $table = 'mitras';
 
     protected $fillable = [
-        'partner_name',
-        'partner_type',
+        'mitra_name',
+        'mitra_type',
         'city',
         'address',
         'image_url',
@@ -24,6 +24,11 @@ class Partner extends Model
         'is_active',
         'latitude',
         'longitude',
+        'catatan',
+        'bank_name',
+        'nomor_rekening',
+        'ewallet_name',
+        'nomor_ewallet',
     ];
 
     public $incrementing = false;
@@ -41,24 +46,24 @@ class Partner extends Model
 
     public function reportRoutings()
     {
-        return $this->hasMany(ReportPartnerRouting::class);
+        return $this->hasMany(ReportMitraRouting::class, 'mitra_id');
     }
 
     public function routedReports()
     {
-        return $this->belongsToMany(Report::class, 'report_partner_routings')
+        return $this->belongsToMany(Report::class, 'report_mitra_routings', 'mitra_id', 'report_id')
             ->withPivot(['status', 'routed_at', 'responded_at', 'expires_at'])
             ->withTimestamps();
     }
 
     public function priceLists()
     {
-        return $this->hasMany(PriceList::class);
+        return $this->hasMany(PriceList::class, 'mitra_id');
     }
 
     public function payments()
     {
-        return $this->hasMany(UserPartnerPayment::class);
+        return $this->hasMany(UserMitraPayment::class, 'mitra_id');
     }
 
     public static function routeByCategory($category)
@@ -66,7 +71,7 @@ class Partner extends Model
         return self::routeMultipleByCategory($category, 1)->first();
     }
 
-    public static function partnerTypesForCategory($category): array
+    public static function mitraTypesForCategory($category): array
     {
         $normalized = strtolower(trim((string) $category));
         $normalized = str_replace(['_', '-'], ' ', $normalized);
@@ -84,16 +89,16 @@ class Partner extends Model
         };
     }
 
-    public static function matchesCategory($partnerType, $category): bool
+    public static function matchesCategory($mitraType, $category): bool
     {
-        return in_array(strtolower((string) $partnerType), self::partnerTypesForCategory($category), true);
+        return in_array(strtolower((string) $mitraType), self::mitraTypesForCategory($category), true);
     }
 
     public static function routeMultipleByCategory($category, $limit = 5, ?float $latitude = null, ?float $longitude = null)
     {
-        $partnerTypes = self::partnerTypesForCategory($category);
+        $mitraTypes = self::mitraTypesForCategory($category);
 
-        if (!$partnerTypes) {
+        if (!$mitraTypes) {
             return collect();
         }
 
@@ -102,92 +107,92 @@ class Partner extends Model
         $normalized = preg_replace('/\s+/', ' ', $normalized);
 
         if ($normalized === 'lainnya') {
-            // Get all active partners of the five types
+            // Get all active mitras of the five types
             $query = self::query()
-                ->whereIn('partner_type', ['ambulance', 'legal', 'counselor', 'pemadam', 'pppa']);
+                ->whereIn('mitra_type', ['ambulance', 'legal', 'counselor', 'pemadam', 'pppa']);
 
-            if (Schema::hasColumn('partners', 'is_active')) {
+            if (Schema::hasColumn('mitras', 'is_active')) {
                 $query->where('is_active', true);
             }
 
-            $allPartners = $query->get();
+            $allMitras = $query->get();
 
-            // Calculate distance for all partners
+            // Calculate distance for all mitras
             if ($latitude !== null && $longitude !== null) {
-                $allPartners = $allPartners->map(function ($partner) use ($latitude, $longitude) {
-                    $partner->distance_km = ($partner->latitude !== null && $partner->longitude !== null)
-                        ? self::haversineKm($latitude, $longitude, (float) $partner->latitude, (float) $partner->longitude)
+                $allMitras = $allMitras->map(function ($mitra) use ($latitude, $longitude) {
+                    $mitra->distance_km = ($mitra->latitude !== null && $mitra->longitude !== null)
+                        ? self::haversineKm($latitude, $longitude, (float) $mitra->latitude, (float) $mitra->longitude)
                         : PHP_FLOAT_MAX;
-                    return $partner;
+                    return $mitra;
                 });
             } else {
-                $allPartners = $allPartners->map(function ($partner) {
-                    $partner->distance_km = PHP_FLOAT_MAX;
-                    return $partner;
+                $allMitras = $allMitras->map(function ($mitra) {
+                    $mitra->distance_km = PHP_FLOAT_MAX;
+                    return $mitra;
                 });
             }
 
-            // Group all partners by type
-            $grouped = $allPartners->groupBy('partner_type');
+            // Group all mitras by type
+            $grouped = $allMitras->groupBy('mitra_type');
 
-            $selectedPartners = collect();
+            $selectedMitras = collect();
             $types = ['ambulance', 'legal', 'counselor', 'pemadam', 'pppa'];
 
-            // 1. For each type, get the closest (verified desc, distance_km asc) partner
+            // 1. For each type, get the closest (verified desc, distance_km asc) mitra
             foreach ($types as $type) {
-                $partnersOfType = $grouped->get($type, collect());
-                if ($partnersOfType->isNotEmpty()) {
-                    $closest = $partnersOfType->sortBy([
+                $mitrasOfType = $grouped->get($type, collect());
+                if ($mitrasOfType->isNotEmpty()) {
+                    $closest = $mitrasOfType->sortBy([
                         ['verified', 'desc'],
                         ['distance_km', 'asc'],
                     ])->first();
-                    $selectedPartners->push($closest);
+                    $selectedMitras->push($closest);
                 }
             }
 
-            // 2. We need to backfill up to $limit partners from the remaining pool
-            $selectedIds = $selectedPartners->pluck('id')->toArray();
-            $remainingPool = $allPartners->reject(function ($partner) use ($selectedIds) {
-                return in_array($partner->id, $selectedIds);
+            // 2. We need to backfill up to $limit mitras from the remaining pool
+            $selectedIds = $selectedMitras->pluck('id')->toArray();
+            $remainingPool = $allMitras->reject(function ($mitra) use ($selectedIds) {
+                return in_array($mitra->id, $selectedIds);
             });
 
-            $needed = $limit - $selectedPartners->count();
+            $needed = $limit - $selectedMitras->count();
             if ($needed > 0 && $remainingPool->isNotEmpty()) {
                 $backfill = $remainingPool->sortBy([
                     ['verified', 'desc'],
                     ['distance_km', 'asc'],
                 ])->take($needed);
 
-                foreach ($backfill as $partner) {
-                    $selectedPartners->push($partner);
+                foreach ($backfill as $mitra) {
+                    $selectedMitras->push($mitra);
                 }
             }
 
-            // Finally, sort the limit partners by verified desc and distance_km asc
-            return $selectedPartners->sortBy([
+            // Finally, sort the limit mitras by verified desc and distance_km asc
+            return $selectedMitras->sortBy([
                 ['verified', 'desc'],
                 ['distance_km', 'asc'],
             ])->values();
         }
 
         $query = self::query()
-            ->whereIn('partner_type', $partnerTypes)
+            ->whereIn('mitra_type', $mitraTypes)
             ->orderByDesc('verified');
 
-        if (Schema::hasColumn('partners', 'is_active')) {
+        if (Schema::hasColumn('mitras', 'is_active')) {
             $query->where('is_active', true);
         }
 
-        $partners = $query->get();
+        $mitras = $query->get();
 
         if ($latitude !== null && $longitude !== null) {
-            $partners = $partners
-                ->map(function ($partner) use ($latitude, $longitude) {
-                    $partner->distance_km = ($partner->latitude !== null && $partner->longitude !== null)
-                        ? self::haversineKm($latitude, $longitude, (float) $partner->latitude, (float) $partner->longitude)
+            $mitras = $mitras
+                ->map(function ($mitra) use ($latitude, $longitude) {
+                    $mitra->distance_km = ($mitra->latitude !== null && $mitra->longitude !== null)
+                        ? self::haversineKm($latitude, $longitude, (float) $mitra->latitude, (float) $mitra->longitude)
                         : PHP_FLOAT_MAX;
 
-                    return $partner;
+                    return $mitra;
                 })
                 ->sortBy([
                     ['verified', 'desc'],
@@ -196,7 +201,7 @@ class Partner extends Model
                 ->values();
         }
 
-        return $partners->take($limit)->values();
+        return $mitras->take($limit)->values();
     }
 
     public static function distanceKm(float $lat1, float $lon1, float $lat2, float $lon2): float

@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Partner;
+use App\Models\Mitra;
 use Illuminate\Http\Request;
 
-class PartnerNearbyController extends Controller
+class MitraNearbyController extends Controller
 {
     public function index()
     {
@@ -14,7 +14,7 @@ class PartnerNearbyController extends Controller
             return response()->json(['error' => 'Lokasi user belum tersedia.'], 422);
         }
 
-        $partners = Partner::query()
+        $mitras = Mitra::query()
             ->where('verified', true)
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
@@ -25,18 +25,18 @@ class PartnerNearbyController extends Controller
 
         // Tidak ada batas radius untuk memastikan tetap ada hasil terdekat,
         // sekalipun jaraknya sangat jauh.
-        $partnersWithDistance = $partners->map(function ($partner) use ($lat, $lng) {
-            $distanceKm = $this->haversineKm($lat, $lng, (float) $partner->latitude, (float) $partner->longitude);
+        $mitrasWithDistance = $mitras->map(function ($mitra) use ($lat, $lng) {
+            $distanceKm = $this->haversineKm($lat, $lng, (float) $mitra->latitude, (float) $mitra->longitude);
 
             return [
-                'partner' => $partner,
+                'mitra' => $mitra,
                 'distance_km' => round($distanceKm, 2),
             ];
         })
         ->sortBy('distance_km')
         ->values();
 
-        return response()->json(['data' => $partnersWithDistance]);
+        return response()->json(['data' => $mitrasWithDistance]);
     }
 
     private function haversineKm(float $lat1, float $lon1, float $lat2, float $lon2): float

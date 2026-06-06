@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Report;
 use App\Models\User;
-use App\Models\Partner;
+use App\Models\Mitra;
 use App\Models\AuditLog;
-use App\Models\ReportPartnerRouting;
+use App\Models\ReportMitraRouting;
 use App\Models\ReportStatusLog;
 use App\Services\FonnteService;
 use Illuminate\Support\Facades\Hash;
@@ -25,8 +25,8 @@ class AdminController extends Controller
             });
 
         $unhandledQuery = Report::query()
-            ->whereDoesntHave('partnerRoutings', fn ($query) => $query->where('status', 'accepted'))
-            ->whereDoesntHave('partnerRoutings', $validPending);
+            ->whereDoesntHave('mitraRoutings', fn ($query) => $query->where('status', 'accepted'))
+            ->whereDoesntHave('mitraRoutings', $validPending);
 
         $stats = [
             'reports' => Report::count(),
@@ -34,8 +34,8 @@ class AdminController extends Controller
             'emergency' => Report::where('report_type', 'Emergency')->count(),
             'unhandled' => (clone $unhandledQuery)->count(),
             'resolved' => Report::where('status', 'Resolved')->count(),
-            'active_partners' => Partner::query()
-                ->when(\Illuminate\Support\Facades\Schema::hasColumn('partners', 'is_active'), fn ($query) => $query->where('is_active', true))
+            'active_mitras' => Mitra::query()
+                ->when(\Illuminate\Support\Facades\Schema::hasColumn('mitras', 'is_active'), fn ($query) => $query->where('is_active', true))
                 ->count(),
         ];
 
@@ -44,29 +44,29 @@ class AdminController extends Controller
             ->take(10)
             ->get();
 
-        $partners = Partner::query()
+        $mitras = Mitra::query()
             ->with(['reportRoutings.report'])
             ->latest()
             ->get()
-            ->map(function ($partner) {
-                $accepted = $partner->reportRoutings->where('status', 'accepted');
+            ->map(function ($mitra) {
+                $accepted = $mitra->reportRoutings->where('status', 'accepted');
                 $responseMinutes = $accepted
                     ->filter(fn ($routing) => $routing->routed_at && $routing->responded_at)
                     ->map(fn ($routing) => $routing->routed_at->diffInMinutes($routing->responded_at));
 
-                $partner->accepted_count = $accepted->count();
-                $partner->average_response_minutes = $responseMinutes->count() ? round($responseMinutes->avg()) : null;
-                $partner->active_reports_count = $accepted->filter(fn ($routing) => $routing->report?->status === 'In Progress')->count();
-                $partner->last_response_at = optional($accepted->sortByDesc('responded_at')->first())->responded_at;
-                $partner->activity_status = $partner->last_response_at && $partner->last_response_at->greaterThanOrEqualTo(now()->subDays(7))
+                $mitra->accepted_count = $accepted->count();
+                $mitra->average_response_minutes = $responseMinutes->count() ? round($responseMinutes->avg()) : null;
+                $mitra->active_reports_count = $accepted->filter(fn ($routing) => $routing->report?->status === 'In Progress')->count();
+                $mitra->last_response_at = optional($accepted->sortByDesc('responded_at')->first())->responded_at;
+                $mitra->activity_status = $mitra->last_response_at && $mitra->last_response_at->greaterThanOrEqualTo(now()->subDays(7))
                     ? 'Aktif'
                     : 'Tidak Aktif';
 
-                return $partner;
+                return $mitra;
             });
 
         $reportsQuery = Report::query()
-            ->with(['user', 'partner', 'partnerRoutings.partner']);
+            ->with(['user', 'mitra', 'mitraRoutings.mitra']);
 
         if (request('status')) {
             $reportsQuery->where('status', request('status'));
@@ -83,16 +83,16 @@ class AdminController extends Controller
         if (request('date_to')) {
             $reportsQuery->whereDate('created_at', '<=', request('date_to'));
         }
-        if (request('partner_id')) {
-            $partnerId = request('partner_id');
-            $reportsQuery->whereHas('partnerRoutings', fn ($query) => $query->where('partner_id', $partnerId));
+        if (request('mitra_id')) {
+            $mitraId = request('mitra_id');
+            $reportsQuery->whereHas('mitraRoutings', fn ($query) => $query->where('mitra_id', $mitraId));
         }
 
         $reports = $reportsQuery->latest()->take(50)->get();
         $auditLogs = AuditLog::latest('created_at')->take(20)->get();
         $categories = Report::query()->select('category')->distinct()->pluck('category');
 
-        return view('pages.admin.index', compact('stats', 'unhandledReports', 'partners', 'reports', 'auditLogs', 'categories'));
+        return view('pages.admin.index', compact('stats', 'unhandledReports', 'mitras', 'reports', 'auditLogs', 'categories'));
     }
 
     public function rerouteReport(Request $request, $id)
@@ -100,23 +100,23 @@ class AdminController extends Controller
         $request->validate([]);
 
         $report = Report::findOrFail($id);
-        $partners = Partner::routeMultipleByCategory($report->category, 5, $report->latitude, $report->longitude);
+        $mitras = Mitra::routeMultipleByCategory($report->category, 5, $report->latitude, $report->longitude);
         $expiresAt = now()->addMinutes(max(1, (int) env('REPORT_ROUTING_EXPIRY_MINUTES', 30)));
 
-        ReportPartnerRouting::where('report_id', $report->id)
+        ReportMitraRouting::where('report_id', $report->id)
             ->whereIn('status', ['pending', 'expired'])
             ->delete();
 
-        foreach ($partners as $partner) {
-            ReportPartnerRouting::create([
+        foreach ($mitras as $mitra) {
+            ReportMitraRouting::create([
                 'report_id' => $report->id,
-                'partner_id' => $partner->id,
+                'mitra_id' => $mitra->id,
                 'status' => 'pending',
                 'routed_at' => now(),
                 'expires_at' => $expiresAt,
             ]);
 
-            if ($partner->phone) {
+            if ($mitra->phone) {
                 $mapsLink = $report->latitude ? "https://maps.google.com/?q={$report->latitude},{$report->longitude}" : 'Lokasi tidak tersedia';
                 $message =
                     "Safora: Laporan darurat kategori {$report->category} diroute ulang oleh admin.\n\n" .
@@ -125,7 +125,7 @@ class AdminController extends Controller
                     "Buka dashboard Safora untuk menerima laporan ini.";
 
                 try {
-                    FonnteService::send($partner->phone, $message);
+                    FonnteService::send($mitra->phone, $message);
                 } catch (\Exception $e) {
                     // skip jika layanan WA tidak tersedia
                 }
@@ -133,11 +133,11 @@ class AdminController extends Controller
         }
 
         // Juga kirim ke ADMIN_PHONE sebagai testing jika dalam mode testing
-        if (env('ADMIN_PHONE') && $partners->isNotEmpty()) {
-            $partner = $partners->first();
+        if (env('ADMIN_PHONE') && $mitras->isNotEmpty()) {
+            $mitra = $mitras->first();
             $mapsLink = $report->latitude ? "https://maps.google.com/?q={$report->latitude},{$report->longitude}" : 'Lokasi tidak tersedia';
             $message =
-                "Safora: Laporan darurat kategori {$report->category} diroute ulang oleh admin (Test Partner).\n\n" .
+                "Safora: Laporan darurat kategori {$report->category} diroute ulang oleh admin (Test Mitra).\n\n" .
                 "Lokasi: {$mapsLink}\n" .
                 "Tracking: " . url('/tracking/' . $report->id) . "\n\n" .
                 "Buka dashboard Safora untuk menerima laporan ini.";
@@ -151,8 +151,8 @@ class AdminController extends Controller
 
         $oldStatus = $report->status;
         $report->update([
-            'status' => $partners->isNotEmpty() ? 'Routed' : $report->status,
-            'routed_partner_id' => $partners->first()?->id,
+            'status' => $mitras->isNotEmpty() ? 'Routed' : $report->status,
+            'routed_mitra_id' => $mitras->first()?->id,
         ]);
 
         if ($oldStatus !== $report->status) {
@@ -167,7 +167,7 @@ class AdminController extends Controller
 
         AuditLog::log('manual_reroute_report', 'report', $report->id);
 
-        return back()->with('success', 'Laporan berhasil diroute ulang ke ' . $partners->count() . ' partner.');
+        return back()->with('success', 'Laporan berhasil diroute ulang ke ' . $mitras->count() . ' mitra.');
     }
 
     public function resolveReport(Request $request, $id)
@@ -190,61 +190,4 @@ class AdminController extends Controller
 
         return back()->with('success', 'Laporan ditandai selesai secara manual.');
     }
-
-    public function partners()
-    {
-        $partners = Partner::latest()->get();
-
-        return view('pages.admin.partners.index', compact('partners'));
-    }
-
-    public function createPartner()
-{
-    return view('pages.admin.partners.create');
-}
-
-public function storePartner(Request $request)
-{
-    $request->validate([
-        'partner_name' => 'required|string|max:255',
-        'partner_type' => 'required|string|max:255',
-        'city' => 'required|string|max:255',
-        'email' => 'required|email|unique:users,email',
-        'phone' => 'nullable|string|max:30',
-    ]);
-
-    $partner = Partner::create([
-        'partner_name' => $request->partner_name,
-        'partner_type' => $request->partner_type,
-        'city' => $request->city,
-        'phone' => $request->phone,
-        'email' => $request->email,
-        'verified' => true,
-    ]);
-
-    $password = Str::random(10);
-
-    User::create([
-        'name' => $request->partner_name,
-        'email' => $request->email,
-        'password' => Hash::make($password),
-        'role' => 'partner',
-        'partner_id' => $partner->id,
-    ]);
-
-    return redirect()
-        ->route('admin.partners')
-        ->with('success', 'Partner berhasil dibuat. Password: ' . $password);
-}
-
-public function verifyPartner($id)
-{
-    $partner = Partner::findOrFail($id);
-
-    $partner->verified = !$partner->verified;
-
-    $partner->save();
-
-    return back()->with('success', 'Status partner diperbarui.');
-}
 }

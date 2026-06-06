@@ -13,7 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         // 1. Tambahkan alias middleware kamu di sini
         $middleware->alias([
-            'partner' => \App\Http\Middleware\EnsurePartnerRole::class,
+            'mitra' => \App\Http\Middleware\EnsureMitraRole::class,
             'admin' => \App\Http\Middleware\EnsureAdminRole::class,
             'phone.required' => \App\Http\Middleware\EnsurePhoneIsFilled::class,
         ]);

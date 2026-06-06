@@ -4,7 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\AuditLog;
 use App\Models\Report;
-use App\Models\ReportPartnerRouting;
+use App\Models\ReportMitraRouting;
 use App\Models\ReportTimelineEvent;
 use App\Services\FonnteService;
 use Illuminate\Console\Command;
@@ -13,11 +13,11 @@ class ExpireReportRoutings extends Command
 {
     protected $signature = 'reports:expire-routings';
 
-    protected $description = 'Menandai routing laporan partner yang melewati batas respons sebagai expired.';
+    protected $description = 'Menandai routing laporan mitra yang melewati batas respons sebagai expired.';
 
     public function handle(): int
     {
-        $expiredRoutings = ReportPartnerRouting::query()
+        $expiredRoutings = ReportMitraRouting::query()
             ->where('status', 'pending')
             ->whereNotNull('expires_at')
             ->where('expires_at', '<', now())
@@ -35,7 +35,7 @@ class ExpireReportRoutings extends Command
 
         $emergencyReports = Report::query()
             ->where('report_type', 'Emergency')
-            ->whereNull('handler_partner_id')
+            ->whereNull('handler_mitra_id')
             ->whereIn('status', ['Submitted', 'Routed', 'Viewed'])
             ->get();
 
@@ -70,7 +70,7 @@ class ExpireReportRoutings extends Command
                 \Illuminate\Support\Facades\Cache::store('database')->put($lastRetryAtKey, now()->toDateTimeString(), now()->addDays(7));
 
                 // Pastikan status routing tetap pending dan expires_at = null (tidak expired statis)
-                ReportPartnerRouting::query()
+                ReportMitraRouting::query()
                     ->where('report_id', $report->id)
                     ->whereIn('status', ['pending', 'expired'])
                     ->update([
@@ -79,8 +79,8 @@ class ExpireReportRoutings extends Command
                         'routed_at' => now(),
                     ]);
 
-                // Hubungi partner-partner terhubung
-                $pendingRoutings = ReportPartnerRouting::query()
+                // Hubungi mitra-mitra terhubung
+                $pendingRoutings = ReportMitraRouting::query()
                     ->where('report_id', $report->id)
                     ->where('status', 'pending')
                     ->get();
@@ -91,21 +91,21 @@ class ExpireReportRoutings extends Command
                 $trackingLink = url('/tracking/' . $report->id);
 
                 foreach ($pendingRoutings as $routing) {
-                    $partner = $routing->partner;
-                    if ($partner && $partner->phone) {
-                        $partnerMessage =
+                    $mitra = $routing->mitra;
+                    if ($mitra && $mitra->phone) {
+                        $mitraMessage =
                             "🚨 *ALERT PENGINGAT (Mencari Bantuan - Percobaan {$newRetryCount}/3)*\n\n" .
-                            "Laporan darurat belum di-acc oleh partner mana pun!\n" .
+                            "Laporan darurat belum di-acc oleh mitra mana pun!\n" .
                             "Kategori: *{$report->category}*\n\n" .
                             "📍 Lokasi:\n{$mapsLink}\n\n" .
                             "🔗 Tracking:\n{$trackingLink}\n\n" .
                             "Mohon segera buka dashboard Safora dan terima laporan ini jika berada di dekat lokasi.";
 
                         try {
-                            FonnteService::send($partner->phone, $partnerMessage);
+                            FonnteService::send($mitra->phone, $mitraMessage);
                         } catch (\Exception $e) {
-                            \Log::error("Failed to send scheduler retry WA to partner", [
-                                'partner_id' => $partner->id,
+                            \Log::error("Failed to send scheduler retry WA to mitra", [
+                                'mitra_id' => $mitra->id,
                                 'error' => $e->getMessage()
                             ]);
                         }
@@ -122,7 +122,7 @@ class ExpireReportRoutings extends Command
                 if (env('ADMIN_PHONE') || env('ADMIN_PHONE') === '6285124019353') {
                     $adminMessage =
                         "🚨 *ALERT PENGINGAT ADMIN (Percobaan {$newRetryCount}/3)*\n\n" .
-                        "Laporan darurat belum di-acc partner selama " . ($newRetryCount * 5) . " menit.\n" .
+                        "Laporan darurat belum di-acc mitra selama " . ($newRetryCount * 5) . " menit.\n" .
                         "Kategori: *{$report->category}*\n" .
                         "📍 Lokasi:\n{$mapsLink}\n\n" .
                         "🔗 Tracking:\n{$trackingLink}";
@@ -137,8 +137,8 @@ class ExpireReportRoutings extends Command
                 // Tambahkan event ke timeline
                 ReportTimelineEvent::create([
                     'report_id' => $report->id,
-                    'event_type' => 'partner_retry_alert',
-                    'event_message' => "Sistem mengirimkan ulang alert WhatsApp pengingat ke partner terdekat (Percobaan ke-{$newRetryCount} dari 3).",
+                    'event_type' => 'mitra_retry_alert',
+                    'event_message' => "Sistem mengirimkan ulang alert WhatsApp pengingat ke mitra terdekat (Percobaan ke-{$newRetryCount} dari 3).",
                     'actor_type' => 'system',
                 ]);
 
@@ -153,7 +153,7 @@ class ExpireReportRoutings extends Command
         }
 
         $this->info($expiredRoutings->count() . ' routing laporan ditandai expired.');
-        $this->info($escalatedReportsCount . ' laporan darurat dikirim ulang alert pengingat.');
+        $this->info($escalatedReportsCount . ' Laporan darurat dikirim ulang alert pengingat.');
 
         return self::SUCCESS;
     }

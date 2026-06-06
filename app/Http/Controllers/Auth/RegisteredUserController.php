@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\AuditLog;
-use App\Models\Partner;
+use App\Models\Mitra;
 use App\Services\FonnteService;
 use App\Services\PhoneNumberService;
 use Illuminate\Auth\Events\Registered;

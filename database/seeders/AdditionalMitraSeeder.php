@@ -3,13 +3,13 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use App\Models\Partner;
+use App\Models\Mitra;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
-class AdditionalPartnerSeeder extends Seeder
+class AdditionalMitraSeeder extends Seeder
 {
     public function run(): void
     {
@@ -21,15 +21,7 @@ class AdditionalPartnerSeeder extends Seeder
             'Surabaya' => [-7.2575, 112.7521],
         ];
 
-        // Definisi 6 layanan penanganan
-        // 1. Ambulance (PSC 119 / PMI) -> ambulance
-        // 2. Pemadam & Rescue (Damkar / SAR) -> pemadam
-        // 3. Layanan PPPA (UPTD PPA / SAPA 129) -> pppa
-        // 4. Bantuan Hukum (LBH / LPSK) -> legal
-        // 5. Konselor / Psikolog (SEJIWA / Mandiri) -> counselor
-        // 6. Dinas Sosial (Dinsos / Satpol PP) -> Dinsos (pppa) & Satpol PP (pemadam)
-        
-        $partnersConfig = [
+        $mitrasConfig = [
             // Ambulance
             [
                 'name' => 'PSC 119',
@@ -147,11 +139,11 @@ class AdditionalPartnerSeeder extends Seeder
         ];
 
         foreach ($cities as $cityName => [$centerLat, $centerLng]) {
-            foreach ($partnersConfig as $pConfig) {
-                $partnerName = $pConfig['name'] . ' ' . $cityName;
+            foreach ($mitrasConfig as $pConfig) {
+                $mitraName = $pConfig['name'] . ' ' . $cityName;
 
                 // Cek jika sudah ada agar tidak duplikat
-                $exists = Partner::where('partner_name', $partnerName)->exists();
+                $exists = Mitra::where('mitra_name', $mitraName)->exists();
                 if ($exists) {
                     continue;
                 }
@@ -162,8 +154,8 @@ class AdditionalPartnerSeeder extends Seeder
                 $lat = round($centerLat + $latOffset, 6);
                 $lng = round($centerLng + $lngOffset, 6);
 
-                $partnerId = (string) Str::uuid();
-                $cleanName = preg_replace('/[^a-z0-9_]/', '', strtolower(str_replace([' ', 'Kab.'], ['_', 'Kab'], $partnerName)));
+                $mitraId = (string) Str::uuid();
+                $cleanName = preg_replace('/[^a-z0-9_]/', '', strtolower(str_replace([' ', 'Kab.'], ['_', 'Kab'], $mitraName)));
                 $email = $cleanName . '@safora.id';
                 $phone = '62' . rand(810000000, 899999999);
 
@@ -174,11 +166,11 @@ class AdditionalPartnerSeeder extends Seeder
                     default => '/512.jpg',
                 };
 
-                // Insert Partner
-                Partner::create([
-                    'id' => $partnerId,
-                    'partner_name' => $partnerName,
-                    'partner_type' => $pConfig['type'],
+                // Insert Mitra
+                Mitra::create([
+                    'id' => $mitraId,
+                    'mitra_name' => $mitraName,
+                    'mitra_type' => $pConfig['type'],
                     'city' => $cityName,
                     'address' => "Jl. Raya " . $pConfig['name'] . " No. " . rand(1, 150) . ", " . $cityName,
                     'image_url' => $img,
@@ -195,10 +187,10 @@ class AdditionalPartnerSeeder extends Seeder
                 User::create([
                     'id' => (string) Str::uuid(),
                     'email' => $email,
-                    'name' => $partnerName,
+                    'name' => $mitraName,
                     'password' => Hash::make($password),
-                    'role' => 'partner',
-                    'partner_id' => $partnerId,
+                    'role' => 'mitra',
+                    'mitra_id' => $mitraId,
                     'created_at' => $now,
                     'updated_at' => $now,
                 ]);
@@ -208,7 +200,7 @@ class AdditionalPartnerSeeder extends Seeder
                     $priceRows = [];
                     foreach ($priceCatalog[$pConfig['type']] as $item) {
                         $priceRows[] = [
-                            'partner_id' => $partnerId,
+                            'mitra_id' => $mitraId,
                             'service_name' => $item['service_name'],
                             'price' => $item['price'],
                             'currency' => 'IDR',

@@ -10,21 +10,21 @@ class PriceList extends Model
 
 
     protected $fillable = [
-        'partner_id',
+        'mitra_id',
         'service_name',
         'price',
         'currency',
         'duration',
     ];
 
-    public function partner()
+    public function mitra()
     {
-        return $this->belongsTo(Partner::class);
+        return $this->belongsTo(Mitra::class, 'mitra_id');
     }
 
     public function payments()
     {
-        return $this->hasMany(UserPartnerPayment::class);
+        return $this->hasMany(UserMitraPayment::class);
     }
 
 }

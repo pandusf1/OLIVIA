@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Report;
 use App\Models\ChatThread;
-use App\Models\Partner;
+use App\Models\Mitra;
 use Illuminate\Http\Request;
 use App\Services\FonnteService;
 
@@ -81,10 +81,10 @@ class TrackingController extends Controller
         $report = $this->resolveReport($id, [
             'evidences',
             'statusLogs',
-            'partner',
-            'assignedPartner',
+            'mitra',
+            'assignedMitra',
             'handlerUser',
-            'partnerRoutings.partner',
+            'mitraRoutings.mitra',
             'timelineEvents',
             'chronologies',
         ]);
@@ -111,9 +111,9 @@ class TrackingController extends Controller
     {
         $report = $this->resolveReport($id, [
             'evidences',
-            'assignedPartner',
+            'assignedMitra',
             'handlerUser',
-            'partnerRoutings.partner',
+            'mitraRoutings.mitra',
             'timelineEvents',
             'chronologies',
         ]);
@@ -126,10 +126,10 @@ class TrackingController extends Controller
         $report = Report::findOrFail($id);
 
         $user = auth()->user();
-        $isPartner = $user && $user->role === 'partner';
+        $isMitra = $user && $user->role === 'mitra';
 
-        // Allow update if auth user is the creator or session has the report id (and is not a partner responder)
-        $isCreator = !$isPartner && (
+        // Allow update if auth user is the creator or session has the report id (and is not a mitra responder)
+        $isCreator = !$isMitra && (
             (auth()->check() && auth()->id() === $report->user_id) 
             || ($report->user_id === null && in_array($report->id, $request->session()->get('my_reports', [])))
         );
@@ -159,25 +159,25 @@ class TrackingController extends Controller
             $report->timelineEvents()->create([
                 'report_id' => $report->id,
                 'event_type' => 'gps_verified',
-                'event_message' => 'Lokasi GPS berhasil diterima sehingga partner dapat melihat area kejadian lebih cepat.',
+                'event_message' => 'Lokasi GPS berhasil diterima sehingga mitra dapat melihat area kejadian lebih cepat.',
                 'actor_type' => 'system',
             ]);
 
             $trackingLink = url('/tracking/' . $report->id);
             $mapsLink = "https://maps.google.com/?q={$report->latitude},{$report->longitude}";
 
-            // Recalculate distance for existing routed partners
-            foreach ($report->partnerRoutings as $routing) {
-                if ($routing->partner) {
-                    $dist = Partner::distanceKm((float) $report->latitude, (float) $report->longitude, (float) $routing->partner->latitude, (float) $routing->partner->longitude);
+            // Recalculate distance for existing routed mitras
+            foreach ($report->mitraRoutings as $routing) {
+                if ($routing->mitra) {
+                    $dist = Mitra::distanceKm((float) $report->latitude, (float) $report->longitude, (float) $routing->mitra->latitude, (float) $routing->mitra->longitude);
                     $routing->update(['distance_km' => $dist]);
                 }
             }
 
-            // Route to nearest partners if none exists and not unknown_emergency
-            $partners = $report->routingPartners;
-            if ($partners->isEmpty() && strtolower((string) $report->category) !== 'unknown_emergency') {
-                $partners = Partner::routeMultipleByCategory(
+            // Route to nearest mitras if none exists and not unknown_emergency
+            $mitras = $report->routingMitras;
+            if ($mitras->isEmpty() && strtolower((string) $report->category) !== 'unknown_emergency') {
+                $mitras = Mitra::routeMultipleByCategory(
                     $report->category,
                     5,
                     (float) $report->latitude,
@@ -185,41 +185,41 @@ class TrackingController extends Controller
                 );
                 
                 // Filter within 20 km
-                $partners = $partners->filter(function($p) use ($report) {
-                    $dist = Partner::distanceKm((float) $report->latitude, (float) $report->longitude, (float) $p->latitude, (float) $p->longitude);
+                $mitras = $mitras->filter(function($p) use ($report) {
+                    $dist = Mitra::distanceKm((float) $report->latitude, (float) $report->longitude, (float) $p->latitude, (float) $p->longitude);
                     return $dist <= 20.0;
                 });
 
-                if ($partners->isNotEmpty()) {
+                if ($mitras->isNotEmpty()) {
                     $report->update([
                         'status' => 'Routed',
-                        'routed_partner_id' => $partners->first()->id,
+                        'routed_mitra_id' => $mitras->first()->id,
                     ]);
 
-                    foreach ($partners as $partner) {
-                        \App\Models\ReportPartnerRouting::create([
+                    foreach ($mitras as $mitra) {
+                        \App\Models\ReportMitraRouting::create([
                             'report_id' => $report->id,
-                            'partner_id' => $partner->id,
+                            'mitra_id' => $mitra->id,
                             'status' => 'pending',
                             'routed_at' => now(),
-                            'distance_km' => Partner::distanceKm((float) $report->latitude, (float) $report->longitude, (float) $partner->latitude, (float) $partner->longitude),
-                            'estimated_response_minutes' => $partner->partner_type === 'ambulance' ? 5 : 8,
+                            'distance_km' => Mitra::distanceKm((float) $report->latitude, (float) $report->longitude, (float) $mitra->latitude, (float) $mitra->longitude),
+                            'estimated_response_minutes' => $mitra->mitra_type === 'ambulance' ? 5 : 8,
                         ]);
                     }
                 }
             }
 
-            // Alert via WhatsApp torouted partners
-            foreach ($partners as $partner) {
-                if ($partner->phone) {
-                    $partnerMessage =
+            // Alert via WhatsApp torouted mitras
+            foreach ($mitras as $mitra) {
+                if ($mitra->phone) {
+                    $mitraMessage =
                         "🚨 *Safora - Laporan Darurat Baru (GPS Terdeteksi)*\n\n" .
                         "Kategori: *{$report->category}*\n\n" .
                         "📍 Lokasi:\n{$mapsLink}\n\n" .
                         "🔗 Tracking:\n{$trackingLink}\n\n" .
                         "Buka dashboard Safora untuk menerima laporan ini.";
                     try {
-                        FonnteService::send($partner->phone, $partnerMessage);
+                        FonnteService::send($mitra->phone, $mitraMessage);
                     } catch (\Exception $e) {}
                 }
             }
@@ -338,7 +338,7 @@ class TrackingController extends Controller
             return redirect()->back()->with('error', 'Anda tidak berhak menyelesaikan laporan ini.');
         }
 
-        // Only allow resolving if currently handled by a partner (In Progress or Assigned)
+        // Only allow resolving if currently handled by a mitra (In Progress or Assigned)
         if (!in_array($report->status, ['In Progress', 'Assigned'])) {
             return redirect()->back()->with('error', 'Laporan hanya bisa diselesaikan jika sedang ditangani oleh mitra.');
         }
@@ -431,8 +431,8 @@ class TrackingController extends Controller
         // Simpan waktu manual alert baru
         \Illuminate\Support\Facades\Cache::store('database')->put($lastManualAlertAtKey, now()->toDateTimeString(), now()->addDays(7));
 
-        // Dapatkan semua partner yang pending
-        $pendingRoutings = $report->partnerRoutings()->where('status', 'pending')->get();
+        // Dapatkan semua mitra yang pending
+        $pendingRoutings = $report->mitraRoutings()->where('status', 'pending')->get();
 
         $mapsLink = $report->latitude
             ? "https://maps.google.com/?q={$report->latitude},{$report->longitude}"
@@ -440,9 +440,9 @@ class TrackingController extends Controller
         $trackingLink = url('/tracking/' . $report->id);
 
         foreach ($pendingRoutings as $routing) {
-            $partner = $routing->partner;
-            if ($partner && $partner->phone) {
-                $partnerMessage =
+            $mitra = $routing->mitra;
+            if ($mitra && $mitra->phone) {
+                $mitraMessage =
                     "🚨 *ALERT PENGINGAT MANUAL DARURAT*\n\n" .
                     "Korban mengirim ulang alert manual karena belum menerima bantuan!\n" .
                     "Kategori: *{$report->category}*\n\n" .
@@ -451,10 +451,10 @@ class TrackingController extends Controller
                     "Mohon segera buka dashboard Safora dan terima laporan ini.";
 
                 try {
-                    FonnteService::send($partner->phone, $partnerMessage);
+                    FonnteService::send($mitra->phone, $mitraMessage);
                 } catch (\Exception $e) {
-                    \Log::error("Failed to send manual re-alert WA to partner", [
-                        'partner_id' => $partner->id,
+                    \Log::error("Failed to send manual re-alert WA to mitra", [
+                        'mitra_id' => $mitra->id,
                         'error' => $e->getMessage()
                     ]);
                 }
@@ -463,8 +463,8 @@ class TrackingController extends Controller
 
         // Tambahkan event ke timeline
         $report->timelineEvents()->create([
-            'event_type' => 'partner_manual_alert',
-            'event_message' => 'Pelapor mengirimkan ulang alert WhatsApp ke partner secara manual.',
+            'event_type' => 'mitra_manual_alert',
+            'event_message' => 'Pelapor mengirimkan ulang alert WhatsApp ke mitra secara manual.',
             'actor_type' => auth()->check() ? 'user' : 'system',
             'actor_id' => auth()->id(),
         ]);
@@ -477,8 +477,8 @@ class TrackingController extends Controller
 
     public function buildLivePayload(Report $report): array
     {
-        $assignedPartner = $report->assignedPartner;
-        $relevantRoutings = $this->relevantPartnerRoutings($report);
+        $assignedMitra = $report->assignedMitra;
+        $relevantRoutings = $this->relevantMitraRoutings($report);
         $pendingRoutings = $relevantRoutings->where('status', 'pending');
         $pendingCount = $pendingRoutings->count();
         $reviewingCount = $pendingRoutings
@@ -489,17 +489,17 @@ class TrackingController extends Controller
         $humanMessage = $this->humanStatusMessage($report, $pendingCount, $reviewingCount);
         $eta = ($report->status === 'Resolved')
             ? 'Selesai'
-            : ($assignedPartner
+            : ($assignedMitra
                 ? 'Mitra sudah terhubung'
                 : ($pendingRoutings->min('estimated_response_minutes')
                     ? $pendingRoutings->min('estimated_response_minutes') . '-' . ($pendingRoutings->min('estimated_response_minutes') + 3) . ' menit'
                     : '3-5 menit'));
 
         $latestMessages = collect();
-        if ($assignedPartner && $report->user_id) {
+        if ($assignedMitra && $report->user_id) {
             $thread = ChatThread::query()
                 ->where('user_id', $report->user_id)
-                ->where('partner_id', $assignedPartner->id)
+                ->where('mitra_id', $assignedMitra->id)
                 ->first();
 
             $latestMessages = $thread
@@ -547,24 +547,24 @@ class TrackingController extends Controller
             'escalation_message' => $retryCount >= 3
                 ? 'Sistem selesai mengirim ulang alert pengingat otomatis. Anda kini dapat mengirim ulang alert secara manual jika diperlukan.'
                 : 'Jika belum ada mitra menerima dalam 5 menit, sistem akan mencoba ulang alert WhatsApp secara bertahap s.d. 3 kali.',
-            'assigned_partner' => $assignedPartner ? [
-                'id' => $assignedPartner->id,
-                'name' => $assignedPartner->partner_name,
-                'specialization' => $this->partnerTypeLabel($assignedPartner->partner_type),
-                'city' => $assignedPartner->city,
-                'verified' => (bool) $assignedPartner->verified,
+            'assigned_mitra' => $assignedMitra ? [
+                'id' => $assignedMitra->id,
+                'name' => $assignedMitra->mitra_name,
+                'specialization' => $this->mitraTypeLabel($assignedMitra->mitra_type),
+                'city' => $assignedMitra->city,
+                'verified' => (bool) $assignedMitra->verified,
                 'handler_name' => $report->handlerUser?->name,
                 'assigned_at' => optional($report->assigned_at)->format('d M Y, H:i'),
-                'latitude' => $assignedPartner->latitude,
-                'longitude' => $assignedPartner->longitude,
+                'latitude' => $assignedMitra->latitude,
+                'longitude' => $assignedMitra->longitude,
             ] : null,
-            'routed_partners' => $relevantRoutings
+            'routed_mitras' => $relevantRoutings
                 ->sortByDesc(fn ($routing) => $routing->status === 'accepted')
                 ->values()
                 ->map(fn ($routing) => [
-                    'name' => $routing->partner?->partner_name ?? 'Mitra Safora',
-                    'specialization' => $this->partnerTypeLabel($routing->partner?->partner_type),
-                    'city' => $routing->partner?->city,
+                    'name' => $routing->mitra?->mitra_name ?? 'Mitra Safora',
+                    'specialization' => $this->mitraTypeLabel($routing->mitra?->mitra_type),
+                    'city' => $routing->mitra?->city,
                     'estimated_response' => $routing->estimated_response_minutes
                         ? $routing->estimated_response_minutes . '-' . ($routing->estimated_response_minutes + 3) . ' menit'
                         : '3-5 menit',
@@ -607,7 +607,7 @@ class TrackingController extends Controller
                 ];
             })->all(),
             'can_view_evidence' => (bool) ($report->show_evidence 
-                || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner')) 
+                || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'mitra')) 
                 || ($report->user_id === null && in_array($report->id, session()->get('my_reports', [])))),
         ];
     }
@@ -628,14 +628,14 @@ class TrackingController extends Controller
     private function humanStatusMessage(Report $report, int $pendingCount, int $reviewingCount): string
     {
         if ($report->status === 'Resolved') {
-            if ($report->handler_partner_id && $report->assignedPartner) {
-                return 'Kasus ini telah selesai ditangani oleh ' . $report->assignedPartner->partner_name . '. Terima kasih atas kerja sama Anda.';
+            if ($report->handler_mitra_id && $report->assignedMitra) {
+                return 'Kasus ini telah selesai ditangani oleh ' . $report->assignedMitra->mitra_name . '. Terima kasih atas kerja sama Anda.';
             }
             return 'Kasus ini telah selesai ditangani. Terima kasih atas kerja sama Anda.';
         }
 
-        if ($report->handler_partner_id && $report->assignedPartner) {
-            return 'Laporan Anda sekarang ditangani oleh ' . $report->assignedPartner->partner_name . '. Chat krisis sudah terbuka untuk koordinasi.';
+        if ($report->handler_mitra_id && $report->assignedMitra) {
+            return 'Laporan Anda sekarang ditangani oleh ' . $report->assignedMitra->mitra_name . '. Chat krisis sudah terbuka untuk koordinasi.';
         }
 
         if ($reviewingCount > 0) {
@@ -655,7 +655,7 @@ class TrackingController extends Controller
             return 'Simpan kode laporan ini jika Anda perlu menambah bukti atau tindak lanjut.';
         }
 
-        if ($report->handler_partner_id) {
+        if ($report->handler_mitra_id) {
             return 'Buka chat dan kirim pesan sesingkat mungkin: lokasi detail, kondisi Anda, atau bantuan yang dibutuhkan.';
         }
 
@@ -675,7 +675,7 @@ class TrackingController extends Controller
         return filled($routing->reviewed_at) ? 'reviewing' : 'waiting';
     }
 
-    private function partnerTypeLabel(?string $type): string
+    private function mitraTypeLabel(?string $type): string
     {
         return match ($type) {
             'ambulance' => 'Medis Darurat',
@@ -686,16 +686,16 @@ class TrackingController extends Controller
         };
     }
 
-    private function relevantPartnerRoutings(Report $report)
+    private function relevantMitraRoutings(Report $report)
     {
-        $partnerTypes = Partner::partnerTypesForCategory($report->category);
+        $mitraTypes = Mitra::mitraTypesForCategory($report->category);
 
-        if (empty($partnerTypes)) {
+        if (empty($mitraTypes)) {
             return collect();
         }
 
-        return $report->partnerRoutings
-            ->filter(fn ($routing) => $routing->partner && Partner::matchesCategory($routing->partner->partner_type, $report->category))
+        return $report->mitraRoutings
+            ->filter(fn ($routing) => $routing->mitra && Mitra::matchesCategory($routing->mitra->mitra_type, $report->category))
             ->values();
     }
 
@@ -738,15 +738,15 @@ class TrackingController extends Controller
             }
         }
 
-        $isPartner = auth()->check() && auth()->user()->role === 'partner';
-        if ($isPartner) {
-            $partnerId = auth()->user()->partner_id;
-            if ($report->handler_partner_id !== $partnerId) {
+        $isMitra = auth()->check() && auth()->user()->role === 'mitra';
+        if ($isMitra) {
+            $mitraId = auth()->user()->mitra_id;
+            if ($report->handler_mitra_id !== $mitraId) {
                 return response()->json(['error' => 'Akses ditolak. Kasus ini ditangani oleh mitra lain.'], 403);
             }
         }
 
-        if (!$isCreator && !$isTrustedContact && !$isWitnessWithin5Km && !$isPartner) {
+        if (!$isCreator && !$isTrustedContact && !$isWitnessWithin5Km && !$isMitra) {
             return response()->json(['error' => 'Akses ditolak. Hanya korban, saksi (< 5 km), mitra krisis, atau kontak terpercaya yang bisa menambah kronologi.'], 403);
         }
 
@@ -757,10 +757,10 @@ class TrackingController extends Controller
         $role = 'Saksi';
         $writerName = 'anonim';
 
-        if (auth()->check() && auth()->user()->role === 'partner') {
+        if (auth()->check() && auth()->user()->role === 'mitra') {
             $role = 'Mitra';
-            $partner = \App\Models\Partner::find(auth()->user()->partner_id);
-            $writerName = $partner ? $partner->partner_name : auth()->user()->name;
+            $mitra = \App\Models\Mitra::find(auth()->user()->mitra_id);
+            $writerName = $mitra ? $mitra->mitra_name : auth()->user()->name;
         } elseif ($isCreator) {
             $role = 'Korban';
             $writerName = auth()->check() ? auth()->user()->name : 'anonim';
@@ -835,14 +835,14 @@ class TrackingController extends Controller
         return response()->json(['ok' => true]);
     }
 
-    public function updatePartnerLocation(Request $request, $id)
+    public function updateMitraLocation(Request $request, $id)
     {
         $report = Report::findOrFail($id);
 
         $user = auth()->user();
-        $isHandlerPartner = $user && $user->role === 'partner' && $report->handler_partner_id === $user->partner_id;
+        $isHandlerMitra = $user && $user->role === 'mitra' && $report->handler_mitra_id === $user->mitra_id;
 
-        if (!$isHandlerPartner) {
+        if (!$isHandlerMitra) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -851,11 +851,11 @@ class TrackingController extends Controller
             'longitude' => 'required|numeric|between:-180,180',
         ]);
 
-        $partner = $report->assignedPartner;
-        if ($partner) {
-            $partner->latitude = $request->input('latitude');
-            $partner->longitude = $request->input('longitude');
-            $partner->save();
+        $mitra = $report->assignedMitra;
+        if ($mitra) {
+            $mitra->latitude = $request->input('latitude');
+            $mitra->longitude = $request->input('longitude');
+            $mitra->save();
         }
 
         return response()->json(['ok' => true]);

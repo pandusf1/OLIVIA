@@ -49,16 +49,16 @@ class AdminUsersExportController extends Controller
                 'email',
                 'phone',
                 'role',
-                'partner_id',
-                'partner_type',
-                'partner_city',
+                'mitra_id',
+                'mitra_type',
+                'mitra_city',
                 'created_at',
                 'updated_at',
             ]);
 
 
             foreach ($users as $u) {
-                $partner = $u->partner;
+                $mitra = $u->mitra;
 
                 fputcsv($out, [
                     $u->id,
@@ -66,9 +66,9 @@ class AdminUsersExportController extends Controller
                     $u->email,
                     $u->phone,
                     $u->role,
-                    $u->partner_id,
-                    $partner?->partner_type,
-                    $partner?->city,
+                    $u->mitra_id,
+                    $mitra?->mitra_type,
+                    $mitra?->city,
                     $u->created_at?->toDateTimeString(),
                     $u->updated_at?->toDateTimeString(),
                 ]);

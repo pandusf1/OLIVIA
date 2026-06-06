@@ -62,8 +62,8 @@
         <?php
             $user = auth()->user();
             $canSendChat = true;
-            if ($user && $user->role === 'partner') {
-                $canSendChat = ($report->handler_partner_id === $user->partner_id);
+            if ($user && $user->role === 'mitra') {
+                $canSendChat = ($report->handler_mitra_id === $user->mitra_id);
             }
         ?>
 

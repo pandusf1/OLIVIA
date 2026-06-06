@@ -10,8 +10,8 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        if (auth()->user()->role === 'partner') {
-            return redirect()->route('partner.index');
+        if (auth()->user()->role === 'mitra') {
+            return redirect()->route('mitra.index');
         }
 
         $userHasLocation = \App\Models\UserLocation::where('user_id', auth()->id())->exists();
@@ -32,7 +32,7 @@ class DashboardController extends Controller
     public function summaryData()
     {
         $reports = Report::where('user_id', auth()->id())
-            ->with(['partner'])
+            ->with(['mitra'])
             ->withCount('evidences')
             ->latest()
             ->get();
@@ -44,7 +44,7 @@ class DashboardController extends Controller
 
         $chatThreads = ChatThread::query()
             ->where('user_id', auth()->id())
-            ->with('partner')
+            ->with('mitra')
             ->orderByDesc('last_message_at')
             ->get();
 
@@ -79,8 +79,8 @@ class DashboardController extends Controller
                     'anonymous' => (bool) $r->anonymous,
                     'evidences_count' => $r->evidences_count,
                     'incident_date' => $r->incident_date 
-                        ? \Carbon\Carbon::parse($r->incident_date)->format('d M Y, H:i') 
-                        : $r->created_at->format('d M Y, H:i'),
+                    ? \Carbon\Carbon::parse($r->incident_date)->format('d M Y, H:i') 
+                    : $r->created_at->format('d M Y, H:i'),
                     'status_classes' => $s,
                     'is_editable_deletable' => in_array($r->status, ['Submitted', 'Routed', 'Viewed']) 
                         && $r->created_at->diffInMinutes(now()) <= 15,
@@ -91,8 +91,8 @@ class DashboardController extends Controller
             'chatThreads' => $chatThreads->map(function ($t) {
                 return [
                     'id' => $t->id,
-                    'partner_id' => $t->partner_id,
-                    'partner_name' => $t->partner?->partner_name ?? 'Mitra',
+                    'mitra_id' => $t->mitra_id,
+                    'mitra_name' => $t->mitra?->mitra_name ?? 'Mitra',
                     'last_message' => $t->last_message,
                     'last_message_at' => $t->last_message_at 
                         ? \Carbon\Carbon::parse($t->last_message_at)->diffForHumans() 

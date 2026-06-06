@@ -10,18 +10,16 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Schema;
 
-
-
-class PartnerSeeder extends Seeder
+class MitraSeeder extends Seeder
 {
     public function run(): void
     {
         $now = now();
         $password = 'safora2026';
 
-        // Reset isi tabel (requested: reset users, partners, price_lists)
-        if (Schema::hasTable('user_partner_payments')) {
-            DB::table('user_partner_payments')->delete();
+        // Reset isi tabel
+        if (Schema::hasTable('user_mitra_payments')) {
+            DB::table('user_mitra_payments')->delete();
         }
         if (Schema::hasTable('chat_messages')) {
             DB::table('chat_messages')->delete();
@@ -30,9 +28,8 @@ class PartnerSeeder extends Seeder
             DB::table('chat_threads')->delete();
         }
         DB::table('price_lists')->delete();
-        DB::table('partners')->delete();
+        DB::table('mitras')->delete();
         DB::table('users')->delete();
-        // Jika relasi user_locations punya FK ke users, idealnya juga reset agar tidak error.
         if (Schema::hasTable('user_locations')) {
             DB::table('user_locations')->delete();
         }
@@ -48,7 +45,7 @@ class PartnerSeeder extends Seeder
                 'name' => 'Admin Safora',
                 'password' => Hash::make($password),
                 'role' => 'admin',
-                'partner_id' => null,
+                'mitra_id' => null,
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
@@ -58,7 +55,7 @@ class PartnerSeeder extends Seeder
                 'name' => 'User Demo',
                 'password' => Hash::make($password),
                 'role' => 'user',
-                'partner_id' => null,
+                'mitra_id' => null,
                 'created_at' => $now,
                 'updated_at' => $now,
             ],
@@ -83,7 +80,7 @@ class PartnerSeeder extends Seeder
                 'name' => $v['name'],
                 'password' => Hash::make($password),
                 'role' => 'user',
-                'partner_id' => null,
+                'mitra_id' => null,
                 'created_at' => $now,
                 'updated_at' => $now,
             ];
@@ -145,43 +142,43 @@ class PartnerSeeder extends Seeder
 
         $configs = [
             [
-                'partner_type' => 'ambulance',
+                'mitra_type' => 'ambulance',
                 'prefixes' => ['PSC 119', 'Ambulans PMI', 'Layanan Medis Darurat', 'Ambulans Gawat Darurat'],
             ],
             [
-                'partner_type' => 'legal',
+                'mitra_type' => 'legal',
                 'prefixes' => ['LBH', 'Posbakum Pengadilan', 'LPSK Cabang', 'Layanan Advokasi Hukum'],
             ],
             [
-                'partner_type' => 'counselor',
+                'mitra_type' => 'counselor',
                 'prefixes' => ['Layanan SEJIWA', 'Pusat Konseling & Trauma Healing', 'Dinas Sosial (Rehabilitasi ODGJ)', 'Layanan Psikologi Klinik'],
             ],
             [
-                'partner_type' => 'pemadam',
+                'mitra_type' => 'pemadam',
                 'prefixes' => ['Dinas Pemadam Kebakaran & Penyelamatan', 'Damkar Rescue', 'Satpol PP & Penyelamatan', 'Posko Evakuasi BPBD'],
             ],
             [
-                'partner_type' => 'pppa',
+                'mitra_type' => 'pppa',
                 'prefixes' => ['UPTD PPA', 'P2TP2A', 'Layanan PPA (Sahabat Perempuan & Anak)', 'Dinas Sosial (Perlindungan Anak)'],
             ]
         ];
 
-        $partnersToInsert = [];
+        $mitrasToInsert = [];
         $usersToInsert = [];
 
         foreach ($cityNames as $cityIndex => $cityName) {
             [$cLat, $cLng] = $areaCenters[$cityName];
 
             foreach ($configs as $typeIndex => $config) {
-                $partnerType = $config['partner_type'];
+                $mitraType = $config['mitra_type'];
                 $prefixes = $config['prefixes'];
 
                 $prefix = $prefixes[($cityIndex + $typeIndex) % count($prefixes)];
-                $partnerId = (string) Str::uuid();
-                $partnerName = $prefix . ' ' . $cityName;
+                $mitraId = (string) Str::uuid();
+                $mitraName = $prefix . ' ' . $cityName;
 
                 // Unique clean email & phone
-                $cleanName = preg_replace('/[^a-z0-9_]/', '', strtolower(str_replace([' ', 'Kab.'], ['_', 'Kab'], $partnerName)));
+                $cleanName = preg_replace('/[^a-z0-9_]/', '', strtolower(str_replace([' ', 'Kab.'], ['_', 'Kab'], $mitraName)));
                 $email = $cleanName . '@safora.id';
                 $phone = '62' . str_pad((string) (80000000 + ($cityIndex * 100 + $typeIndex * 19) % 99999999), 10, '0', STR_PAD_LEFT);
 
@@ -195,16 +192,16 @@ class PartnerSeeder extends Seeder
                 $address = "Jl. Veteran No. {$streetNo}, {$cityName}";
 
                 $img = match(true){
-                    $partnerType === 'legal' => '/192.jpg',
-                    $partnerType === 'counselor' => '/512.jpg',
-                    $partnerType === 'ambulance' => '/192.jpg',
+                    $mitraType === 'legal' => '/192.jpg',
+                    $mitraType === 'counselor' => '/512.jpg',
+                    $mitraType === 'ambulance' => '/192.jpg',
                     default => '/512.jpg',
                 };
 
-                $partnersToInsert[] = [
-                    'id' => $partnerId,
-                    'partner_name' => $partnerName,
-                    'partner_type' => $partnerType,
+                $mitrasToInsert[] = [
+                    'id' => $mitraId,
+                    'mitra_name' => $mitraName,
+                    'mitra_type' => $mitraType,
                     'city' => $cityName,
                     'address' => $address,
                     'image_url' => $img,
@@ -219,18 +216,18 @@ class PartnerSeeder extends Seeder
                 $usersToInsert[] = [
                     'id' => (string) Str::uuid(),
                     'email' => $email,
-                    'name' => $partnerName,
+                    'name' => $mitraName,
                     'password' => Hash::make($password),
-                    'role' => 'partner',
-                    'partner_id' => $partnerId,
+                    'role' => 'mitra',
+                    'mitra_id' => $mitraId,
                     'created_at' => $now,
                     'updated_at' => $now,
                 ];
             }
         }
 
-        // Seed 7 PPPA Semarang partners to preserve specific local requirements
-        $pppaPartners = [
+        // Seed 7 PPPA Semarang mitras to preserve specific local requirements
+        $pppaMitras = [
             ['name' => 'PPPA Kota Semarang Utama', 'lat' => -6.980000, 'lng' => 110.420000, 'address' => 'Jl. Pemuda No. 148, Sekayu, Kec. Semarang Tengah, Kota Semarang'],
             ['name' => 'PPPA Semarang Barat', 'lat' => -6.995000, 'lng' => 110.380000, 'address' => 'Jl. Bojong Salaman No. 2, Salamanmloyo, Kec. Semarang Barat, Kota Semarang'],
             ['name' => 'PPPA Semarang Timur', 'lat' => -6.985000, 'lng' => 110.440000, 'address' => 'Jl. Majapahit No. 110, Gayamsari, Kec. Semarang Timur, Kota Semarang'],
@@ -240,15 +237,15 @@ class PartnerSeeder extends Seeder
             ['name' => 'PPPA Banyumanik', 'lat' => -7.065000, 'lng' => 110.425000, 'address' => 'Jl. Perintis Kemerdekaan No. 88, Kec. Banyumanik, Kota Semarang'],
         ];
 
-        foreach ($pppaPartners as $i => $pppa) {
-            $partnerId = (string) Str::uuid();
+        foreach ($pppaMitras as $i => $pppa) {
+            $mitraId = (string) Str::uuid();
             $email = 'pppa_semarang_' . ($i + 1) . '@safora.id';
             $phone = '628512401935' . ($i + 1);
 
-            $partnersToInsert[] = [
-                'id' => $partnerId,
-                'partner_name' => $pppa['name'],
-                'partner_type' => 'pppa',
+            $mitrasToInsert[] = [
+                'id' => $mitraId,
+                'mitra_name' => $pppa['name'],
+                'mitra_type' => 'pppa',
                 'city' => 'Semarang',
                 'address' => $pppa['address'],
                 'image_url' => '/512.jpg',
@@ -265,23 +262,23 @@ class PartnerSeeder extends Seeder
                 'email' => $email,
                 'name' => $pppa['name'],
                 'password' => Hash::make($password),
-                'role' => 'partner',
-                'partner_id' => $partnerId,
+                'role' => 'mitra',
+                'mitra_id' => $mitraId,
                 'created_at' => $now,
                 'updated_at' => $now,
             ];
         }
 
-        DB::table('partners')->insert($partnersToInsert);
+        DB::table('mitras')->insert($mitrasToInsert);
         if (!empty($usersToInsert)) {
             DB::table('users')->upsert(
                 $usersToInsert,
                 ['email'],
-                ['name', 'password', 'role', 'partner_id', 'updated_at']
+                ['name', 'password', 'role', 'mitra_id', 'updated_at']
             );
         }
 
-        // Price list only for legal and counselor partners
+        // Price list only for legal and counselor mitras
         $priceCatalog = [
             'legal' => [
                 ['service_name' => 'Konsultasi Pengacara (20 menit)', 'price' => 150000, 'duration' => '20 menit'],
@@ -302,15 +299,15 @@ class PartnerSeeder extends Seeder
         ];
 
         $priceRows = [];
-        foreach ($partnersToInsert as $p) {
-            if (!in_array($p['partner_type'], ['legal', 'counselor'], true)) {
+        foreach ($mitrasToInsert as $p) {
+            if (!in_array($p['mitra_type'], ['legal', 'counselor'], true)) {
                 continue;
             }
 
-            $typeKey = $p['partner_type'];
+            $typeKey = $p['mitra_type'];
             foreach ($priceCatalog[$typeKey] as $item) {
                 $priceRows[] = [
-                    'partner_id' => $p['id'],
+                    'mitra_id' => $p['id'],
                     'service_name' => $item['service_name'],
                     'price' => $item['price'],
                     'currency' => 'IDR',

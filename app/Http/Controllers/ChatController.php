@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ChatMessage;
 use App\Models\ChatThread;
-use App\Models\Partner;
+use App\Models\Mitra;
 use App\Models\Report;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -18,17 +18,17 @@ class ChatController extends Controller
      * 1. Pelapor (user_id === report.user_id, atau via session my_reports)
      * 2. Warga dalam radius < 5 km dari lokasi laporan (lat/lng via query param)
      *
-     * Partner bisa join chat setelah menerima (accept) laporan.
-     * Partner yang belum accept tidak bisa masuk.
+     * Mitra bisa join chat setelah menerima (accept) laporan.
+     * Mitra yang belum accept tidak bisa masuk.
      */
     private function canAccessReportChat(Report $report, ?float $lat = null, ?float $lng = null): bool
     {
         $user = auth()->user();
 
-        // Partner: mitra yang di-route (baik pending, accepted, expired) diizinkan membaca chat
-        if ($user && $user->role === 'partner') {
-            return $report->partnerRoutings()
-                ->where('partner_id', $user->partner_id)
+        // Mitra: mitra yang di-route (baik pending, accepted, expired) diizinkan membaca chat
+        if ($user && $user->role === 'mitra') {
+            return $report->mitraRoutings()
+                ->where('mitra_id', $user->mitra_id)
                 ->exists();
         }
 
@@ -88,9 +88,9 @@ class ChatController extends Controller
      */
     private function senderDisplayName(ChatMessage $msg, Report $report): string
     {
-        if ($msg->sender_type === 'partner') {
-            $partner = Partner::find($msg->sender_id);
-            return $partner ? $partner->partner_name : 'Mitra Safora';
+        if ($msg->sender_type === 'mitra') {
+            $mitra = Mitra::find($msg->sender_id);
+            return $mitra ? $mitra->mitra_name : 'Mitra Safora';
         }
 
         // Cek jika pelapor via cache (guest reporter)
@@ -100,7 +100,7 @@ class ChatController extends Controller
             || ($reporterUuid && (string) $msg->sender_id === (string) $reporterUuid);
 
         if ($isReporter) {
-            if ($msg->sender_type === 'user' || $msg->sender_type === 'partner_user') {
+            if ($msg->sender_type === 'user' || $msg->sender_type === 'mitra_user') {
                 $user = \App\Models\User::find($msg->sender_id);
                 $name = $user ? $user->name : 'anonim';
                 return "Korban ({$name})";
@@ -148,7 +148,7 @@ class ChatController extends Controller
     {
         $report = Report::with([
             'user',
-            'partnerRoutings.partner',
+            'mitraRoutings.mitra',
             'timelineEvents',
         ])->findOrFail($reportId);
 
@@ -156,7 +156,7 @@ class ChatController extends Controller
         $lng  = request()->query('lng')  ? (float) request()->query('lng')  : null;
 
         if (!$this->canAccessReportChat($report, $lat, $lng)) {
-            abort(403, 'Akses chat tidak diizinkan. Kamu harus berada dalam radius 5 km dari lokasi kejadian, atau merupakan pelapor/partner yang menangani.');
+            abort(403, 'Akses chat tidak diizinkan. Kamu harus berada dalam radius 5 km dari lokasi kejadian, atau merupakan pelapor/mitra yang menangani.');
         }
 
         // Cek jika pelapor adalah guest, simpan anonymous_chat_uuid di cache agar teridentifikasi sebagai Korban
@@ -181,10 +181,10 @@ class ChatController extends Controller
             $user = auth()->user();
             $isMine = false;
 
-            if ($user && $user->role === 'partner') {
-                $isMine = $msg->sender_type === 'partner' && (string) $msg->sender_id === (string) $user->partner_id;
+            if ($user && $user->role === 'mitra') {
+                $isMine = $msg->sender_type === 'mitra' && (string) $msg->sender_id === (string) $user->mitra_id;
             } elseif ($user) {
-                $isMine = $msg->sender_type !== 'partner' && (string) $msg->sender_id === (string) $user->id;
+                $isMine = $msg->sender_type !== 'mitra' && (string) $msg->sender_id === (string) $user->id;
             } else {
                 // Guest: identifikasi via session UUID
                 $anonUuid = $this->getAnonymousChatUuid();
@@ -204,10 +204,10 @@ class ChatController extends Controller
 
         // Identitas pengirim saat ini
         $user = auth()->user();
-        if ($user && $user->role === 'partner') {
-            $currentSenderType = 'partner';
-            $currentSenderId   = $user->partner_id;
-            $currentName       = Partner::find($user->partner_id)?->partner_name ?? 'Mitra';
+        if ($user && $user->role === 'mitra') {
+            $currentSenderType = 'mitra';
+            $currentSenderId   = $user->mitra_id;
+            $currentName       = Mitra::find($user->mitra_id)?->mitra_name ?? 'Mitra';
         } elseif ($user) {
             $currentSenderType = 'user';
             $currentSenderId   = $user->id;
@@ -239,7 +239,7 @@ class ChatController extends Controller
      */
     public function sendMessage(Request $request, string $reportId)
     {
-        $report = Report::with(['user', 'partnerRoutings'])->findOrFail($reportId);
+        $report = Report::with(['user', 'mitraRoutings'])->findOrFail($reportId);
 
         $lat = $request->query('lat') ? (float) $request->query('lat') : null;
         $lng = $request->query('lng') ? (float) $request->query('lng') : null;
@@ -254,16 +254,16 @@ class ChatController extends Controller
         $request->validate(['message' => 'required|string|max:2000']);
 
         $user = auth()->user();
-        if ($user && $user->role === 'partner') {
-            $isHandling = ($report->handler_partner_id === $user->partner_id);
+        if ($user && $user->role === 'mitra') {
+            $isHandling = ($report->handler_mitra_id === $user->mitra_id);
             if (!$isHandling) {
                 if ($request->expectsJson()) {
                     return response()->json(['ok' => false, 'message' => 'Akses ditolak. Anda tidak menangani kasus ini.'], 403);
                 }
                 abort(403, 'Akses ditolak. Anda tidak menangani kasus ini.');
             }
-            $senderType = 'partner';
-            $senderId   = $user->partner_id;
+            $senderType = 'mitra';
+            $senderId   = $user->mitra_id;
         } elseif ($user) {
             $senderType = 'user';
             $senderId   = $user->id;
@@ -329,10 +329,10 @@ class ChatController extends Controller
         $user = auth()->user();
         $msgs = $thread->messages()->orderBy('created_at', 'asc')->get()->map(function ($msg) use ($report, $user) {
             $isMine = false;
-            if ($user && $user->role === 'partner') {
-                $isMine = $msg->sender_type === 'partner' && (string) $msg->sender_id === (string) $user->partner_id;
+            if ($user && $user->role === 'mitra') {
+                $isMine = $msg->sender_type === 'mitra' && (string) $msg->sender_id === (string) $user->mitra_id;
             } elseif ($user) {
-                $isMine = $msg->sender_type !== 'partner' && (string) $msg->sender_id === (string) $user->id;
+                $isMine = $msg->sender_type !== 'mitra' && (string) $msg->sender_id === (string) $user->id;
             } else {
                 $anonUuid = $this->getAnonymousChatUuid();
                 $isMine = $msg->sender_type === 'anonymous' && $msg->sender_id === $anonUuid;
@@ -358,24 +358,24 @@ class ChatController extends Controller
     public function indexThreads(Request $request)
     {
         $user = auth()->user();
-        $isPartner = $user && $user->role === 'partner';
+        $isMitra = $user && $user->role === 'mitra';
         
-        if ($isPartner) {
-            $threads = ChatThread::with(['partner', 'user', 'report'])
+        if ($isMitra) {
+            $threads = ChatThread::with(['mitra', 'user', 'report'])
                 ->where(function($query) use ($user) {
-                    $query->where('partner_id', $user->partner_id)
+                    $query->where('mitra_id', $user->mitra_id)
                           ->orWhereHas('report', function($q) use ($user) {
-                              $q->whereHas('partnerRoutings', function($pq) use ($user) {
-                                  $pq->where('partner_id', $user->partner_id)
+                              $q->whereHas('mitraRoutings', function($pq) use ($user) {
+                                  $pq->where('mitra_id', $user->mitra_id)
                                      ->where('status', 'accepted');
                               });
                           });
                 })
                 ->orderBy('last_message_at', 'desc')
                 ->get();
-            $viewerType = 'partner';
+            $viewerType = 'mitra';
         } else {
-            $threads = ChatThread::with(['partner', 'user', 'report'])
+            $threads = ChatThread::with(['mitra', 'user', 'report'])
                 ->where(function($query) use ($user) {
                     $query->where('user_id', $user->id)
                           ->orWhereHas('report', function($q) use ($user) {
@@ -389,36 +389,38 @@ class ChatController extends Controller
 
         if ($request->expectsJson() || $request->ajax()) {
             $data = $threads->map(function ($t) use ($viewerType) {
-                $threadName = $viewerType === 'partner'
+                $threadName = $viewerType === 'mitra'
                     ? ($t->user?->name ?? 'Pelapor')
-                    : ($t->partner?->partner_name ?? 'Mitra');
+                    : ($t->mitra?->mitra_name ?? 'Mitra');
                 
-                $threadType = $viewerType === 'partner'
+                $threadType = $viewerType === 'mitra'
                     ? 'Pelapor'
-                    : match($t->partner?->partner_type ?? '') {
+                    : match($t->mitra?->mitra_type ?? '') {
                         'ambulance' => 'Medis Darurat',
                         'legal' => 'Bantuan Hukum',
                         'counselor' => 'Psikososial',
                         'pemadam' => 'Pemadam / Rescue',
-                        default => $t->partner?->partner_type ?? ''
+                        default => $t->mitra?->mitra_type ?? ''
                     };
 
                 $threadHref = '#';
                 if ($t->report_id) {
                     $threadHref = route('chat.report', ['reportId' => $t->report_id]);
-                } elseif ($t->partner_id) {
-                    $threadHref = route('chat.messages', ['partnerId' => $t->partner_id]);
+                } elseif ($viewerType === 'mitra') {
+                    $threadHref = route('chat.messages', ['mitraId' => $t->user_id]);
+                } elseif ($t->mitra_id) {
+                    $threadHref = route('chat.messages', ['mitraId' => $t->mitra_id]);
                 }
 
                 return [
                     'id' => $t->id,
                     'report_id' => $t->report_id,
-                    'partner_id' => $t->partner_id,
+                    'mitra_id' => $viewerType === 'mitra' ? $t->user_id : $t->mitra_id,
                     'user_id' => $t->user_id,
                     'threadName' => $threadName,
                     'threadType' => $threadType,
                     'threadHref' => $threadHref,
-                    'partner_image' => $t->partner?->image_url ?? '',
+                    'mitra_image' => $t->mitra?->image_url ?? '',
                     'last_message_time' => $t->last_message_at ? $t->last_message_at->format('d M Y, H:i') : 'Belum ada pesan',
                 ];
             });
@@ -431,41 +433,41 @@ class ChatController extends Controller
 
         return view('pages.user.chat', [
             'threads' => $threads,
-            'partnerId' => null,
-            'partner' => null,
+            'mitraId' => null,
+            'mitra' => null,
             'messages' => [],
             'viewerType' => $viewerType,
             'reportContext' => null,
         ]);
     }
 
-    public function start(string $partnerId)
+    public function start(string $mitraId)
     {
         $user = auth()->user();
         
         $thread = ChatThread::firstOrCreate([
             'user_id' => $user->id,
-            'partner_id' => $partnerId,
+            'mitra_id' => $mitraId,
         ], [
             'id' => (string) \Illuminate\Support\Str::uuid(),
             'last_message_at' => now(),
         ]);
         
-        return redirect()->route('chat.messages', ['partnerId' => $partnerId]);
+        return redirect()->route('chat.messages', ['mitraId' => $mitraId]);
     }
 
-    public function messages(string $partnerId)
+    public function messages(string $mitraId)
     {
         $user = auth()->user();
-        $isPartner = $user && $user->role === 'partner';
+        $isMitra = $user && $user->role === 'mitra';
         
-        if ($isPartner) {
-            $threads = ChatThread::with(['partner', 'user', 'report'])
+        if ($isMitra) {
+            $threads = ChatThread::with(['mitra', 'user', 'report'])
                 ->where(function($query) use ($user) {
-                    $query->where('partner_id', $user->partner_id)
+                    $query->where('mitra_id', $user->mitra_id)
                           ->orWhereHas('report', function($q) use ($user) {
-                              $q->whereHas('partnerRoutings', function($pq) use ($user) {
-                                  $pq->where('partner_id', $user->partner_id)
+                              $q->whereHas('mitraRoutings', function($pq) use ($user) {
+                                  $pq->where('mitra_id', $user->mitra_id)
                                      ->where('status', 'accepted');
                               });
                           });
@@ -474,17 +476,17 @@ class ChatController extends Controller
                 ->get();
                 
             $thread = ChatThread::firstOrCreate([
-                'user_id' => $partnerId,
-                'partner_id' => $user->partner_id,
+                'user_id' => $mitraId,
+                'mitra_id' => $user->mitra_id,
             ], [
                 'id' => (string) \Illuminate\Support\Str::uuid(),
                 'last_message_at' => now(),
             ]);
             
-            $partner = Partner::find($user->partner_id);
-            $viewerType = 'partner';
+            $mitra = Mitra::find($user->mitra_id);
+            $viewerType = 'mitra';
         } else {
-            $threads = ChatThread::with(['partner', 'user', 'report'])
+            $threads = ChatThread::with(['mitra', 'user', 'report'])
                 ->where(function($query) use ($user) {
                     $query->where('user_id', $user->id)
                           ->orWhereHas('report', function($q) use ($user) {
@@ -496,13 +498,13 @@ class ChatController extends Controller
                 
             $thread = ChatThread::firstOrCreate([
                 'user_id' => $user->id,
-                'partner_id' => $partnerId,
+                'mitra_id' => $mitraId,
             ], [
                 'id' => (string) \Illuminate\Support\Str::uuid(),
                 'last_message_at' => now(),
             ]);
             
-            $partner = Partner::findOrFail($partnerId);
+            $mitra = Mitra::findOrFail($mitraId);
             $viewerType = 'user';
         }
 
@@ -512,8 +514,8 @@ class ChatController extends Controller
             return response()->json([
                 'messages' => $messages->map(function ($msg) use ($viewerType, $user) {
                     $isMine = false;
-                    if ($viewerType === 'partner') {
-                        $isMine = $msg->sender_type === 'partner' && (string) $msg->sender_id === (string) $user->partner_id;
+                    if ($viewerType === 'mitra') {
+                        $isMine = $msg->sender_type === 'mitra' && (string) $msg->sender_id === (string) $user->mitra_id;
                     } else {
                         $isMine = $msg->sender_type === 'user' && (string) $msg->sender_id === (string) $user->id;
                     }
@@ -529,30 +531,31 @@ class ChatController extends Controller
 
         return view('pages.user.chat', [
             'threads' => $threads,
-            'partnerId' => $partnerId,
-            'partner' => $partner,
+            'mitraId' => $mitraId,
+            'mitra' => $mitra,
             'messages' => $messages,
             'viewerType' => $viewerType,
             'reportContext' => $thread->report,
+            'thread' => $thread,
         ]);
     }
 
-    public function send(Request $request, string $partnerId)
+    public function send(Request $request, string $mitraId)
     {
         $request->validate(['message' => 'required|string|max:2000']);
 
         $user = auth()->user();
-        $isPartner = $user && $user->role === 'partner';
+        $isMitra = $user && $user->role === 'mitra';
 
-        if ($isPartner) {
-            $thread = ChatThread::where('user_id', $partnerId)
-                ->where('partner_id', $user->partner_id)
+        if ($isMitra) {
+            $thread = ChatThread::where('user_id', $mitraId)
+                ->where('mitra_id', $user->mitra_id)
                 ->firstOrFail();
-            $senderType = 'partner';
-            $senderId = $user->partner_id;
+            $senderType = 'mitra';
+            $senderId = $user->mitra_id;
         } else {
             $thread = ChatThread::where('user_id', $user->id)
-                ->where('partner_id', $partnerId)
+                ->where('mitra_id', $mitraId)
                 ->firstOrFail();
             $senderType = 'user';
             $senderId = $user->id;

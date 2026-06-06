@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Report;
 use App\Models\Evidence;
-use App\Models\Partner;
-use App\Models\ReportPartnerRouting;
+use App\Models\Mitra;
+use App\Models\ReportMitraRouting;
 use App\Models\ReportStatusLog;
 use App\Models\ReportTimelineEvent;
 use App\Services\FonnteService;
@@ -154,22 +154,22 @@ class PastReportController extends Controller
             }
         }
 
-        // Feature 2: Route to partner based on category
-        $partners = Partner::routeMultipleByCategory($report->category, 5);
+        // Feature 2: Route to mitra based on category
+        $mitras = Mitra::routeMultipleByCategory($report->category, 5);
         
-        if ($partners->isEmpty()) {
-            // Create dummy partner for "Lembaga Sosial"
-            $dummyPartner = Partner::firstOrCreate(
+        if ($mitras->isEmpty()) {
+            // Create dummy mitra for "Lembaga Sosial"
+            $dummyMitra = Mitra::firstOrCreate(
                 ['phone' => '080000000000'],
                 [
-                    'partner_name' => 'Lembaga Sosial Mitra Safora',
-                    'partner_type' => 'lembaga_sosial',
+                    'mitra_name' => 'Lembaga Sosial Mitra Safora',
+                    'mitra_type' => 'lembaga_sosial',
                     'city' => 'Semarang',
                     'verified' => true,
                     'is_active' => true,
                 ]
             );
-            $partners = collect([$dummyPartner]);
+            $mitras = collect([$dummyMitra]);
         }
 
         $expiryMinutes = (int) env('REPORT_ROUTING_EXPIRY_MINUTES', 180);
@@ -177,10 +177,10 @@ class PastReportController extends Controller
 
         $report->update([
             'status' => 'Routed',
-            'routed_partner_id' => $partners->first()?->id,
+            'routed_mitra_id' => $mitras->first()?->id,
         ]);
 
-        if ($partners->isNotEmpty()) {
+        if ($mitras->isNotEmpty()) {
             ReportStatusLog::create([
                 'report_id' => $report->id,
                 'old_status' => 'Submitted',
@@ -191,60 +191,60 @@ class PastReportController extends Controller
 
             ReportTimelineEvent::create([
                 'report_id' => $report->id,
-                'event_type' => 'forwarded_to_partners',
-                'event_message' => 'Laporan Anda telah diteruskan ke ' . $partners->count() . ' institusi terdekat yang relevan.',
+                'event_type' => 'forwarded_to_mitras',
+                'event_message' => 'Laporan Anda telah diteruskan ke ' . $mitras->count() . ' institusi terdekat yang relevan.',
                 'actor_type' => 'system',
             ]);
 
             ReportTimelineEvent::create([
                 'report_id' => $report->id,
-                'event_type' => 'waiting_for_partner',
-                'event_message' => 'Kami sedang menunggu partner tersedia meninjau laporan ini.',
+                'event_type' => 'waiting_for_mitra',
+                'event_message' => 'Kami sedang menunggu mitra tersedia meninjau laporan ini.',
                 'actor_type' => 'system',
             ]);
         } else {
             ReportTimelineEvent::create([
                 'report_id' => $report->id,
-                'event_type' => 'no_partner_found',
-                'event_message' => 'Kami belum menemukan partner yang sesuai. Admin Safora akan tetap diberi peringatan.',
+                'event_type' => 'no_mitra_found',
+                'event_message' => 'Kami belum menemukan mitra yang sesuai. Admin Safora akan tetap diberi peringatan.',
                 'actor_type' => 'system',
             ]);
         }
 
-        foreach ($partners as $partner) {
-            ReportPartnerRouting::create([
+        foreach ($mitras as $mitra) {
+            ReportMitraRouting::create([
                 'report_id' => $report->id,
-                'partner_id' => $partner->id,
+                'mitra_id' => $mitra->id,
                 'status' => 'pending',
                 'routed_at' => now(),
                 'expires_at' => $expiresAt,
             ]);
 
-            // Notify partner via WA if available
-            if ($partner->phone && $partner->phone !== '080000000000') {
-                $trackingLink = url('/partner/report/' . $report->id);
-                $partnerMessage =
+            // Notify mitra via WA if available
+            if ($mitra->phone && $mitra->phone !== '080000000000') {
+                $trackingLink = url('/mitra/report/' . $report->id);
+                $mitraMessage =
                     "🚨 *Safora - Laporan Baru Diterima*\n\n" .
                     "Kategori: *{$report->category}*\n\n" .
                     "🔗 Buka dashboard mitra untuk merespons:\n{$trackingLink}";
 
                 try {
-                    FonnteService::send($partner->phone, $partnerMessage);
+                    FonnteService::send($mitra->phone, $mitraMessage);
                 } catch (\Exception $e) {
                     // skip
                 }
             }
 
-            // Juga kirim ke ADMIN_PHONE sebagai testing jika nomor partner adalah nomor dummy atau sedang ditest
+            // Juga kirim ke ADMIN_PHONE sebagai testing jika nomor mitra adalah nomor dummy atau sedang ditest
             if (env('ADMIN_PHONE')) {
-                $trackingLink = url('/partner/report/' . $report->id);
-                $partnerMessage =
-                    "🚨 *Safora - Laporan Baru Diterima (Test Partner)*\n\n" .
+                $trackingLink = url('/mitra/report/' . $report->id);
+                $mitraMessage =
+                    "🚨 *Safora - Laporan Baru Diterima (Test Mitra)*\n\n" .
                     "Kategori: *{$report->category}*\n\n" .
                     "🔗 Buka dashboard mitra untuk merespons:\n{$trackingLink}";
 
                 try {
-                    FonnteService::send(env('ADMIN_PHONE'), $partnerMessage);
+                    FonnteService::send(env('ADMIN_PHONE'), $mitraMessage);
                 } catch (\Exception $e) {
                     // skip
                 }

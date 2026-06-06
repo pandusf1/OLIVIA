@@ -62,18 +62,18 @@
         </div>
         <?php
             $currUser = auth()->user();
-            $isPartnerUser = $currUser && $currUser->role === 'partner';
-            $pId = $isPartnerUser ? $currUser->partner_id : null;
+            $isMitraUser = $currUser && $currUser->role === 'mitra';
+            $pId = $isMitraUser ? $currUser->mitra_id : null;
             
-            $pRouting = $isPartnerUser ? $report->partnerRoutings()->where('partner_id', $pId)->first() : null;
+            $pRouting = $isMitraUser ? $report->mitraRoutings()->where('mitra_id', $pId)->first() : null;
             $isChronoPending = ($pRouting && $pRouting->status === 'pending' && (is_null($pRouting->expires_at) || $pRouting->expires_at > now()));
             
-            $canPartnerAccept = ($report->handler_partner_id === null && $isChronoPending);
-            $isPartnerHandling = ($isPartnerUser && $report->handler_partner_id === $pId);
+            $canMitraAccept = ($report->handler_mitra_id === null && $isChronoPending);
+            $isMitraHandling = ($isMitraUser && $report->handler_mitra_id === $pId);
         ?>
 
         <?php
-            $isCreator = !$isPartnerUser && (
+            $isCreator = !$isMitraUser && (
                 (auth()->check() && auth()->id() === $report->user_id)
                 || ($report->user_id === null && in_array($report->id, session('my_reports', [])))
             );
@@ -89,19 +89,19 @@
             </div>
         <?php endif; ?>
 
-        <?php if($isPartnerUser): ?>
-            <?php if($canPartnerAccept): ?>
+        <?php if($isMitraUser): ?>
+            <?php if($canMitraAccept): ?>
                 <div class="mt-4">
-                    <form method="POST" action="<?php echo e(route('partner.report.accept', $report->id)); ?>">
+                    <form method="POST" action="<?php echo e(route('mitra.report.accept', $report->id)); ?>">
                         <?php echo csrf_field(); ?>
                         <button type="submit" class="w-full rounded-lg bg-red-700 hover:bg-red-800 text-white px-5 py-3.5 text-sm font-black transition hover:scale-[1.01] duration-200 shadow-md">
                             TERIMA KASUS
                         </button>
                     </form>
                 </div>
-            <?php elseif($isPartnerHandling && in_array($report->status, ['In Progress', 'Assigned', 'Viewed', 'Routed', 'Submitted'])): ?>
+            <?php elseif($isMitraHandling && in_array($report->status, ['In Progress', 'Assigned', 'Viewed', 'Routed', 'Submitted'])): ?>
                 <div class="mt-4">
-                    <form method="POST" action="<?php echo e(route('partner.status', $report->id)); ?>" data-confirm="Apakah Anda yakin kasus ini telah selesai ditangani?">
+                    <form method="POST" action="<?php echo e(route('mitra.status', $report->id)); ?>" data-confirm="Apakah Anda yakin kasus ini telah selesai ditangani?">
                         <?php echo csrf_field(); ?>
                         <input type="hidden" name="status" value="Resolved">
                         <button type="submit" class="w-full rounded-lg bg-green-600 hover:bg-green-700 text-white px-5 py-3.5 text-sm font-black transition hover:scale-[1.01] duration-200 shadow-md">
@@ -115,12 +115,12 @@
 
             <?php
                 $user = auth()->user();
-                $isPartner = $user && $user->role === 'partner';
+                $isMitra = $user && $user->role === 'mitra';
                 $cookieReports = [];
                 if (request()->hasCookie('safora_my_reports')) {
                     $cookieReports = json_decode(request()->cookie('safora_my_reports'), true) ?: [];
                 }
-                $isReporter = !$isPartner && (
+                $isReporter = !$isMitra && (
                     (auth()->check() && auth()->id() === $report->user_id)
                     || ($report->user_id === null && (
                         in_array($report->id, session('my_reports', []))
@@ -128,16 +128,16 @@
                     ))
                 );
                 
-                $isOtherPartnerHandling = $isPartner && $report->handler_partner_id !== null && $report->handler_partner_id !== $user->partner_id;
+                $isOtherMitraHandling = $isMitra && $report->handler_mitra_id !== null && $report->handler_mitra_id !== $user->mitra_id;
                 
-                $isRoutingExist = $isPartner && $report->partnerRoutings()
-                    ->where('partner_id', $user->partner_id)
+                $isRoutingExist = $isMitra && $report->mitraRoutings()
+                    ->where('mitra_id', $user->mitra_id)
                     ->exists();
-                $isAcceptedPartner = $isPartner && $report->partnerRoutings()
-                    ->where('partner_id', $user->partner_id)
+                $isAcceptedMitra = $isMitra && $report->mitraRoutings()
+                    ->where('mitra_id', $user->mitra_id)
                     ->where('status', 'accepted')
                     ->exists();
-                $hasDirectChatAccess = $isReporter || $isAcceptedPartner || $isRoutingExist;
+                $hasDirectChatAccess = $isReporter || $isAcceptedMitra || $isRoutingExist;
             ?>
 
             <section class="mt-4 rounded-lg border border-gray-200 bg-white p-5">
@@ -149,7 +149,7 @@
                     </div>
                     
                     <div class="flex items-center gap-2">
-                        <?php if(!$isOtherPartnerHandling): ?>
+                        <?php if(!$isOtherMitraHandling): ?>
                             <!-- Tombol Tambah Bukti -->
                             <button type="button" onclick="openEvidenceModal()" class="text-xs font-semibold text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-full transition border border-gray-200">
                                 + Bukti
@@ -208,7 +208,7 @@
                                     <span class="text-xs font-bold text-slate-800 bg-slate-200 px-2 py-0.5 rounded">
                                         <?php if($chrono->role === 'Korban'): ?>
                                             Korban (<?php echo e($chrono->writer_name); ?>)
-                                        <?php elseif($chrono->role === 'Partner' || $chrono->role === 'Mitra'): ?>
+                                        <?php elseif($chrono->role === 'Mitra' || $chrono->role === 'Mitra'): ?>
                                             Mitra (<?php echo e($chrono->writer_name); ?>)
                                         <?php elseif($chrono->role === 'Saksi'): ?>
                                             Saksi (<?php echo e($chrono->writer_name); ?>)
@@ -257,7 +257,7 @@
                                                     $isAudio = str_starts_with($evidence->file_type, 'audio/');
                                                     
                                                     $canView = $report->show_evidence 
-                                                        || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner'))
+                                                        || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'mitra'))
                                                         || ($report->user_id === null && in_array($report->id, session('my_reports', [])));
                                                         
                                                     $evidenceUrl = url('/evidences/view/' . $evidence->id);
@@ -344,7 +344,7 @@
                         <p class="text-sm text-gray-500">Status ini diperbarui otomatis setiap beberapa detik.</p>
                     </div>
                 </div>
-                <div id="routed-partners" class="space-y-3"></div>
+                <div id="routed-mitras" class="space-y-3"></div>
 
                 <?php if((auth()->check() && auth()->id() === $report->user_id) || ($report->user_id === null && in_array($report->id, session('my_reports', [])))): ?>
                     <div id="re-alert-container" class="mt-4 hidden animate-pulse">
@@ -378,8 +378,8 @@
     const isCreator = <?php echo json_encode($isReporter, 15, 512) ?>;
     const hasDirectChatAccess = <?php echo json_encode($hasDirectChatAccess, 15, 512) ?>;
     const isLoggedIn = <?php echo json_encode(auth()->check(), 15, 512) ?>;
-    const isPartner = <?php echo json_encode($isPartner, 15, 512) ?>;
-    const isPartnerHandling = <?php echo json_encode($isPartnerHandling, 15, 512) ?>;
+    const isMitra = <?php echo json_encode($isMitra, 15, 512) ?>;
+    const isMitraHandling = <?php echo json_encode($isMitraHandling, 15, 512) ?>;
     let lastPayload = null;
 
     // Check if we need to launch the native phone dialer immediately (forwarded from emergency submission)
@@ -405,7 +405,7 @@
 
     // Sync session my_reports dengan localStorage agar ketahanan 100% terjamin (misal habis login/logout)
     let storedReports = JSON.parse(localStorage.getItem('safora_guest_reports') || '[]');
-    if (storedReports.includes(reportId) && !isPartner) {
+    if (storedReports.includes(reportId) && !isMitra) {
         if (!isCreator && !sessionStorage.getItem('synced_' + reportId)) {
             sessionStorage.setItem('synced_' + reportId, 'true');
             // Pelapor terdeteksi di browser ini tapi session kosong (misal habis logout)
@@ -426,7 +426,7 @@
                 sessionStorage.removeItem('synced_' + reportId);
             });
         }
-    } else if (isCreator && !isLoggedIn && !isPartner) {
+    } else if (isCreator && !isLoggedIn && !isMitra) {
         // Tambahkan ke localStorage jika kita adalah pelapor guest/anonim
         storedReports.push(reportId);
         localStorage.setItem('safora_guest_reports', JSON.stringify(Array.from(new Set(storedReports))));
@@ -435,9 +435,9 @@
     let map = null;
     let marker = null;
 
-    let partnerMarker = null;
+    let mitraMarker = null;
 
-    function updateMapMarkers(victimLat, victimLng, partnerLat, partnerLng) {
+    function updateMapMarkers(victimLat, victimLng, mitraLat, mitraLng) {
         if (!victimLat || !victimLng) return;
         
         const victimLatLng = [victimLat, victimLng];
@@ -459,13 +459,13 @@
             if (marker) marker.setLatLng(victimLatLng);
         }
         
-        if (partnerLat && partnerLng) {
-            const partnerLatLng = [partnerLat, partnerLng];
-            if (!partnerMarker) {
-                // Partner marker (blue div icon with pulsating effect)
-                partnerMarker = L.marker(partnerLatLng, {
+        if (mitraLat && mitraLng) {
+            const mitraLatLng = [mitraLat, mitraLng];
+            if (!mitraMarker) {
+                // Mitra marker (blue div icon with pulsating effect)
+                mitraMarker = L.marker(mitraLatLng, {
                     icon: L.divIcon({
-                        className: 'partner-map-icon',
+                        className: 'mitra-map-icon',
                         html: `
                             <div class="relative flex items-center justify-center">
                                 <div class="absolute w-6 h-6 bg-blue-500 rounded-full animate-ping opacity-75"></div>
@@ -478,18 +478,18 @@
                         iconAnchor: [12, 12]
                     })
                 }).addTo(map);
-                partnerMarker.bindPopup("<b>Lokasi Mitra</b><br>Sedang menuju ke lokasi Anda.").openPopup();
+                mitraMarker.bindPopup("<b>Lokasi Mitra</b><br>Sedang menuju ke lokasi Anda.").openPopup();
             } else {
-                partnerMarker.setLatLng(partnerLatLng);
+                mitraMarker.setLatLng(mitraLatLng);
             }
             
             // Fit bounds to show both
-            const bounds = L.latLngBounds([victimLatLng, partnerLatLng]);
+            const bounds = L.latLngBounds([victimLatLng, mitraLatLng]);
             map.fitBounds(bounds, { padding: [30, 30] });
         } else {
-            if (partnerMarker) {
-                map.removeLayer(partnerMarker);
-                partnerMarker = null;
+            if (mitraMarker) {
+                map.removeLayer(mitraMarker);
+                mitraMarker = null;
             }
             map.setView(victimLatLng, 15);
         }
@@ -661,23 +661,23 @@
         if (payload.report.location.latitude && payload.report.location.longitude) {
             const victimLat = parseFloat(payload.report.location.latitude);
             const victimLng = parseFloat(payload.report.location.longitude);
-            let partnerLat = null;
-            let partnerLng = null;
+            let mitraLat = null;
+            let mitraLng = null;
             
-            if (payload.assigned_partner && payload.assigned_partner.latitude && payload.assigned_partner.longitude) {
-                partnerLat = parseFloat(payload.assigned_partner.latitude);
-                partnerLng = parseFloat(payload.assigned_partner.longitude);
+            if (payload.assigned_mitra && payload.assigned_mitra.latitude && payload.assigned_mitra.longitude) {
+                mitraLat = parseFloat(payload.assigned_mitra.latitude);
+                mitraLng = parseFloat(payload.assigned_mitra.longitude);
             }
             
-            updateMapMarkers(victimLat, victimLng, partnerLat, partnerLng);
+            updateMapMarkers(victimLat, victimLng, mitraLat, mitraLng);
         }
 
         const assigned = document.getElementById('assigned-card');
         if (assigned) {
-            if (payload.assigned_partner) {
+            if (payload.assigned_mitra) {
                 assigned.classList.remove('hidden');
-                setText('[data-field="assigned_name"]', payload.assigned_partner.name);
-                setText('[data-field="assigned_detail"]', payload.assigned_partner.specialization);
+                setText('[data-field="assigned_name"]', payload.assigned_mitra.name);
+                setText('[data-field="assigned_detail"]', payload.assigned_mitra.specialization);
                 
                 const chatLink = document.getElementById('chat-link');
                 if (chatLink) {
@@ -698,21 +698,21 @@
             }
         }
 
-        const routedPartnersEl = document.getElementById('routed-partners');
-        if (routedPartnersEl) {
-            routedPartnersEl.innerHTML = (payload.routed_partners || []).map((partner) => {
-                const [label, klass] = statusLabel(partner.status);
+        const routedMitrasEl = document.getElementById('routed-mitras');
+        if (routedMitrasEl) {
+            routedMitrasEl.innerHTML = (payload.routed_mitras || []).map((mitra) => {
+                const [label, klass] = statusLabel(mitra.status);
                 return `
                     <div class="rounded-lg border border-gray-200 p-4">
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <p class="font-black">${escapeHtml(partner.name)}</p>
-                                <p class="mt-1 text-sm text-gray-500">${escapeHtml(partner.specialization)}${partner.city ? ' - ' + escapeHtml(partner.city) : ''}</p>
-                                <p class="mt-1 text-xs text-gray-500">${escapeHtml(partner.distance || 'Jarak belum tersedia')}</p>
+                                <p class="font-black">${escapeHtml(mitra.name)}</p>
+                                <p class="mt-1 text-sm text-gray-500">${escapeHtml(mitra.specialization)}${mitra.city ? ' - ' + escapeHtml(mitra.city) : ''}</p>
+                                <p class="mt-1 text-xs text-gray-500">${escapeHtml(mitra.distance || 'Jarak belum tersedia')}</p>
                             </div>
                             <div class="flex flex-col items-end gap-2">
                                 <span class="rounded-full px-3 py-1 text-xs font-bold ${klass}">${label}</span>
-                                ${partner.status === 'accepted' ? `<span id="chat-access-badge" class="text-xs text-green-700 font-semibold hidden">✓ Chat tersedia</span>` : ''}
+                                ${mitra.status === 'accepted' ? `<span id="chat-access-badge" class="text-xs text-green-700 font-semibold hidden">✓ Chat tersedia</span>` : ''}
                             </div>
                         </div>
                     </div>
@@ -756,7 +756,7 @@
         // Update Re-Alert Button UI secara dinamis
         const reAlertContainer = document.getElementById('re-alert-container');
         if (reAlertContainer && isCreator) {
-            if (payload.retry_count >= 3 && payload.report.status !== 'Resolved' && !payload.assigned_partner) {
+            if (payload.retry_count >= 3 && payload.report.status !== 'Resolved' && !payload.assigned_mitra) {
                 reAlertContainer.classList.remove('hidden');
                 
                 const btnReAlert = document.getElementById('btn-re-alert');
@@ -1189,7 +1189,7 @@
     const activeUploads = {};
     let uploadedEvidenceIdsInSession = [];
     let uploadedEvidencesInSession = [];
-    const canViewEvidence = <?php echo json_encode($report->show_evidence || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner')) || ($report->user_id === null && in_array($report->id, session('my_reports', [])))) ?>;
+    const canViewEvidence = <?php echo json_encode($report->show_evidence || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'mitra')) || ($report->user_id === null && in_array($report->id, session('my_reports', [])))) ?>;
 
     let uploadQueue = [];
     let isUploading = false;
@@ -1718,14 +1718,14 @@
 
 
 
-    // Partner live location push
-    let partnerWatchId = null;
-    function pushPartnerLocation() {
+    // Mitra live location push
+    let mitraWatchId = null;
+    function pushMitraLocation() {
         if (!navigator.geolocation) return;
 
-        const updatePartnerCoords = async (pos) => {
+        const updateMitraCoords = async (pos) => {
             try {
-                await fetch(`/tracking/${reportId}/partner-location`, {
+                await fetch(`/tracking/${reportId}/mitra-location`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1741,21 +1741,21 @@
         };
 
         // Get initial position
-        navigator.geolocation.getCurrentPosition(updatePartnerCoords, () => {}, {
+        navigator.geolocation.getCurrentPosition(updateMitraCoords, () => {}, {
             enableHighAccuracy: true,
             timeout: 5000
         });
 
         // Watch position
-        partnerWatchId = navigator.geolocation.watchPosition(updatePartnerCoords, (err) => {}, {
+        mitraWatchId = navigator.geolocation.watchPosition(updateMitraCoords, (err) => {}, {
             enableHighAccuracy: true,
             maximumAge: 0,
             timeout: 10000
         });
     }
 
-    if (isPartner && isPartnerHandling) {
-        pushPartnerLocation();
+    if (isMitra && isMitraHandling) {
+        pushMitraLocation();
     }
 
     function openChronologyModal() {
@@ -1847,10 +1847,10 @@
         }
     }
 
-    // Show "+ Tambah Kronologi" button if Korban or Trusted Contact, and not another partner handling
+    // Show "+ Tambah Kronologi" button if Korban or Trusted Contact, and not another mitra handling
     const isTrustedContact = <?php echo json_encode($isTrustedContact, 15, 512) ?>;
-    const isOtherPartnerHandling = <?php echo json_encode($isOtherPartnerHandling, 15, 512) ?>;
-    if ((isCreator || isTrustedContact) && !isOtherPartnerHandling) {
+    const isOtherMitraHandling = <?php echo json_encode($isOtherMitraHandling, 15, 512) ?>;
+    if ((isCreator || isTrustedContact) && !isOtherMitraHandling) {
         const btn = document.getElementById('btn-add-chronology');
         if (btn) btn.classList.remove('hidden');
     }

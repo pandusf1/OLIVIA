@@ -32,9 +32,9 @@ public function store(LoginRequest $request): RedirectResponse
         return redirect()->intended(route('admin.index'));
     }
 
-    // PARTNER
-    if ($user->isPartner()) {
-        return redirect()->intended(route('partner.index'));
+    // MITRA
+    if ($user->isMitra()) {
+        return redirect()->intended(route('mitra.index'));
     }
 
     // USER BIASA

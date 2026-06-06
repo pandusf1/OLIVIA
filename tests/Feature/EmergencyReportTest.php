@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\Partner;
+use App\Models\Mitra;
 use App\Models\Report;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,11 +15,11 @@ class EmergencyReportTest extends TestCase
 
     public function test_emergency_report_routing_and_call_phone_payload()
     {
-        // 1. Create a mock partner of type pppa
-        $partner = Partner::create([
+        // 1. Create a mock mitra of type pppa
+        $mitra = Mitra::create([
             'id' => (string) Str::uuid(),
-            'partner_name' => 'UPTD PPPA Test',
-            'partner_type' => 'pppa',
+            'mitra_name' => 'UPTD PPPA Test',
+            'mitra_type' => 'pppa',
             'address' => 'Jl. Test No. 123',
             'phone' => '6281234567890',
             'email' => 'pppa@test.com',
@@ -48,11 +48,11 @@ class EmergencyReportTest extends TestCase
             'call_phone' => '6281234567890',
         ]);
 
-        // 5. Assert the report was created and correctly routed to the partner
+        // 5. Assert the report was created and correctly routed to the mitra
         $this->assertDatabaseHas('reports', [
             'category' => 'Pelecehan',
             'status' => 'Routed',
-            'routed_partner_id' => $partner->id,
+            'routed_mitra_id' => $mitra->id,
         ]);
     }
 }

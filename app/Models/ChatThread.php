@@ -15,7 +15,7 @@ class ChatThread extends Model
         'id',
         'report_id',
         'user_id',
-        'partner_id',
+        'mitra_id',
         'last_message_at',
     ];
 
@@ -31,9 +31,9 @@ class ChatThread extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function partner()
+    public function mitra()
     {
-        return $this->belongsTo(Partner::class);
+        return $this->belongsTo(Mitra::class, 'mitra_id');
     }
 
     public function report()

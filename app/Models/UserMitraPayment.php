@@ -4,11 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class UserPartnerPayment extends Model
+class UserMitraPayment extends Model
 {
+    protected $table = 'user_mitra_payments';
+
     protected $fillable = [
         'user_id',
-        'partner_id',
+        'mitra_id',
         'price_list_id',
         'status',
         'paid_at',
@@ -18,9 +20,9 @@ class UserPartnerPayment extends Model
         'paid_at' => 'datetime',
     ];
 
-    public function partner()
+    public function mitra()
     {
-        return $this->belongsTo(Partner::class);
+        return $this->belongsTo(Mitra::class, 'mitra_id');
     }
 
     public function priceList()

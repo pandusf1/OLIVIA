@@ -17,7 +17,7 @@ class User extends Authenticatable
     protected $primaryKey = 'id';
 
     protected $fillable = [
-        'name', 'email', 'phone', 'password', 'role', 'partner_id', 'google_id',
+        'name', 'email', 'phone', 'password', 'role', 'mitra_id', 'google_id',
         'phone_is_verified', 'phone_verification_code',
         'receive_nearby_alerts', 'nearby_alert_count', 'next_nearby_alert_threshold',
     ];
@@ -57,14 +57,14 @@ class User extends Authenticatable
         return $this->role === 'user';
     }
 
-    public function isPartner(): bool
+    public function isMitra(): bool
     {
-        return in_array($this->role, ['partner', 'admin']);
+        return in_array($this->role, ['mitra', 'admin']);
     }
 
-    public function partner()
+    public function mitra()
     {
-        return $this->belongsTo(Partner::class);
+        return $this->belongsTo(Mitra::class, 'mitra_id');
     }
 
     public function isAdmin()

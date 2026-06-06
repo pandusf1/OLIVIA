@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Partner;
+use App\Models\Mitra;
 use Illuminate\Http\Request;
 
 class PsikologPengacaraController extends Controller
@@ -17,26 +17,26 @@ class PsikologPengacaraController extends Controller
         $lat = (float) $userLocation->latitude;
         $lng = (float) $userLocation->longitude;
 
-        // ambil berdasarkan partner_type
-        $legal = Partner::where('verified', true)
-            ->where('partner_type', 'legal')
+        // ambil berdasarkan mitra_type
+        $legal = Mitra::where('verified', true)
+            ->where('mitra_type', 'legal')
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
             ->get();
 
-        $counselor = Partner::where('verified', true)
-            ->where('partner_type', 'counselor')
+        $counselor = Mitra::where('verified', true)
+            ->where('mitra_type', 'counselor')
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
             ->get();
 
         $legalSorted = $legal->map(fn ($p) => [
-            'partner' => $p,
+            'mitra' => $p,
             'distance_km' => round($this->haversineKm($lat, $lng, (float) $p->latitude, (float) $p->longitude), 2),
         ])->sortBy('distance_km')->values()->take(3);
 
         $counselorSorted = $counselor->map(fn ($p) => [
-            'partner' => $p,
+            'mitra' => $p,
             'distance_km' => round($this->haversineKm($lat, $lng, (float) $p->latitude, (float) $p->longitude), 2),
         ])->sortBy('distance_km')->values()->take(3);
 

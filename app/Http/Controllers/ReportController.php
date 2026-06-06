@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Report;
-use App\Models\Partner;
-use App\Models\ReportPartnerRouting;
+use App\Models\Mitra;
+use App\Models\ReportMitraRouting;
 use App\Services\FonnteService;
 use Illuminate\Http\Request;
 
@@ -18,7 +18,7 @@ class ReportController extends Controller
             if (request()->wantsJson()) {
                 return response()->json(['error' => 'Laporan tidak bisa diedit karena sudah lewat 15 menit atau sudah diproses.'], 403);
             }
-            return redirect()->route('dashboard')->with('error', 'Laporan tidak bisa diedit karena sudah lewat 15 menit atau sudah diproses oleh partner.');
+            return redirect()->route('dashboard')->with('error', 'Laporan tidak bisa diedit karena sudah lewat 15 menit atau sudah diproses oleh mitra.');
         }
 
         return view('pages.report.edit', compact('report'));
@@ -32,7 +32,7 @@ class ReportController extends Controller
             if ($request->wantsJson()) {
                 return response()->json(['error' => 'Laporan tidak bisa diedit karena sudah lewat 15 menit atau sudah diproses.'], 403);
             }
-            return redirect()->route('dashboard')->with('error', 'Laporan tidak bisa diedit karena sudah lewat 15 menit atau sudah diproses oleh partner.');
+            return redirect()->route('dashboard')->with('error', 'Laporan tidak bisa diedit karena sudah lewat 15 menit atau sudah diproses oleh mitra.');
         }
 
         $request->validate([
@@ -48,64 +48,64 @@ class ReportController extends Controller
         $report->created_at = now();
         $report->save();
 
-        // Teruskan/route ulang ke partner setiap kali ada perubahan laporan (kategori atau deskripsi)
+        // Teruskan/route ulang ke mitra setiap kali ada perubahan laporan (kategori atau deskripsi)
         if ($report->status !== 'Resolved' && $report->status !== 'Assigned' && $report->status !== 'In Progress') {
-            // Hapus routing lama yang belum diterima agar tracking tidak menampilkan partner dari kategori sebelumnya.
-            ReportPartnerRouting::where('report_id', $report->id)
+            // Hapus routing lama yang belum diterima agar tracking tidak menampilkan mitra dari kategori sebelumnya.
+            ReportMitraRouting::where('report_id', $report->id)
                 ->whereIn('status', ['pending', 'expired'])
                 ->delete();
 
-            $partners = Partner::routeMultipleByCategory(
+            $mitras = Mitra::routeMultipleByCategory(
                 $report->category,
                 5,
                 $report->latitude ? (float) $report->latitude : null,
                 $report->longitude ? (float) $report->longitude : null
             );
 
-            if ($partners->isEmpty()) {
-                // Create dummy partner for "Lembaga Sosial" (Laporan Biasa)
-                $dummyPartner = Partner::firstOrCreate(
+            if ($mitras->isEmpty()) {
+                // Create dummy mitra for "Lembaga Sosial" (Laporan Biasa)
+                $dummyMitra = Mitra::firstOrCreate(
                     ['phone' => '080000000000'],
                     [
-                        'partner_name' => 'Lembaga Sosial Mitra Safora',
-                        'partner_type' => 'lembaga_sosial',
+                        'mitra_name' => 'Lembaga Sosial Mitra Safora',
+                        'mitra_type' => 'lembaga_sosial',
                         'city' => 'Semarang',
                         'verified' => true,
                         'is_active' => true,
                     ]
                 );
-                $partners = collect([$dummyPartner]);
+                $mitras = collect([$dummyMitra]);
             }
 
             $expiryMinutes = (int) env('REPORT_ROUTING_EXPIRY_MINUTES', 180);
             $expiresAt = now()->addMinutes(max(1, $expiryMinutes));
 
             $report->update([
-                'status' => $partners->isNotEmpty() ? 'Routed' : 'Submitted',
-                'routed_partner_id' => $partners->first()?->id,
+                'status' => $mitras->isNotEmpty() ? 'Routed' : 'Submitted',
+                'routed_mitra_id' => $mitras->first()?->id,
             ]);
 
-            foreach ($partners as $partner) {
-                ReportPartnerRouting::create([
+            foreach ($mitras as $mitra) {
+                ReportMitraRouting::create([
                     'report_id' => $report->id,
-                    'partner_id' => $partner->id,
+                    'mitra_id' => $mitra->id,
                     'status' => 'pending',
                     'routed_at' => now(),
                     'expires_at' => $expiresAt,
-                    'distance_km' => ($report->latitude && $report->longitude && $partner->latitude && $partner->longitude)
-                        ? Partner::distanceKm((float) $report->latitude, (float) $report->longitude, (float) $partner->latitude, (float) $partner->longitude)
+                    'distance_km' => ($report->latitude && $report->longitude && $mitra->latitude && $mitra->longitude)
+                        ? Mitra::distanceKm((float) $report->latitude, (float) $report->longitude, (float) $mitra->latitude, (float) $mitra->longitude)
                         : null,
-                    'estimated_response_minutes' => $partner->partner_type === 'ambulance' ? 5 : 8,
+                    'estimated_response_minutes' => $mitra->mitra_type === 'ambulance' ? 5 : 8,
                 ]);
 
-                // Send WA Notification to new partner
-                if ($partner->phone) {
+                // Send WA Notification to new mitra
+                if ($mitra->phone) {
                     $trackingLink = url('/tracking/' . $report->id);
                     $mapsLink = $report->latitude
                         ? "https://maps.google.com/?q={$report->latitude},{$report->longitude}"
                         : 'Lokasi tidak tersedia';
 
-                    $partnerMessage =
+                    $mitraMessage =
                         "🚨 *Safora - Laporan Diperbarui*\n\n" .
                         "Kategori Baru: *{$report->category}*\n\n" .
                         "📍 Lokasi:\n{$mapsLink}\n\n" .
@@ -113,7 +113,7 @@ class ReportController extends Controller
                         "Buka dashboard Safora untuk menerima laporan ini.";
 
                     try {
-                        FonnteService::send($partner->phone, $partnerMessage);
+                        FonnteService::send($mitra->phone, $mitraMessage);
                     } catch (\Exception $e) {
                         // skip
                     }
@@ -133,7 +133,7 @@ class ReportController extends Controller
         $report = Report::where('user_id', auth()->id())->findOrFail($id);
 
         if ($report->created_at->diffInMinutes(now()) > 15 || in_array($report->status, ['Assigned', 'In Progress', 'Resolved'])) {
-            return redirect()->route('dashboard')->with('error', 'Laporan tidak bisa dihapus karena sudah lewat 15 menit atau sudah diproses oleh partner.');
+            return redirect()->route('dashboard')->with('error', 'Laporan tidak bisa dihapus karena sudah lewat 15 menit atau sudah diproses oleh mitra.');
         }
 
         $report->delete();

@@ -3,30 +3,30 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use App\Models\Partner;
+use App\Models\Mitra;
 use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
-class AdminPartnerController extends Controller
+class AdminMitraController extends Controller
 {
     public function index()
     {
-        $partners = Partner::latest()->get();
+        $mitras = Mitra::latest()->get();
 
-        return view('pages.admin.partners.index', compact('partners'));
+        return view('pages.admin.mitras.index', compact('mitras'));
     }
 
     public function create()
     {
-        return view('pages.admin.partners.create');
+        return view('pages.admin.mitras.create');
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'partner_name' => 'required|string|max:255',
-            'partner_type' => 'required|string|max:255',
+            'mitra_name' => 'required|string|max:255',
+            'mitra_type' => 'required|string|max:255',
             'city' => 'required|string|max:255',
             'phone' => 'nullable|string|max:20',
             'latitude' => 'required|numeric|between:-90,90',
@@ -38,9 +38,9 @@ class AdminPartnerController extends Controller
             'password' => 'required|min:6',
         ]);
 
-        $partner = Partner::create([
-            'partner_name' => $request->partner_name,
-            'partner_type' => $request->partner_type,
+        $mitra = Mitra::create([
+            'mitra_name' => $request->mitra_name,
+            'mitra_type' => $request->mitra_type,
             'city' => $request->city,
             'phone' => $request->phone,
             'email' => $request->email,
@@ -55,44 +55,44 @@ class AdminPartnerController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => 'partner',
-            'partner_id' => $partner->id,
+            'role' => 'mitra',
+            'mitra_id' => $mitra->id,
         ]);
 
         return redirect()
-            ->route('admin.partners')
-            ->with('success', 'Partner berhasil ditambahkan.');
+            ->route('admin.mitras')
+            ->with('success', 'Mitra berhasil ditambahkan.');
     }
 
     public function toggleVerify($id)
     {
-        $partner = Partner::findOrFail($id);
+        $mitra = Mitra::findOrFail($id);
 
-        $partner->verified = !$partner->verified;
-        $partner->save();
+        $mitra->verified = !$mitra->verified;
+        $mitra->save();
 
         return back()->with(
             'success',
-            $partner->verified
-                ? 'Partner berhasil diverifikasi.'
-                : 'Verifikasi partner dicabut.'
+            $mitra->verified
+                ? 'Mitra berhasil diverifikasi.'
+                : 'Verifikasi mitra dicabut.'
         );
     }
 
     public function toggleActive($id)
     {
-        $partner = Partner::findOrFail($id);
+        $mitra = Mitra::findOrFail($id);
 
-        $partner->is_active = !$partner->is_active;
-        $partner->save();
+        $mitra->is_active = !$mitra->is_active;
+        $mitra->save();
 
-        AuditLog::log('toggle_partner_active', 'partner', $partner->id);
+        AuditLog::log('toggle_mitra_active', 'mitra', $mitra->id);
 
         return back()->with(
             'success',
-            $partner->is_active
-                ? 'Partner berhasil diaktifkan.'
-                : 'Partner berhasil dinonaktifkan.'
+            $mitra->is_active
+                ? 'Mitra berhasil diaktifkan.'
+                : 'Mitra berhasil dinonaktifkan.'
         );
     }
 }

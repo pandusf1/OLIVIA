@@ -5,15 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
-class ReportPartnerRouting extends Model
+class ReportMitraRouting extends Model
 {
     use HasUuids;
 
-    protected $table = 'report_partner_routings';
+    protected $table = 'report_mitra_routings';
 
     protected $fillable = [
         'report_id',
-        'partner_id',
+        'mitra_id',
         'status',
         'routed_at',
         'reviewed_at',
@@ -40,8 +40,8 @@ class ReportPartnerRouting extends Model
         return $this->belongsTo(Report::class);
     }
 
-    public function partner()
+    public function mitra()
     {
-        return $this->belongsTo(Partner::class);
+        return $this->belongsTo(Mitra::class, 'mitra_id');
     }
 }

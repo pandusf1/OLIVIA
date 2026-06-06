@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Partner;
+use App\Models\Mitra;
 use Illuminate\Http\Request;
 
 class MapSearchController extends Controller
@@ -44,35 +44,35 @@ class MapSearchController extends Controller
         $type = $request->string('type')->toString();
         $q = $request->string('query')->toString();
 
-        $partnersQuery = Partner::query()
+        $mitrasQuery = Mitra::query()
             ->where('verified', true)
             ->whereNotNull('latitude')
             ->whereNotNull('longitude');
 
-        // Map type to partner_type
+        // Map type to mitra_type
         if ($type !== '') {
             $normalized = strtolower($type);
 
-            $partnersQuery->where(function ($qq) use ($normalized) {
-                $qq->where('partner_type', 'ilike', '%'.$normalized.'%')
-                    ->orWhere('partner_type', '=', $this->normalizePartnerType($normalized));
+            $mitrasQuery->where(function ($qq) use ($normalized) {
+                $qq->where('mitra_type', 'ilike', '%'.$normalized.'%')
+                    ->orWhere('mitra_type', '=', $this->normalizeMitraType($normalized));
             });
         }
 
         if ($q !== '') {
-            $partnersQuery->where(function ($qq) use ($q) {
-                $qq->where('partner_name', 'ilike', '%'.$q.'%')
+            $mitrasQuery->where(function ($qq) use ($q) {
+                $qq->where('mitra_name', 'ilike', '%'.$q.'%')
                     ->orWhere('city', 'ilike', '%'.$q.'%')
-                    ->orWhere('partner_type', 'ilike', '%'.$q.'%');
+                    ->orWhere('mitra_type', 'ilike', '%'.$q.'%');
             });
         }
 
-        $partners = $partnersQuery->get();
+        $mitras = $mitrasQuery->get();
 
-        $partnersWithDistance = $partners->map(function ($partner) use ($lat, $lng) {
+        $mitrasWithDistance = $mitras->map(function ($mitra) use ($lat, $lng) {
             return [
-                'partner' => $partner,
-                'distance_km' => round($this->haversineKm($lat, $lng, (float) $partner->latitude, (float) $partner->longitude), 2),
+                'mitra' => $mitra,
+                'distance_km' => round($this->haversineKm($lat, $lng, (float) $mitra->latitude, (float) $mitra->longitude), 2),
             ];
         })
         ->sortBy('distance_km')
@@ -80,14 +80,14 @@ class MapSearchController extends Controller
 
         $page = $request->integer('page', 1);
         $limit = (int) $request->integer('limit', 0);
-        // Default: tampilkan semua partner (hapus batas 20)
+        // Default: tampilkan semua mitra (hapus batas 20)
         if ($limit <= 0) {
-            $limit = $partnersWithDistance->count();
+            $limit = $mitrasWithDistance->count();
         }
         $offset = ($page - 1) * $limit;
 
-        $paginatedPartners = $partnersWithDistance->slice($offset, $limit)->values();
-        $hasMore = ($offset + $limit) < $partnersWithDistance->count();
+        $paginatedMitras = $mitrasWithDistance->slice($offset, $limit)->values();
+        $hasMore = ($offset + $limit) < $mitrasWithDistance->count();
 
         // Get active emergency reports with locations
         $activeReports = \App\Models\Report::with('user')
@@ -110,13 +110,13 @@ class MapSearchController extends Controller
             ->values();
 
         return response()->json([
-            'data' => $paginatedPartners,
+            'data' => $paginatedMitras,
             'emergencies' => $activeReports,
             'has_more' => $hasMore,
         ]);
     }
 
-    private function normalizePartnerType(string $type): string
+    private function normalizeMitraType(string $type): string
     {
         return match ($type) {
             'ambulance', 'ambulans' => 'ambulance',

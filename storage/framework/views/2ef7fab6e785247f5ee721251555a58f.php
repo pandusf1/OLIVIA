@@ -1,7 +1,7 @@
 <?php
-    // show back only when we're inside dashboard flow (user/admin/partner)
+    // show back only when we're inside dashboard flow (user/admin/mitra)
     // and not on the initial dashboard page (/dashboard).
-    $isDashboardInitial = in_array(request()->route()?->getName(), ['dashboard', 'admin.index', 'partner.index']);
+    $isDashboardInitial = in_array(request()->route()?->getName(), ['dashboard', 'admin.index', 'mitra.index']);
 
     // Default fallback to dashboard if opened directly (no history)
     $fallbackUrl = auth()->check() ? route('dashboard') : url('/');

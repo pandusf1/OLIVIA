@@ -8,24 +8,24 @@ use App\Models\ReportStatusLog;
 use App\Models\AuditLog;
 use App\Models\ChatMessage;
 use App\Models\ChatThread;
-use App\Models\Partner;
-use App\Models\ReportPartnerRouting;
+use App\Models\Mitra;
+use App\Models\ReportMitraRouting;
 use App\Models\ReportTimelineEvent;
 use App\Services\FonnteService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-class PartnerController extends Controller
+class MitraController extends Controller
 {
     public function index(Request $request)
     {
-        $partnerId = auth()->user()->partner_id;
+        $mitraId = auth()->user()->mitra_id;
 
-        $partner = Partner::findOrFail($partnerId);
+        $mitra = Mitra::findOrFail($mitraId);
 
-        $pendingRoutings = ReportPartnerRouting::query()
+        $pendingRoutings = ReportMitraRouting::query()
             ->with(['report' => fn ($query) => $query->with(['user'])->withCount('evidences')])
-            ->where('partner_id', $partnerId)
+            ->where('mitra_id', $mitraId)
             ->where('status', 'pending')
             ->where(function ($query) {
                 $query->whereNull('expires_at')
@@ -35,23 +35,23 @@ class PartnerController extends Controller
             ->get();
 
         $activeReports = Report::query()
-            ->with(['user', 'partnerRoutings' => fn ($query) => $query->where('partner_id', $partnerId)])
+            ->with(['user', 'mitraRoutings' => fn ($query) => $query->where('mitra_id', $mitraId)])
             ->withCount('evidences')
             ->where('status', 'In Progress')
-            ->whereHas('partnerRoutings', function ($query) use ($partnerId) {
-                $query->where('partner_id', $partnerId)->where('status', 'accepted');
+            ->whereHas('mitraRoutings', function ($query) use ($mitraId) {
+                $query->where('mitra_id', $mitraId)->where('status', 'accepted');
             })
             ->latest('updated_at')
             ->get();
 
         $resolvedReports = Report::query()
-            ->with(['user', 'partnerRoutings' => fn ($query) => $query->where('partner_id', $partnerId)])
+            ->with(['user', 'mitraRoutings' => fn ($query) => $query->where('mitra_id', $mitraId)])
             ->withCount('evidences')
             ->where('status', 'Resolved')
             ->whereMonth('updated_at', now()->month)
             ->whereYear('updated_at', now()->year)
-            ->whereHas('partnerRoutings', function ($query) use ($partnerId) {
-                $query->where('partner_id', $partnerId)->where('status', 'accepted');
+            ->whereHas('mitraRoutings', function ($query) use ($mitraId) {
+                $query->where('mitra_id', $mitraId)->where('status', 'accepted');
             })
             ->latest('updated_at')
             ->get();
@@ -63,8 +63,8 @@ class PartnerController extends Controller
         ];
 
         // For "Semua Laporan" Tab
-        $allReportsQuery = Report::whereHas('partnerRoutings', function ($q) use ($partnerId) {
-            $q->where('partner_id', $partnerId);
+        $allReportsQuery = Report::whereHas('mitraRoutings', function ($q) use ($mitraId) {
+            $q->where('mitra_id', $mitraId);
         });
 
         // Search Filter
@@ -85,11 +85,11 @@ class PartnerController extends Controller
         // Handled Filter
         if ($request->filled('handled')) {
             if ($request->handled == 'yes') {
-                $allReportsQuery->where('handler_partner_id', $partnerId);
+                $allReportsQuery->where('handler_mitra_id', $mitraId);
             } elseif ($request->handled == 'no') {
-                $allReportsQuery->where(function($q) use ($partnerId) {
-                    $q->whereNull('handler_partner_id')
-                      ->orWhere('handler_partner_id', '!=', $partnerId);
+                $allReportsQuery->where(function($q) use ($mitraId) {
+                    $q->whereNull('handler_mitra_id')
+                      ->orWhere('handler_mitra_id', '!=', $mitraId);
                 });
             }
         }
@@ -102,9 +102,19 @@ class PartnerController extends Controller
             $allReportsQuery->whereYear('created_at', $request->year);
         }
 
+        $activeClients = collect();
+        if (in_array($mitra->mitra_type, ['legal', 'counselor'], true)) {
+            $activeClients = \App\Models\UserMitraPayment::query()
+                ->with(['user', 'priceList'])
+                ->where('mitra_id', $mitraId)
+                ->latest('paid_at')
+                ->get()
+                ->groupBy('user_id');
+        }
+
         $allReports = $allReportsQuery->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
 
-        return view('pages.partner.index', compact('partner', 'pendingRoutings', 'activeReports', 'resolvedReports', 'stats', 'allReports'));
+        return view('pages.mitra.index', compact('mitra', 'pendingRoutings', 'activeReports', 'resolvedReports', 'stats', 'allReports', 'activeClients'));
     }
 
     public function show($id)
@@ -128,19 +138,18 @@ class PartnerController extends Controller
         $report->load([
             'evidences',
             'statusLogs',
-            'witnessReports.evidences',
         ]);
 
-        $partnerId = auth()->user()->partner_id;
-        $routing = $report->partnerRoutings()
-            ->where('partner_id', $partnerId)
+        $mitraId = auth()->user()->mitra_id;
+        $routing = $report->mitraRoutings()
+            ->where('mitra_id', $mitraId)
             ->first();
 
-        if ($report->routed_partner_id !== $partnerId && !$routing) {
+        if ($report->routed_mitra_id !== $mitraId && !$routing) {
             abort(403, 'Laporan ini bukan untuk mitra anda.');
         }
 
-        $isHandling = ($report->handler_partner_id === $partnerId);
+        $isHandling = ($report->handler_mitra_id === $mitraId);
         $isPending = ($routing && $routing->status === 'pending' && (is_null($routing->expires_at) || $routing->expires_at > now()));
         $canViewSensitive = $isHandling || $isPending;
 
@@ -152,10 +161,10 @@ class PartnerController extends Controller
 
             ReportTimelineEvent::create([
                 'report_id' => $report->id,
-                'event_type' => 'partner_reviewing',
-                'event_message' => 'Salah satu partner sedang meninjau laporan Anda.',
-                'actor_type' => 'partner',
-                'actor_id' => $partnerId,
+                'event_type' => 'mitra_reviewing',
+                'event_message' => 'Salah satu mitra sedang meninjau laporan Anda.',
+                'actor_type' => 'mitra',
+                'actor_id' => $mitraId,
             ]);
 
             $old = $report->status;
@@ -178,10 +187,10 @@ class PartnerController extends Controller
         $reportLoaded = $trackingController->resolveReport($report->id, [
             'evidences',
             'statusLogs',
-            'partner',
-            'assignedPartner',
+            'mitra',
+            'assignedMitra',
             'handlerUser',
-            'partnerRoutings.partner',
+            'mitraRoutings.mitra',
             'timelineEvents',
             'chronologies',
         ]);
@@ -201,7 +210,7 @@ class PartnerController extends Controller
             'report' => $reportLoaded,
             'livePayload' => $trackingController->buildLivePayload($reportLoaded),
             'isTrustedContact' => $isTrustedContact,
-            'backUrl' => route('partner.index'),
+            'backUrl' => route('mitra.index'),
             'backLabel' => 'Kembali',
         ]);
     }
@@ -211,13 +220,13 @@ class PartnerController extends Controller
         $request->validate(['status' => 'required|string|in:Submitted,Routed,Viewed,Assigned,In Progress,Resolved,Follow-up Monitoring']);
 
         $report = Report::findOrFail($id);
-        $partnerId = auth()->user()->partner_id;
-        $hasAcceptedRouting = $report->partnerRoutings()
-            ->where('partner_id', $partnerId)
+        $mitraId = auth()->user()->mitra_id;
+        $hasAcceptedRouting = $report->mitraRoutings()
+            ->where('mitra_id', $mitraId)
             ->where('status', 'accepted')
             ->exists();
 
-        if ($report->routed_partner_id !== $partnerId && !$hasAcceptedRouting) {
+        if ($report->routed_mitra_id !== $mitraId && !$hasAcceptedRouting) {
             abort(403, 'Anda tidak punya akses.');
         }
         $oldStatus = $report->status;
@@ -242,8 +251,8 @@ class PartnerController extends Controller
             'event_message' => $request->status === 'Resolved'
                 ? 'Kasus ditandai selesai. Safora tetap menyimpan riwayat dan bukti laporan Anda.'
                 : 'Status laporan diperbarui menjadi ' . $request->status . '.',
-            'actor_type' => 'partner',
-            'actor_id' => $partnerId,
+            'actor_type' => 'mitra',
+            'actor_id' => $mitraId,
         ]);
 
         return back()->with('success', 'Status laporan diperbarui ke "' . $request->status . '".');
@@ -253,23 +262,23 @@ class PartnerController extends Controller
     {
         $request->validate([]);
 
-        $partnerId = auth()->user()->partner_id;
+        $mitraId = auth()->user()->mitra_id;
 
         $phoneToSend = null;
         $messageToSend = null;
 
         try {
-            $redirectPartnerId = $partnerId;
+            $redirectMitraId = $mitraId;
 
-            DB::transaction(function () use ($id, $partnerId, &$redirectPartnerId, &$phoneToSend, &$messageToSend) {
+            DB::transaction(function () use ($id, $mitraId, &$redirectMitraId, &$phoneToSend, &$messageToSend) {
                 $report = Report::with(['user'])
                     ->where('id', $id)
-                    ->whereNull('handler_partner_id')
+                    ->whereNull('handler_mitra_id')
                     ->firstOrFail();
 
-                $routing = ReportPartnerRouting::query()
+                $routing = ReportMitraRouting::query()
                     ->where('report_id', $report->id)
-                    ->where('partner_id', $partnerId)
+                    ->where('mitra_id', $mitraId)
                     ->where('status', 'pending')
                     ->where(function ($query) {
                         $query->whereNull('expires_at')
@@ -282,7 +291,7 @@ class PartnerController extends Controller
                     'responded_at' => now(),
                 ]);
 
-                ReportPartnerRouting::query()
+                ReportMitraRouting::query()
                     ->where('report_id', $report->id)
                     ->where('id', '!=', $routing->id)
                     ->where('status', 'pending')
@@ -294,8 +303,8 @@ class PartnerController extends Controller
                 $oldStatus = $report->status;
                 $report->update([
                     'status' => 'Assigned',
-                    'routed_partner_id' => $partnerId,
-                    'handler_partner_id' => $partnerId,
+                    'routed_mitra_id' => $mitraId,
+                    'handler_mitra_id' => $mitraId,
                     'handler_user_id' => auth()->id(),
                     'assigned_at' => now(),
                     'last_activity_at' => now(),
@@ -326,21 +335,21 @@ class PartnerController extends Controller
                 }
 
                 $thread = ChatThread::firstOrCreate(
-                    ['user_id' => $report->user_id, 'partner_id' => $partnerId],
+                    ['user_id' => $report->user_id, 'mitra_id' => $mitraId],
                     ['id' => (string) Str::uuid(), 'last_message_at' => now()]
                 );
 
-                $partner = Partner::find($partnerId);
+                $mitra = Mitra::find($mitraId);
 
                 ReportTimelineEvent::create([
                     'report_id' => $report->id,
-                    'event_type' => 'partner_accepted',
-                    'event_message' => 'Kasus Anda sekarang ditangani oleh ' . ($partner?->partner_name ?? 'partner Safora') . '. Anda sudah kami hubungkan ke chat krisis.',
-                    'actor_type' => 'partner',
-                    'actor_id' => $partnerId,
+                    'event_type' => 'mitra_accepted',
+                    'event_message' => 'Kasus Anda sekarang ditangani oleh ' . ($mitra?->mitra_name ?? 'mitra Safora') . '. Anda sudah kami hubungkan ke chat krisis.',
+                    'actor_type' => 'mitra',
+                    'actor_id' => $mitraId,
                     'metadata' => [
-                        'partner_name' => $partner?->partner_name,
-                        'partner_type' => $partner?->partner_type,
+                        'mitra_name' => $mitra?->mitra_name,
+                        'mitra_type' => $mitra?->mitra_type,
                     ],
                 ]);
 
@@ -353,9 +362,9 @@ class PartnerController extends Controller
 
                 ChatMessage::create([
                     'chat_thread_id' => $thread->id,
-                    'sender_type' => 'partner',
-                    'sender_id' => $partnerId,
-                    'message' => "Halo, laporan Anda dengan kategori {$report->category} telah diterima oleh {$partner?->partner_name}. Tim kami siap membantu Anda.",
+                    'sender_type' => 'mitra',
+                    'sender_id' => $mitraId,
+                    'message' => "Halo, laporan Anda dengan kategori {$report->category} telah diterima oleh {$mitra?->mitra_name}. Tim kami siap membantu Anda.",
                 ]);
 
                 $thread->update(['last_message_at' => now()]);
@@ -363,13 +372,13 @@ class PartnerController extends Controller
                 if ($report->report_type !== 'past_incident' && $report->user?->phone) {
                     $phoneToSend = $report->user->phone;
                     $messageToSend =
-                        "Safora: laporan Anda dengan kategori {$report->category} telah diterima oleh {$partner?->partner_name}. " .
+                        "Safora: Laporan Anda dengan kategori {$report->category} telah diterima oleh {$mitra?->mitra_name}. " .
                         "Silakan buka chat untuk koordinasi lanjutan.";
                 }
 
             });
 
-            // Send WhatsApp outside database transaction to prevent deadlocks / lock blocking
+            // Send WhatsApp outside database transaction to prevent deadlocks
             if ($phoneToSend && $messageToSend) {
                 try {
                     FonnteService::send($phoneToSend, $messageToSend);
@@ -378,9 +387,80 @@ class PartnerController extends Controller
                 }
             }
 
-            return redirect()->route('partner.show', $id)->with('success', 'Laporan berhasil diterima.');
+            return redirect()->route('mitra.show', $id)->with('success', 'Laporan berhasil diterima.');
         } catch (\Exception $e) {
             return back()->with('error', 'Laporan tidak dapat diterima. Mungkin sudah expired atau diambil mitra lain.');
         }
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $mitraId = auth()->user()->mitra_id;
+        $mitra = Mitra::findOrFail($mitraId);
+
+        $request->validate([
+            'catatan' => 'nullable|string|max:5000',
+            'bank_name' => 'nullable|string|max:255',
+            'nomor_rekening' => 'nullable|string|max:255',
+            'ewallet_name' => 'nullable|string|max:255',
+            'nomor_ewallet' => 'nullable|string|max:255',
+        ]);
+
+        $mitra->update($request->only([
+            'catatan', 'bank_name', 'nomor_rekening', 'ewallet_name', 'nomor_ewallet'
+        ]));
+
+        return back()->with('success', 'Profil dan metode pembayaran berhasil diperbarui.');
+    }
+
+    public function storePriceList(Request $request)
+    {
+        $mitraId = auth()->user()->mitra_id;
+
+        $request->validate([
+            'service_name' => 'required|string|max:255',
+            'price' => 'required|numeric|min:0',
+            'duration' => 'nullable|string|max:255',
+        ]);
+
+        \App\Models\PriceList::create([
+            'mitra_id' => $mitraId,
+            'service_name' => $request->service_name,
+            'price' => $request->price,
+            'duration' => $request->duration,
+            'currency' => 'IDR',
+        ]);
+
+        return back()->with('success', 'Layanan pricelist baru berhasil ditambahkan.');
+    }
+
+    public function destroyPriceList($id)
+    {
+        $mitraId = auth()->user()->mitra_id;
+        $priceList = \App\Models\PriceList::where('id', $id)
+            ->where('mitra_id', $mitraId)
+            ->firstOrFail();
+
+        $priceList->delete();
+
+        return back()->with('success', 'Layanan pricelist berhasil dihapus.');
+    }
+
+    public function showClientDetails($userId)
+    {
+        $mitraId = auth()->user()->mitra_id;
+        $mitra = Mitra::findOrFail($mitraId);
+
+        $client = \App\Models\User::findOrFail($userId);
+        $location = \App\Models\UserLocation::where('user_id', $userId)->first();
+        
+        $purchasedServices = \App\Models\UserMitraPayment::query()
+            ->with('priceList')
+            ->where('user_id', $userId)
+            ->where('mitra_id', $mitraId)
+            ->latest('paid_at')
+            ->get();
+
+        return view('pages.mitra.client_details', compact('mitra', 'client', 'location', 'purchasedServices'));
     }
 }

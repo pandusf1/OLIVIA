@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Report;
 use App\Models\ReportStatusLog;
-use App\Models\Partner;
+use App\Models\Mitra;
 use App\Models\AuditLog;
 use App\Models\User;
 use App\Models\UserLocation;
-use App\Models\ReportPartnerRouting;
+use App\Models\ReportMitraRouting;
 use App\Models\ReportTimelineEvent;
 use App\Models\ReportUserRouting;
 use App\Services\FonnteService;
@@ -73,24 +73,24 @@ class EmergencyController extends Controller
         ]);
 
 
-        // unknown_emergency: jangan route ke partner (tetap kirim notifikasi/WA terdekat via notifyNearestUsers)
-        $partners = collect();
+        // unknown_emergency: jangan route ke mitra
+        $mitras = collect();
         if (strtolower((string) $request->category) !== 'unknown_emergency') {
             if ($request->latitude && $request->longitude) {
-                $partners = Partner::routeMultipleByCategory(
+                $mitras = Mitra::routeMultipleByCategory(
                     $request->category,
                     5,
                     (float) $request->latitude,
                     (float) $request->longitude
                 );
 
-                $partners = $partners->filter(function($p) use ($request) {
-                    $dist = Partner::distanceKm((float) $request->latitude, (float) $request->longitude, (float) $p->latitude, (float) $p->longitude);
+                $mitras = $mitras->filter(function($p) use ($request) {
+                    $dist = Mitra::distanceKm((float) $request->latitude, (float) $request->longitude, (float) $p->latitude, (float) $p->longitude);
                     return $dist <= 20.0;
                 });
             }
         }
-        $firstPartner = $partners->first();
+        $firstMitra = $mitras->first();
         $expiresAt = null; // No static expiration for emergency reports
 
 
@@ -114,12 +114,11 @@ class EmergencyController extends Controller
             }
         }
 
-        $report = DB::transaction(function () use ($request, $partners, $firstPartner, $expiresAt, $urgency, $idempotencyKey, $anonymous) {
+        $report = DB::transaction(function () use ($request, $mitras, $firstMitra, $expiresAt, $urgency, $idempotencyKey, $anonymous) {
             $report = Report::create([
                 'user_id' => auth()->id(),
                 'report_type' => 'Emergency',
                 'category' => $request->category,
-                'description' => $request->description,
                 'latitude' => $request->latitude,
                 'longitude' => $request->longitude,
                 'location_text' => $request->location_text,
@@ -127,10 +126,10 @@ class EmergencyController extends Controller
                 'idempotency_key' => $idempotencyKey,
 
 
-                'status' => ($partners->isNotEmpty()) ? 'Routed' : 'Submitted',
+                'status' => ($mitras->isNotEmpty()) ? 'Routed' : 'Submitted',
                 'urgency_level' => $urgency,
 
-                'routed_partner_id' => $firstPartner?->id,
+                'routed_mitra_id' => $firstMitra?->id,
                 'location_verified_at' => ($request->latitude && $request->longitude) ? now() : null,
                 'last_activity_at' => now(),
             ]);
@@ -143,7 +142,7 @@ class EmergencyController extends Controller
                 'changed_at' => now(),
             ]);
 
-            if ($partners->isNotEmpty()) {
+            if ($mitras->isNotEmpty()) {
                 ReportStatusLog::create([
                     'report_id' => $report->id,
                     'old_status' => 'Submitted',
@@ -156,20 +155,20 @@ class EmergencyController extends Controller
             $this->timeline($report, 'report_submitted', 'Laporan darurat Anda sudah kami terima. Anda tidak sendirian, Safora sedang memproses bantuan.');
 
             if ($report->location_verified_at) {
-                $this->timeline($report, 'gps_verified', 'Lokasi GPS berhasil diterima sehingga partner dapat melihat area kejadian lebih cepat.');
+                $this->timeline($report, 'gps_verified', 'Lokasi GPS berhasil diterima sehingga mitra dapat melihat area kejadian lebih cepat.');
             } else {
                 $this->timeline($report, 'gps_unavailable', 'GPS belum tersedia. Kami tetap meneruskan laporan dan Anda bisa membagikan lokasi lewat chat nanti.');
             }
 
-            if ($partners->isNotEmpty()) {
+            if ($mitras->isNotEmpty()) {
                 $this->timeline(
                     $report,
-                    'forwarded_to_partners',
-                    'Laporan Anda telah diteruskan ke ' . $partners->count() . ' institusi terdekat yang relevan.'
+                    'forwarded_to_mitras',
+                    'Laporan Anda telah diteruskan ke ' . $mitras->count() . ' institusi terdekat yang relevan.'
                 );
-                $this->timeline($report, 'waiting_for_partner', 'Kami sedang menunggu partner tersedia menerima kasus ini. Estimasi respons awal 3-5 menit.');
+                $this->timeline($report, 'waiting_for_mitra', 'Kami sedang menunggu mitra tersedia menerima kasus ini. Estimasi respons awal 3-5 menit.');
             } else {
-                $this->timeline($report, 'no_partner_found', 'Kami belum menemukan partner yang sesuai. Admin Safora akan tetap diberi peringatan.');
+                $this->timeline($report, 'no_mitra_found', 'Kami belum menemukan mitra yang sesuai. Admin Safora akan tetap diberi peringatan.');
             }
 
             try {
@@ -178,21 +177,21 @@ class EmergencyController extends Controller
                 // skip jika offline
             }
 
-            foreach ($partners as $partner) {
-                ReportPartnerRouting::create([
+            foreach ($mitras as $mitra) {
+                ReportMitraRouting::create([
                     'report_id' => $report->id,
-                    'partner_id' => $partner->id,
+                    'mitra_id' => $mitra->id,
                     'status' => 'pending',
                     'routed_at' => now(),
                     'expires_at' => $expiresAt,
-                    'distance_km' => ($report->latitude && $report->longitude && $partner->latitude && $partner->longitude)
-                        ? Partner::distanceKm((float) $report->latitude, (float) $report->longitude, (float) $partner->latitude, (float) $partner->longitude)
+                    'distance_km' => ($report->latitude && $report->longitude && $mitra->latitude && $mitra->longitude)
+                        ? Mitra::distanceKm((float) $report->latitude, (float) $report->longitude, (float) $mitra->latitude, (float) $mitra->longitude)
                         : null,
-                    'estimated_response_minutes' => $partner->partner_type === 'ambulance' ? 5 : 8,
+                    'estimated_response_minutes' => $mitra->mitra_type === 'ambulance' ? 5 : 8,
                 ]);
 
                 try {
-                    AuditLog::log('route_report_to_partner', 'report', $report->id);
+                    AuditLog::log('route_report_to_mitra', 'report', $report->id);
                 } catch (\Exception $e) {
                     // skip jika offline
                 }
@@ -223,7 +222,7 @@ class EmergencyController extends Controller
                 'ok' => true,
                 'report_id' => $report->id,
                 'tracking_url' => $trackingLink,
-                'call_phone' => $firstPartner?->phone ?? env('DEFAULT_EMERGENCY_PHONE', '112'),
+                'call_phone' => $firstMitra?->phone ?? env('DEFAULT_EMERGENCY_PHONE', '112'),
             ]);
         } else {
             $response = redirect('/tracking/' . $report->id);
@@ -236,9 +235,9 @@ class EmergencyController extends Controller
         }
 
         // --- SELURUH PROSES BERAT DIJALANKAN DI BACKGROUND ---
-        foreach ($partners as $partner) {
-            if ($partner->phone) {
-                $partnerMessage =
+        foreach ($mitras as $mitra) {
+            if ($mitra->phone) {
+                $mitraMessage =
                     "🚨 *Safora - Laporan Darurat Baru*\n\n" .
                     "Kategori: *{$report->category}*\n\n" .
                     "📍 Lokasi:\n{$mapsLink}\n\n" .
@@ -246,7 +245,7 @@ class EmergencyController extends Controller
                     "Buka dashboard Safora untuk menerima laporan ini.";
 
                 try {
-                    FonnteService::send($partner->phone, $partnerMessage);
+                    FonnteService::send($mitra->phone, $mitraMessage);
                 } catch (\Exception $e) {
                     // skip jika layanan WA tidak tersedia
                 }
@@ -254,16 +253,16 @@ class EmergencyController extends Controller
         }
 
         // Juga kirim ke ADMIN_PHONE sebagai testing jika dalam mode testing
-        if (env('ADMIN_PHONE') && $partners->isNotEmpty()) {
-            $partnerMessage =
-                "🚨 *Safora - Laporan Darurat Baru (Test Partner)*\n\n" .
+        if (env('ADMIN_PHONE') && $mitras->isNotEmpty()) {
+            $mitraMessage =
+                "🚨 *Safora - Laporan Darurat Baru (Test Mitra)*\n\n" .
                 "Kategori: *{$report->category}*\n\n" .
                 "📍 Lokasi:\n{$mapsLink}\n\n" .
                 "🔗 Tracking:\n{$trackingLink}\n\n" .
                 "Buka dashboard Safora untuk menerima laporan ini.";
 
             try {
-                FonnteService::send(env('ADMIN_PHONE'), $partnerMessage);
+                FonnteService::send(env('ADMIN_PHONE'), $mitraMessage);
             } catch (\Exception $e) {
                 // skip jika layanan WA tidak tersedia
             }
@@ -274,7 +273,7 @@ class EmergencyController extends Controller
             "🚨 *Safora EMERGENCY ALERT*\n\n" .
             "Kategori: *{$report->category}*\n" .
             "Status: {$report->status}\n" .
-            "Partner diroute: {$partners->count()}\n" .
+            "Mitra diroute: {$mitras->count()}\n" .
             "Anonim: " . ($report->anonymous ? 'Ya' : 'Tidak') . "\n\n" .
             "📍 Lokasi:\n{$mapsLink}\n\n" .
             "🔗 Tracking:\n{$trackingLink}";
@@ -287,18 +286,18 @@ class EmergencyController extends Controller
 
         // Alert ke trusted contacts jika user login
         if ($userId) {
-            if ($this->notifyTrustedContacts($report, $trackingLink, $mapsLink, $firstPartner)) {
+            if ($this->notifyTrustedContacts($report, $trackingLink, $mapsLink, $firstMitra)) {
                 $this->timeline($report, 'trusted_contacts_notified', 'Kontak terpercaya Anda sudah kami beri tautan tracking dan lokasi laporan.');
             }
         }
 
         // Alert ke 3 user terdekat (role='user') via users.phone + simpan routing
-        $this->notifyNearestUsers($report, $trackingLink, $mapsLink, 3, $firstPartner);
+        $this->notifyNearestUsers($report, $trackingLink, $mapsLink, 3, $firstMitra);
 
         \Log::info("Safora Emergency: Laporan darurat berhasil dibuat & diroute.", [
             'report_id' => $report->id,
             'status' => $report->status,
-            'routed_partners_count' => $partners->count(),
+            'routed_mitras_count' => $mitras->count(),
             'tracking_url' => $trackingLink,
         ]);
 
@@ -326,7 +325,7 @@ class EmergencyController extends Controller
         };
     }
 
-    private function notifyTrustedContacts(Report $report, string $trackingLink, string $mapsLink, ?Partner $partner = null): bool
+    private function notifyTrustedContacts(Report $report, string $trackingLink, string $mapsLink, ?Mitra $mitra = null): bool
     {
         $user = $report->user;
         if (!$user) {
@@ -339,8 +338,8 @@ class EmergencyController extends Controller
         }
 
         $helpInstruction = "";
-        if ($partner && $partner->phone) {
-            $helpInstruction = "\n\nTolong laporkan/hubungi *{$partner->partner_name}* di nomor *{$partner->phone}*, bantu korban agar cepat tertangani.";
+        if ($mitra && $mitra->phone) {
+            $helpInstruction = "\n\nTolong laporkan/hubungi *{$mitra->mitra_name}* di nomor *{$mitra->phone}*, bantu korban agar cepat tertangani.";
         }
 
         $sent = false;
@@ -365,7 +364,7 @@ class EmergencyController extends Controller
         return $sent;
     }
 
-    private function notifyNearestUsers(Report $report, string $trackingLink, string $mapsLink, int $limit = 3, ?Partner $partner = null): void
+    private function notifyNearestUsers(Report $report, string $trackingLink, string $mapsLink, int $limit = 3, ?Mitra $mitra = null): void
     {
         if (!$report->latitude || !$report->longitude) {
             return;
@@ -374,8 +373,8 @@ class EmergencyController extends Controller
         $fromUserId = $report->user_id;
 
         $helpInstruction = "";
-        if ($partner && $partner->phone) {
-            $helpInstruction = "\n\nTolong laporkan/hubungi *{$partner->partner_name}* di nomor *{$partner->phone}*, bantu korban agar cepat tertangani.";
+        if ($mitra && $mitra->phone) {
+            $helpInstruction = "\n\nTolong laporkan/hubungi *{$mitra->mitra_name}* di nomor *{$mitra->phone}*, bantu korban agar cepat tertangani.";
         }
 
         $message =
@@ -392,11 +391,11 @@ class EmergencyController extends Controller
             ->whereHas('user', function ($q) {
                 $q->where('role', 'user')->where('receive_nearby_alerts', true);
             });
-            
+
         if ($fromUserId) {
             $targetsQuery->where('user_id', '!=', $fromUserId);
         }
-            
+
         $targets = $targetsQuery->get();
 
         if ($targets->isEmpty()) {
@@ -431,19 +430,18 @@ class EmergencyController extends Controller
             // WA
             try {
                 FonnteService::send($user->phone, $message);
-                
+
                 $user->nearby_alert_count += 1;
                 if ($user->nearby_alert_count >= $user->next_nearby_alert_threshold) {
                     $settingUrl = url('/settings');
                     $noticeMsg = "ℹ️ *Info Safora*\nAnda telah menerima beberapa alert korban terdekat. Jika Anda merasa terganggu, Anda bisa menonaktifkan fitur ini di pengaturan aplikasi.\n\nAtur di sini: {$settingUrl}";
                     FonnteService::send($user->phone, $noticeMsg);
-                    
+
                     $user->nearby_alert_count = 0;
                     $user->next_nearby_alert_threshold += 3;
                 }
                 $user->save();
             } catch (\Throwable $e) {
-                // jangan silent: minimal log supaya tahu kenapa tidak terkirim
                 \Log::error('notifyNearestUsers Fonnte send failed', [
                     'target_user_id' => $user->id,
                     'target_phone' => $user->phone,

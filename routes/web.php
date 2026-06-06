@@ -7,11 +7,11 @@ use App\Http\Controllers\EvidenceController;
 use App\Http\Controllers\TrustedContactController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\WitnessController;
-use App\Http\Controllers\PartnerController;
+use App\Http\Controllers\MitraController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\AdminPartnerController;
+use App\Http\Controllers\AdminMitraController;
 use App\Http\Controllers\UserLocationController;
 // Landing page
 Route::get('/', function() {
@@ -74,7 +74,7 @@ Route::post('/emergency', [EmergencyController::class, 'store']);
 Route::get('/tracking-search', [TrackingController::class, 'search'])->name('tracking.search');
 Route::get('/tracking/{id}/live', [TrackingController::class, 'live'])->name('tracking.live');
 Route::post('/tracking/{id}/location', [TrackingController::class, 'updateLocation'])->name('tracking.location');
-Route::post('/tracking/{id}/partner-location', [TrackingController::class, 'updatePartnerLocation'])->name('tracking.partner-location');
+Route::post('/tracking/{id}/mitra-location', [TrackingController::class, 'updateMitraLocation'])->name('tracking.mitra-location');
 Route::get('/tracking/{id}', [TrackingController::class, 'show'])->name('tracking.show');
 Route::post('/tracking/{reportId}/evidence', [EvidenceController::class, 'store'])->name('evidence.store');
 Route::delete('/evidence/{id}', [EvidenceController::class, 'destroy'])->name('evidence.destroy');
@@ -199,7 +199,7 @@ Route::get('/tracking/active-check', function(\Illuminate\Http\Request $request)
     ]);
 });
 
-// Chat berbasis laporan (public — bisa diakses pelapor, saksi <5km, atau partner)
+// Chat berbasis laporan (public — bisa diakses pelapor, saksi <5km, atau mitra)
 Route::get('/chat/report/{reportId}', [\App\Http\Controllers\ChatController::class, 'reportChat'])->name('chat.report');
 Route::get('/chat/report/{reportId}/poll', [\App\Http\Controllers\ChatController::class, 'pollMessages'])->name('chat.poll');
 Route::post('/chat/report/{reportId}/send', [\App\Http\Controllers\ChatController::class, 'sendMessage'])->name('chat.send.report');
@@ -242,8 +242,8 @@ Route::middleware(['auth', 'phone.required'])->group(function () {
     Route::patch('/trusted-contact/{id}', [TrustedContactController::class, 'update'])->name('trusted-contact.update');
     Route::delete('/trusted-contact/{id}', [TrustedContactController::class, 'destroy'])->name('trusted-contact.destroy');
 
-    // Partner terdekat (gabungan: semua tipe)
-    Route::get('/partner-nearby', [\App\Http\Controllers\PartnerNearbyController::class, 'index'])->name('partner.nearby');
+    // Mitra terdekat (gabungan: semua tipe)
+    Route::get('/mitra-nearby', [\App\Http\Controllers\MitraNearbyController::class, 'index'])->name('mitra.nearby');
 
     // Psikolog & pengacara terdekat (khusus kategori)
     Route::get('/psikolog-pengacara-nearby', [\App\Http\Controllers\PsikologPengacaraController::class, 'index'])->name('psikolog-pengacara.nearby');
@@ -259,16 +259,16 @@ Route::middleware(['auth', 'phone.required'])->group(function () {
         ->name('dashboard.emergency.markers');
 
 
-    // Data Partner (info + pricelist)
-    Route::get('/data-partner/{partnerId}', [\App\Http\Controllers\PembayaranMockController::class, 'showDataPartner'])->name('partner.data');
+    // Data Mitra (info + pricelist)
+    Route::get('/data-mitra/{mitraId}', [\App\Http\Controllers\PembayaranMockController::class, 'showDataMitra'])->name('mitra.data');
 
     // Kompatibilitas: route lama redirect ke page baru
-    Route::get('/pembayaran/partner/{partnerId}', function (string $partnerId) {
-        return redirect()->route('partner.data', ['partnerId' => $partnerId]);
+    Route::get('/pembayaran/mitra/{mitraId}', function (string $mitraId) {
+        return redirect()->route('mitra.data', ['mitraId' => $mitraId]);
     });
 
-    // Halaman pembayaran untuk satu layanan
-    Route::get('/pembayaran/{priceListId}', [\App\Http\Controllers\PembayaranMockController::class, 'showPembayaran'])->name('pembayaran.show');
+    // Halaman pembayaran untuk satu atau beberapa layanan (berbasis comma-separated IDs)
+    Route::get('/pembayaran/{priceListIds}', [\App\Http\Controllers\PembayaranMockController::class, 'showPembayaran'])->name('pembayaran.show');
 
     // Proses pembayaran demo (JSON response)
     Route::post('/pembayaran', [\App\Http\Controllers\PembayaranMockController::class, 'pay'])->name('pembayaran.pay');
@@ -277,20 +277,24 @@ Route::middleware(['auth', 'phone.required'])->group(function () {
 
     // Chat threads (legacy stubs)
     Route::get('/chat/threads', [\App\Http\Controllers\ChatController::class, 'indexThreads'])->name('chat.threads');
-    Route::get('/chat/start/{partnerId}', [\App\Http\Controllers\ChatController::class, 'start'])->name('chat.start');
-    Route::post('/chat/send/{partnerId}', [\App\Http\Controllers\ChatController::class, 'send'])->name('chat.send');
-    Route::get('/chat/messages/{partnerId}', [\App\Http\Controllers\ChatController::class, 'messages'])->name('chat.messages');
+    Route::get('/chat/start/{mitraId}', [\App\Http\Controllers\ChatController::class, 'start'])->name('chat.start');
+    Route::post('/chat/send/{mitraId}', [\App\Http\Controllers\ChatController::class, 'send'])->name('chat.send');
+    Route::get('/chat/messages/{mitraId}', [\App\Http\Controllers\ChatController::class, 'messages'])->name('chat.messages');
 
 
     // Evidence locker (halaman galeri bukti user)
     Route::get('/evidence', [EvidenceController::class, 'index'])->name('evidence.index');
 
-    // Partner / Mitra
-    Route::middleware('partner')->prefix('partner')->group(function () {
-        Route::get('/', [PartnerController::class, 'index'])->name('partner.index');
-        Route::get('/report/{id}', [PartnerController::class, 'show'])->name('partner.show');
-        Route::post('/report/{id}/accept', [PartnerController::class, 'accept'])->name('partner.report.accept');
-        Route::post('/report/{id}/status', [PartnerController::class, 'updateStatus'])->name('partner.status');
+    // Mitra
+    Route::middleware('mitra')->prefix('mitra')->group(function () {
+        Route::get('/', [MitraController::class, 'index'])->name('mitra.index');
+        Route::get('/report/{id}', [MitraController::class, 'show'])->name('mitra.show');
+        Route::post('/report/{id}/accept', [MitraController::class, 'accept'])->name('mitra.report.accept');
+        Route::post('/report/{id}/status', [MitraController::class, 'updateStatus'])->name('mitra.status');
+        Route::post('/profile', [MitraController::class, 'updateProfile'])->name('mitra.profile.update');
+        Route::post('/price-list', [MitraController::class, 'storePriceList'])->name('mitra.price-list.store');
+        Route::delete('/price-list/{id}', [MitraController::class, 'destroyPriceList'])->name('mitra.price-list.destroy');
+        Route::get('/client/{userId}', [MitraController::class, 'showClientDetails'])->name('mitra.client.show');
     });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
@@ -299,14 +303,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/reports/{id}/reroute', [AdminController::class, 'rerouteReport'])->name('admin.reports.reroute');
     Route::post('/reports/{id}/resolve', [AdminController::class, 'resolveReport'])->name('admin.reports.resolve');
 
-    Route::get('/partners', [AdminPartnerController::class, 'index'])->name('admin.partners');
+    Route::get('/mitras', [AdminMitraController::class, 'index'])->name('admin.mitras');
 
-    Route::get('/partners/create', [AdminPartnerController::class, 'create'])->name('admin.partners.create');
+    Route::get('/mitras/create', [AdminMitraController::class, 'create'])->name('admin.mitras.create');
 
-    Route::post('/partners', [AdminPartnerController::class, 'store'])->name('admin.partners.store');
+    Route::post('/mitras', [AdminMitraController::class, 'store'])->name('admin.mitras.store');
 
-    Route::patch('/partners/{id}/verify', [AdminPartnerController::class, 'toggleVerify'])->name('admin.partners.verify');
-    Route::patch('/partners/{id}/active', [AdminPartnerController::class, 'toggleActive'])->name('admin.partners.active');
+    Route::patch('/mitras/{id}/verify', [AdminMitraController::class, 'toggleVerify'])->name('admin.mitras.verify');
+    Route::patch('/mitras/{id}/active', [AdminMitraController::class, 'toggleActive'])->name('admin.mitras.active');
 
     // Export CSV untuk semua user
     Route::get('/users/export-csv', [\App\Http\Controllers\AdminUsersExportController::class, 'exportCsv'])
