@@ -242,7 +242,7 @@
                                 <?php if($groupedEvidences->has($role) && $groupedEvidences->get($role)->count() > 0): ?>
                                     <div class="bg-slate-50/50 border border-slate-100 rounded-xl p-4" id="evidence-group-<?php echo e($role); ?>">
                                         <h4 class="text-xs font-bold text-slate-800 bg-slate-200 px-2 py-1 rounded inline-block mb-3">
-                                            Bukti dari <?php echo e($role); ?>
+                                            <?php echo e($role); ?>
 
                                         </h4>
                                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="evidence-grid-<?php echo e($role); ?>">
@@ -825,7 +825,7 @@
                         html += `
                             <div class="bg-slate-50/50 border border-slate-100 rounded-xl p-4 mb-3" id="evidence-group-${role}">
                                 <h4 class="text-xs font-bold text-slate-800 bg-slate-200 px-2 py-1 rounded inline-block mb-3">
-                                    Bukti dari ${role}
+                                    ${role}
                                 </h4>
                                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="evidence-grid-${role}">
                         `;
@@ -1532,7 +1532,7 @@
         group.className = "bg-slate-50/50 border border-slate-100 rounded-xl p-4 fade-in";
         group.innerHTML = `
             <h4 class="text-xs font-bold text-slate-800 bg-slate-200 px-2 py-1 rounded inline-block mb-3">
-                Bukti dari ${role}
+                ${role}
             </h4>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="evidence-grid-${role}"></div>
         `;
