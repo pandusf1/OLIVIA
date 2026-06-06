@@ -1245,12 +1245,53 @@
         });
     }
 
+    function createUploadPlaceholderDOM(fileName, uniqueId) {
+        const uploadList = document.getElementById('upload-list');
+        if (!uploadList) return;
+        
+        const item = document.createElement('div');
+        item.id = `upload-${uniqueId}`;
+        item.className = "flex items-center justify-between bg-white border border-gray-100 p-3 rounded-xl shadow-sm mb-2";
+        item.innerHTML = `
+            <div class="flex-1 min-w-0 mr-3">
+                <p class="text-sm font-semibold text-gray-800 truncate">${fileName}</p>
+                <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1.5 overflow-hidden" id="progress-container-${uniqueId}">
+                    <div class="bg-green-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%" id="progress-${uniqueId}"></div>
+                </div>
+                <div class="flex items-center gap-1 mt-1">
+                    <svg class="w-3 h-3 text-green-500 hidden" id="check-${uniqueId}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                    <p class="text-[10px] text-gray-500" id="text-${uniqueId}">Antre dalam antrean...</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2" id="action-${uniqueId}">
+                <!-- Cancel button during upload -->
+                <button type="button" onclick="cancelUpload('${uniqueId}')" class="text-red-500 hover:text-red-700 transition p-1" title="Batalkan Upload">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+        `;
+        uploadList.appendChild(item);
+    }
+
     function processUploadQueue() {
         if (isUploading || uploadQueue.length === 0) return;
         isUploading = true;
-        const file = uploadQueue.shift();
+        const queueItem = uploadQueue.shift();
+        const file = queueItem.file;
+        const uniqueId = queueItem.uniqueId;
+
+        const txt = document.getElementById(`text-${uniqueId}`);
+        if (txt) txt.innerText = 'Menyiapkan berkas...';
+
         compressImageOnClient(file).then(processedFile => {
-            uploadFile(processedFile, function() {
+            const item = document.getElementById(`upload-${uniqueId}`);
+            if (!item || (txt && txt.innerText === 'Dibatalkan')) {
+                isUploading = false;
+                setTimeout(processUploadQueue, 300);
+                return;
+            }
+
+            uploadFile(processedFile, uniqueId, function() {
                 isUploading = false;
                 setTimeout(processUploadQueue, 300);
             });
@@ -1262,7 +1303,9 @@
         if (fileInput) {
             fileInput.addEventListener('change', function() {
                 Array.from(this.files).forEach(file => {
-                    uploadQueue.push(file);
+                    const uniqueId = Math.random().toString(36).substring(2, 15);
+                    createUploadPlaceholderDOM(file.name, uniqueId);
+                    uploadQueue.push({ file: file, uniqueId: uniqueId });
                 });
                 this.value = '';
                 processUploadQueue();
@@ -1270,33 +1313,9 @@
         }
     });
 
-    function uploadFile(file, onComplete) {
-        const uploadList = document.getElementById('upload-list');
-        if (!uploadList) return;
-        const uniqueId = Math.random().toString(36).substring(2, 15);
-        
-        const item = document.createElement('div');
-        item.id = `upload-${uniqueId}`;
-        item.className = "flex items-center justify-between bg-white border border-gray-100 p-3 rounded-xl shadow-sm mb-2";
-        item.innerHTML = `
-            <div class="flex-1 min-w-0 mr-3">
-                <p class="text-sm font-semibold text-gray-800 truncate">${file.name}</p>
-                <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1.5 overflow-hidden" id="progress-container-${uniqueId}">
-                    <div class="bg-green-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%" id="progress-${uniqueId}"></div>
-                </div>
-                <div class="flex items-center gap-1 mt-1">
-                    <svg class="w-3 h-3 text-green-500 hidden" id="check-${uniqueId}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                    <p class="text-[10px] text-gray-500" id="text-${uniqueId}">Menyiapkan...</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-2" id="action-${uniqueId}">
-                <!-- Cancel button during upload -->
-                <button type="button" onclick="cancelUpload('${uniqueId}')" class="text-red-500 hover:text-red-700 transition p-1" title="Batalkan Upload">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
-        `;
-        uploadList.appendChild(item);
+    function uploadFile(file, uniqueId, onComplete) {
+        const txt = document.getElementById(`text-${uniqueId}`);
+        if (txt) txt.innerText = 'Mengunggah...';
 
         const formData = new FormData();
         formData.append('evidence[]', file);
@@ -1439,6 +1458,7 @@
             activeUploads[uniqueId].abort();
             delete activeUploads[uniqueId];
         }
+        uploadQueue = uploadQueue.filter(item => item.uniqueId !== uniqueId);
         const item = document.getElementById(`upload-${uniqueId}`);
         if (item) {
             item.classList.add('opacity-50');
