@@ -31,8 +31,21 @@ Route::get('/', function() {
     }
 
     if (!empty($allIds)) {
-        session()->put('my_reports', $allIds);
+        $allIds = \App\Models\Report::whereIn('id', $allIds)
+            ->where(function ($query) {
+                $query->whereNull('user_id');
+                if (auth()->check()) {
+                    $query->orWhere('user_id', auth()->id());
+                }
+            })
+            ->pluck('id')
+            ->toArray();
+    } else {
+        $allIds = [];
     }
+
+    session()->put('my_reports', $allIds);
+    cookie()->queue(cookie('safora_my_reports', json_encode($allIds), 60 * 24 * 30));
 
     $activeReport = null;
     if (!empty($allIds)) {
@@ -144,7 +157,23 @@ Route::get('/tracking/active-check', function(\Illuminate\Http\Request $request)
         $allIds = array_unique(array_merge($allIds, $userReportIds));
     }
 
+    if (!empty($allIds)) {
+        $allIds = \App\Models\Report::whereIn('id', $allIds)
+            ->where(function ($query) {
+                $query->whereNull('user_id');
+                if (auth()->check()) {
+                    $query->orWhere('user_id', auth()->id());
+                }
+            })
+            ->pluck('id')
+            ->toArray();
+    } else {
+        $allIds = [];
+    }
+
     if (empty($allIds)) {
+        session()->put('my_reports', []);
+        cookie()->queue(cookie('safora_my_reports', json_encode([]), 60 * 24 * 30));
         return response()->json(['active_report_id' => null]);
     }
 

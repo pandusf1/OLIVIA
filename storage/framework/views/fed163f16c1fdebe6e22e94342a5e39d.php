@@ -71,7 +71,7 @@
         <?php
             $isCreator = !$isPartnerUser && (
                 (auth()->check() && auth()->id() === $report->user_id)
-                || in_array($report->id, session('my_reports', []))
+                || ($report->user_id === null && in_array($report->id, session('my_reports', [])))
             );
             $showResolveButton = ($isCreator || $isTrustedContact) && in_array($report->status, ['In Progress', 'Assigned']);
         ?>
@@ -118,8 +118,10 @@
                 }
                 $isReporter = !$isPartner && (
                     (auth()->check() && auth()->id() === $report->user_id)
-                    || in_array($report->id, session('my_reports', []))
-                    || in_array($report->id, $cookieReports)
+                    || ($report->user_id === null && (
+                        in_array($report->id, session('my_reports', []))
+                        || in_array($report->id, $cookieReports)
+                    ))
                 );
                 
                 $isOtherPartnerHandling = $isPartner && $report->handler_partner_id !== null && $report->handler_partner_id !== $user->partner_id;
@@ -252,7 +254,7 @@
                                                     
                                                     $canView = $report->show_evidence 
                                                         || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner'))
-                                                        || in_array($report->id, session('my_reports', []));
+                                                        || ($report->user_id === null && in_array($report->id, session('my_reports', [])));
                                                         
                                                     $evidenceUrl = url('/evidences/view/' . $evidence->id);
                                                     
@@ -340,7 +342,7 @@
                 </div>
                 <div id="routed-partners" class="space-y-3"></div>
 
-                <?php if((auth()->check() && auth()->id() === $report->user_id) || in_array($report->id, session('my_reports', []))): ?>
+                <?php if((auth()->check() && auth()->id() === $report->user_id) || ($report->user_id === null && in_array($report->id, session('my_reports', [])))): ?>
                     <div id="re-alert-container" class="mt-4 hidden animate-pulse">
                         <button id="btn-re-alert" onclick="triggerReAlert()" class="w-full rounded-xl bg-red-600 hover:bg-red-700 text-white font-black py-3.5 px-4 text-sm flex items-center justify-center gap-2 transition duration-300 shadow-md transform active:scale-95">
                             <span>🚨 Kirim Ulang Alert ke Mitra</span>
@@ -1178,7 +1180,7 @@
     const activeUploads = {};
     let uploadedEvidenceIdsInSession = [];
     let uploadedEvidencesInSession = [];
-    const canViewEvidence = <?php echo json_encode($report->show_evidence || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner')) || in_array($report->id, session('my_reports', []))) ?>;
+    const canViewEvidence = <?php echo json_encode($report->show_evidence || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner')) || ($report->user_id === null && in_array($report->id, session('my_reports', [])))) ?>;
 
     let uploadQueue = [];
     let isUploading = false;

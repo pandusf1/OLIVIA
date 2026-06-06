@@ -19,14 +19,9 @@ class TrackingController extends Controller
                 ? json_decode(request()->cookie('safora_my_reports'), true) ?: []
                 : [];
             
-            if (!empty($cookieReports)) {
-                $newReports = array_unique(array_merge($sessionReports, $cookieReports));
-                if (count($newReports) !== count($sessionReports)) {
-                    session()->put('my_reports', $newReports);
-                }
-            }
+            $newReports = array_unique(array_merge($sessionReports, $cookieReports));
         } catch (\Exception $e) {
-            // ignore session issues
+            $newReports = [];
         }
 
         $id = trim($id);
@@ -51,21 +46,29 @@ class TrackingController extends Controller
             $report->load($relations);
         }
 
-        // Add report to session and queue cookie to grant creator/observer access
-        try {
-            $sessionReports = session()->get('my_reports', []);
-            if (!in_array($report->id, $sessionReports)) {
-                $sessionReports[] = $report->id;
-                session()->put('my_reports', $sessionReports);
+        // Add report to session/cookie if it is anonymous (user_id is null)
+        if ($report->user_id === null) {
+            if (!in_array($report->id, $newReports)) {
+                $newReports[] = $report->id;
             }
+        }
 
-            $cookieReports = request()->hasCookie('safora_my_reports')
-                ? json_decode(request()->cookie('safora_my_reports'), true) ?: []
-                : [];
-            if (!in_array($report->id, $cookieReports)) {
-                $cookieReports[] = $report->id;
-                cookie()->queue(cookie('safora_my_reports', json_encode($cookieReports), 60 * 24 * 30));
-            }
+        // Filter out report IDs belonging to other users
+        if (!empty($newReports)) {
+            $newReports = Report::whereIn('id', $newReports)
+                ->where(function ($query) {
+                    $query->whereNull('user_id');
+                    if (auth()->check()) {
+                        $query->orWhere('user_id', auth()->id());
+                    }
+                })
+                ->pluck('id')
+                ->toArray();
+        }
+
+        try {
+            session()->put('my_reports', $newReports);
+            cookie()->queue(cookie('safora_my_reports', json_encode($newReports), 60 * 24 * 30));
         } catch (\Exception $e) {
             // ignore session/cookie issues
         }
@@ -128,7 +131,7 @@ class TrackingController extends Controller
         // Allow update if auth user is the creator or session has the report id (and is not a partner responder)
         $isCreator = !$isPartner && (
             (auth()->check() && auth()->id() === $report->user_id) 
-            || in_array($report->id, $request->session()->get('my_reports', []))
+            || ($report->user_id === null && in_array($report->id, $request->session()->get('my_reports', [])))
         );
 
         if (!$isCreator) {
@@ -318,7 +321,7 @@ class TrackingController extends Controller
 
         // Allow resolve if auth user is the creator, session has the report id, or user is a verified trusted contact
         $isCreator = (auth()->check() && auth()->id() === $report->user_id) 
-            || in_array($report->id, $request->session()->get('my_reports', []));
+            || ($report->user_id === null && in_array($report->id, $request->session()->get('my_reports', [])));
 
         $isTrustedContact = false;
         if (auth()->check() && $report->user_id) {
@@ -398,7 +401,7 @@ class TrackingController extends Controller
 
         // Perbolehkan re-alert jika pengguna login adalah pembuat atau report ID ada di session my_reports
         $isCreator = (auth()->check() && auth()->id() === $report->user_id) 
-            || in_array($report->id, $request->session()->get('my_reports', []));
+            || ($report->user_id === null && in_array($report->id, $request->session()->get('my_reports', [])));
 
         if (!$isCreator) {
             return response()->json(['error' => 'Akses ditolak.'], 403);
@@ -605,7 +608,7 @@ class TrackingController extends Controller
             })->all(),
             'can_view_evidence' => (bool) ($report->show_evidence 
                 || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner')) 
-                || in_array($report->id, session()->get('my_reports', []))),
+                || ($report->user_id === null && in_array($report->id, session()->get('my_reports', [])))),
         ];
     }
 
@@ -712,7 +715,7 @@ class TrackingController extends Controller
         $report = Report::findOrFail($reportId);
 
         $isCreator = (auth()->check() && auth()->id() === $report->user_id) 
-            || in_array($report->id, $request->session()->get('my_reports', []));
+            || ($report->user_id === null && in_array($report->id, $request->session()->get('my_reports', [])));
 
         $isTrustedContact = false;
         if (auth()->check() && $report->user_id) {
@@ -793,7 +796,7 @@ class TrackingController extends Controller
         $report = Report::findOrFail($id);
 
         $isCreator = (auth()->check() && auth()->id() === $report->user_id) 
-            || in_array($report->id, $request->session()->get('my_reports', []));
+            || ($report->user_id === null && in_array($report->id, $request->session()->get('my_reports', [])));
 
         if (!$isCreator) {
             return response()->json(['error' => 'Akses ditolak.'], 403);

@@ -51,7 +51,7 @@ class EvidenceController extends Controller
             
             // Determine uploader role
             $isCreator = (auth()->check() && auth()->id() === $report->user_id) 
-                || in_array($reportId, session()->get('my_reports', []));
+                || ($report->user_id === null && in_array($reportId, session()->get('my_reports', [])));
             
             $isPartner = auth()->check() && auth()->user()->role === 'partner';
             if ($isPartner) {
@@ -137,7 +137,7 @@ class EvidenceController extends Controller
         $report = Report::findOrFail($evidence->report_id);
 
         $isCreator = (auth()->check() && auth()->id() === $report->user_id) 
-            || in_array($report->id, session()->get('my_reports', []));
+            || ($report->user_id === null && in_array($report->id, session()->get('my_reports', [])));
 
         $isUploader = in_array($id, session()->get('uploaded_evidence_ids', []));
 
