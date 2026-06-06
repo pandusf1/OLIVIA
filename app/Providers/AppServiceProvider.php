@@ -33,5 +33,9 @@ public function boot(): void
     if (!app()->runningInConsole() && request()->getSchemeAndHttpHost()) {
         \Illuminate\Support\Facades\URL::forceRootUrl(request()->getSchemeAndHttpHost());
     }
+
+    \Illuminate\Database\Connection::resolverFor('pgsql', function ($connection, $database, $prefix, $config) {
+        return new \App\Database\Connectors\CustomPostgresConnection($connection, $database, $prefix, $config);
+    });
 }
 }

@@ -106,6 +106,8 @@ class EvidenceController extends Controller
                         ]);
                     });
 
+                    session()->push('uploaded_evidence_ids', $evidence->id);
+
                     $uploaded[] = [
                         'id' => $evidence->id,
                         'file_url' => url('/evidences/view/' . $evidence->id),
@@ -137,7 +139,9 @@ class EvidenceController extends Controller
         $isCreator = (auth()->check() && auth()->id() === $report->user_id) 
             || in_array($report->id, session()->get('my_reports', []));
 
-        if (!$isCreator) {
+        $isUploader = in_array($id, session()->get('uploaded_evidence_ids', []));
+
+        if (!$isCreator && !$isUploader) {
             return response()->json(['error' => 'Akses ditolak.'], 403);
         }
 

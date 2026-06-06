@@ -16,6 +16,7 @@
         @keyframes modalIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:scale(1)} }
         .modal-in { animation: modalIn 0.25s ease forwards; }
     </style>
+    @include('partials.vercel-analytics')
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased">
 

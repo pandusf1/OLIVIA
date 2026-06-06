@@ -16,6 +16,7 @@
         @keyframes modalIn { from{opacity:0;transform:scale(.95)} to{opacity:1;transform:scale(1)} }
         .modal-in { animation: modalIn 0.25s ease forwards; }
     </style>
+    <?php echo $__env->make('partials.vercel-analytics', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 </head>
 <body class="bg-[#faf9f7] text-gray-900 antialiased">
 

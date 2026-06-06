@@ -16,6 +16,7 @@
 
         <!-- Scripts -->
         <?php echo app('Illuminate\Foundation\Vite')(['resources/css/app.css', 'resources/js/app.js']); ?>
+        <?php echo $__env->make('partials.vercel-analytics', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
     </head>
     <body class="font-sans antialiased">
         <div class="min-h-screen bg-gray-100">
