@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class Evidence extends Model
 {
@@ -66,5 +68,60 @@ class Evidence extends Model
             // Robust fallback if any read error occurs
             return hash('sha256', $originalName . $fileSize . microtime(true));
         }
+    }
+
+    /**
+     * Compress image using TinyPNG API if key is configured and file is JPEG/PNG.
+     * Returns compressed binary data, or original file content on failure/skip.
+     */
+    public static function compressImageIfNeeded(string $filePath, string $mimeType): string
+    {
+        $originalData = file_get_contents($filePath);
+        $apiKey = env('TINYPNG_API_KEY');
+
+        if (empty($apiKey)) {
+            return $originalData;
+        }
+
+        $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg'];
+        if (!in_array(strtolower($mimeType), $allowedMimes)) {
+            return $originalData;
+        }
+
+        try {
+            $response = Http::withBasicAuth($apiKey, '')
+                ->withBody($originalData, $mimeType)
+                ->timeout(30)
+                ->post('https://api.tinify.com/shrink');
+
+            if ($response->successful()) {
+                $outputUrl = $response->json('output.url');
+                if ($outputUrl) {
+                    $compressedResponse = Http::timeout(30)->get($outputUrl);
+                    if ($compressedResponse->successful()) {
+                        Log::info("TinyPNG compression succeeded. Original size: " . strlen($originalData) . " bytes, Compressed size: " . strlen($compressedResponse->body()) . " bytes");
+                        return $compressedResponse->body();
+                    }
+                }
+            } else {
+                Log::warning("TinyPNG API error: status code " . $response->status() . ", body: " . $response->body());
+            }
+        } catch (\Throwable $e) {
+            Log::error("TinyPNG compression failed: " . $e->getMessage());
+        }
+
+        return $originalData;
+    }
+
+    /**
+     * Customize JSON representation to avoid base64 data leaking into API payloads.
+     */
+    public function toArray()
+    {
+        $array = parent::toArray();
+        if (isset($array['file_url'])) {
+            $array['file_url'] = url('/evidences/view/' . $this->id);
+        }
+        return $array;
     }
 }

@@ -69,9 +69,7 @@
                     list.innerHTML = reports.map(r => {
                         const dateStr = new Date(r.created_at).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
                         const evidencesHtml = (r.evidences || []).map(ev => {
-                            const evUrl = ev.file_url.startsWith('data:') 
-                                ? ev.file_url 
-                                : `/evidences/view/${ev.file_url.split('/').pop()}`;
+                            const evUrl = ev.file_url;
                             const hashShort = (ev.file_hash || '').substring(0, 32) + '...';
                             const evDateStr = new Date(ev.uploaded_at).toLocaleDateString('id-ID', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
                             return `

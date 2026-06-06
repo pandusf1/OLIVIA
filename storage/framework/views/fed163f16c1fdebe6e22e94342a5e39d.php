@@ -253,7 +253,7 @@
                                                         || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner'))
                                                         || in_array($report->id, session('my_reports', []));
                                                         
-                                                    $evidenceUrl = str_starts_with($evidence->file_url, 'data:') ? $evidence->file_url : url('/evidences/view/' . basename($evidence->file_url));
+                                                    $evidenceUrl = url('/evidences/view/' . $evidence->id);
                                                     
                                                     $cardBg = 'bg-blue-50/50 border-blue-150';
                                                     $badgeBg = 'bg-blue-100 text-blue-800';
@@ -584,22 +584,22 @@
             `);
 
             if (fileType.startsWith('image/')) {
-                newWindow.document.write(\`<img src="\${url}" alt="Bukti Foto">\`);
+                newWindow.document.write(`<img src="${url}" alt="Bukti Foto">`);
             } else if (fileType.startsWith('video/')) {
-                newWindow.document.write(\`<video src="\${url}" controls autoplay></video>\`);
+                newWindow.document.write(`<video src="${url}" controls autoplay></video>`);
             } else if (fileType.startsWith('audio/')) {
-                newWindow.document.write(\`<audio src="\${url}" controls autoplay></audio>\`);
+                newWindow.document.write(`<audio src="${url}" controls autoplay></audio>`);
             } else {
-                newWindow.document.write(\`<iframe src="\${url}"></iframe>\`);
+                newWindow.document.write(`<iframe src="${url}"></iframe>`);
             }
 
-            newWindow.document.write(\`
-                        <div class="meta">Format: \${fileType}</div>
-                        <a href="\${url}" download="bukti-\${Date.now()}" class="btn-download">Unduh Berkas</a>
+            newWindow.document.write(`
+                        <div class="meta">Format: ${fileType}</div>
+                        <a href="${url}" download="bukti-${Date.now()}" class="btn-download">Unduh Berkas</a>
                     </div>
                 </body>
                 </html>
-            \`);
+            `);
             newWindow.document.close();
         } else {
             window.open(url, '_blank');

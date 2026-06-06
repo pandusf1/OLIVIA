@@ -162,7 +162,7 @@
                         <p class="text-xs text-gray-400">{{ \Carbon\Carbon::parse($ev->uploaded_at)->format('d M Y, H:i') }}</p>
                     </div>
                     <a href="javascript:void(0)" 
-                       data-url="{{ str_starts_with($ev->file_url, 'data:') ? $ev->file_url : url('/evidences/view/' . basename($ev->file_url)) }}" 
+                       data-url="{{ url('/evidences/view/' . $ev->id) }}" 
                        data-type="{{ $ev->file_type }}"
                        onclick="viewEvidence(this.dataset.url, this.dataset.type)" 
                        class="text-red-700 hover:text-red-800 text-sm font-semibold transition">Buka →</a>

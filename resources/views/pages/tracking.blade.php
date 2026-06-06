@@ -250,7 +250,7 @@
                                                         || (auth()->check() && (auth()->id() === $report->user_id || auth()->user()->role === 'partner'))
                                                         || in_array($report->id, session('my_reports', []));
                                                         
-                                                    $evidenceUrl = str_starts_with($evidence->file_url, 'data:') ? $evidence->file_url : url('/evidences/view/' . basename($evidence->file_url));
+                                                    $evidenceUrl = url('/evidences/view/' . $evidence->id);
                                                     
                                                     $cardBg = 'bg-blue-50/50 border-blue-150';
                                                     $badgeBg = 'bg-blue-100 text-blue-800';

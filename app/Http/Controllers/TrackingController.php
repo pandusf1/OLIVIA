@@ -596,7 +596,7 @@ class TrackingController extends Controller
             'evidences' => $report->evidences->sortBy('uploaded_at')->values()->map(function ($ev) {
                 return [
                     'id' => $ev->id,
-                    'file_url' => str_starts_with($ev->file_url, 'data:') ? $ev->file_url : url('/evidences/view/' . basename($ev->file_url)),
+                    'file_url' => url('/evidences/view/' . $ev->id),
                     'file_type' => $ev->file_type,
                     'file_hash' => $ev->file_hash,
                     'uploaded_at' => $ev->uploaded_at ? ($ev->uploaded_at instanceof \Carbon\Carbon ? $ev->uploaded_at->format('d M Y, H:i') : \Carbon\Carbon::parse($ev->uploaded_at)->format('d M Y, H:i')) : null,

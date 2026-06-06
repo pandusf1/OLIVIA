@@ -73,23 +73,30 @@ class EvidenceController extends Controller
 
             foreach ($files as $file) {
                 try {
-                    $path = null;
-                    $hash = Evidence::generateFastHash($file->getRealPath(), $file->getClientOriginalName(), $file->getSize());
+                    $mimeType = $file->getClientMimeType() ?: 'application/octet-stream';
+                    $realPath = $file->getRealPath();
 
+                    // Compress image using TinyPNG API if applicable
+                    $fileData = Evidence::compressImageIfNeeded($realPath, $mimeType);
+                    $hash = hash('sha256', $fileData);
+
+                    $path = null;
                     try {
-                        $path = $file->store('evidences', 'public');
+                        // Attempt to write the compressed data to public disk
+                        $tempPath = tempnam(sys_get_temp_dir(), 'evidence_');
+                        file_put_contents($tempPath, $fileData);
+                        $path = \Illuminate\Support\Facades\Storage::disk('public')->putFile('evidences', new \Illuminate\Http\File($tempPath));
+                        @unlink($tempPath);
                     } catch (\Throwable $storeEx) {
-                        $fileData = file_get_contents($file->getRealPath());
-                        $mimeType = $file->getClientMimeType();
                         $base64 = base64_encode($fileData);
                         $path = 'data:' . $mimeType . ';base64,' . $base64;
                     }
 
-                    $evidence = \Illuminate\Support\Facades\DB::transaction(function () use ($reportId, $path, $file, $hash, $request, $uploaderRole) {
+                    $evidence = \Illuminate\Support\Facades\DB::transaction(function () use ($reportId, $path, $mimeType, $hash, $request, $uploaderRole) {
                         return Evidence::create([
                             'report_id'   => $reportId,
                             'file_url'    => $path,
-                            'file_type'   => $file->getClientMimeType(),
+                            'file_type'   => $mimeType,
                             'file_hash'   => $hash,
                             'uploaded_by' => auth()->id(),
                             'uploaded_at' => now(),
@@ -101,7 +108,7 @@ class EvidenceController extends Controller
 
                     $uploaded[] = [
                         'id' => $evidence->id,
-                        'file_url' => str_starts_with($evidence->file_url, 'data:') ? $evidence->file_url : url('/evidences/view/' . basename($evidence->file_url)),
+                        'file_url' => url('/evidences/view/' . $evidence->id),
                         'file_type' => $evidence->file_type,
                         'uploader_role' => $evidence->uploader_role,
                     ];

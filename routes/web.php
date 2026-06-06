@@ -66,25 +66,49 @@ Route::get('/tracking/{id}', [TrackingController::class, 'show'])->name('trackin
 Route::post('/tracking/{reportId}/evidence', [EvidenceController::class, 'store'])->name('evidence.store');
 Route::delete('/evidence/{id}', [EvidenceController::class, 'destroy'])->name('evidence.destroy');
 Route::get('/evidences/view/{filename}', function ($filename) {
-    // 1. Check storage_path
+    // 1. Cek apakah ini ID bukti di database
+    $evidence = \App\Models\Evidence::find($filename);
+    if (!$evidence) {
+        $basename = basename($filename);
+        $evidence = \App\Models\Evidence::where('file_url', 'LIKE', '%' . $basename)->first();
+    }
+
+    if ($evidence) {
+        if (str_starts_with($evidence->file_url, 'data:')) {
+            if (preg_match('/^data:([^;]+);base64,(.+)$/', $evidence->file_url, $matches)) {
+                $contentType = $matches[1];
+                $data = base64_decode($matches[2]);
+                return response($data)
+                    ->header('Content-Type', $contentType)
+                    ->header('Cache-Control', 'public, max-age=31536000'); // Cache browser 1 tahun
+            }
+        } else {
+            $path = storage_path('app/public/' . $evidence->file_url);
+            if (file_exists($path) && !is_dir($path)) {
+                return response()->file($path);
+            }
+        }
+    }
+
+    // 2. Check storage_path
     $path = storage_path('app/public/evidences/' . $filename);
     if (file_exists($path) && !is_dir($path)) {
         return response()->file($path);
     }
     
-    // 2. Check /tmp/evidences/
+    // 3. Check /tmp/evidences/
     $path = '/tmp/evidences/' . $filename;
     if (file_exists($path) && !is_dir($path)) {
         return response()->file($path);
     }
     
-    // 3. Check /tmp/
+    // 4. Check /tmp/
     $path = '/tmp/' . $filename;
     if (file_exists($path) && !is_dir($path)) {
         return response()->file($path);
     }
     
-    // 4. Try checking base name
+    // 5. Try checking base name
     $filenameOnly = basename($filename);
     $path = storage_path('app/public/evidences/' . $filenameOnly);
     if (file_exists($path) && !is_dir($path)) {
