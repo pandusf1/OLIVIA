@@ -1,10 +1,14 @@
 import './bootstrap';
 
 import Alpine from 'alpinejs';
+import { inject } from '@vercel/analytics';
 
 window.Alpine = Alpine;
 
 Alpine.start();
+
+// Inject Vercel Analytics
+inject();
 
 if (import.meta.env.PROD) {
     import('virtual:pwa-register').then(({ registerSW }) => {
