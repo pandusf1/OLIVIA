@@ -7,9 +7,10 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        *{font-family:'Inter',sans-serif;}
+    <style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+        * { font-family: 'Space Grotesk', sans-serif; }
+        h1 { font-family: 'Space Grotesk', sans-serif !important; }
+        .font-unbounded { font-family: 'Space Grotesk', sans-serif !important; }
     </style>
 </head>
 
