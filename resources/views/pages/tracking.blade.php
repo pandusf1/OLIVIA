@@ -429,18 +429,38 @@
         localStorage.setItem('safora_guest_reports', JSON.stringify(Array.from(new Set(storedReports))));
     }
 
-    let map = null;
-    let marker = null;
-
-    let mitraMarker = null;
+    let map = window._trackingMap || null;
+    let marker = window._trackingMarker || null;
+    let mitraMarker = window._trackingMitraMarker || null;
 
     function updateMapMarkers(victimLat, victimLng, mitraLat, mitraLng) {
         if (!victimLat || !victimLng) return;
         
         const victimLatLng = [victimLat, victimLng];
+        const container = document.getElementById('tracking-map');
+        if (!container) return;
+
+        // If container changed (e.g. Livewire page update), destroy old map instance
+        if (map && map.getContainer() !== container) {
+            try {
+                map.remove();
+            } catch (e) {}
+            map = null;
+            marker = null;
+            mitraMarker = null;
+            window._trackingMap = null;
+            window._trackingMarker = null;
+            window._trackingMitraMarker = null;
+        }
         
         if (!map) {
+            if (container._leaflet_id) {
+                container._leaflet_id = null;
+                container.innerHTML = "";
+            }
+
             map = L.map('tracking-map', { zoomControl: false }).setView(victimLatLng, 15);
+            window._trackingMap = map;
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
                 attribution: '&copy; OpenStreetMap'
             }).addTo(map);
@@ -452,6 +472,7 @@
                 fillOpacity: 0.5,
                 radius: 8
             }).addTo(map);
+            window._trackingMarker = marker;
         } else {
             if (marker) marker.setLatLng(victimLatLng);
         }
@@ -475,6 +496,7 @@
                         iconAnchor: [12, 12]
                     })
                 }).addTo(map);
+                window._trackingMitraMarker = mitraMarker;
                 mitraMarker.bindPopup("<b>Lokasi Mitra</b><br>Sedang menuju ke lokasi Anda.").openPopup();
             } else {
                 mitraMarker.setLatLng(mitraLatLng);
@@ -487,6 +509,7 @@
             if (mitraMarker) {
                 map.removeLayer(mitraMarker);
                 mitraMarker = null;
+                window._trackingMitraMarker = null;
             }
             map.setView(victimLatLng, 15);
         }
@@ -1014,7 +1037,7 @@
         }
     }
 
-    let watchId = null;
+    let watchId = window._locationWatchId || null;
 
     function pushLocation() {
         if (!navigator.geolocation) return;
@@ -1042,16 +1065,25 @@
             timeout: 5000
         });
 
+        if (window._locationWatchId) {
+            navigator.geolocation.clearWatch(window._locationWatchId);
+        }
+
         // Pantau perubahan lokasi secara real-time
         watchId = navigator.geolocation.watchPosition(updateCoords, (err) => {}, {
             enableHighAccuracy: true,
             maximumAge: 0,
             timeout: 10000
         });
+        window._locationWatchId = watchId;
     }
 
     render(initialPayload);
-    setInterval(pollLive, 4000);
+
+    if (window._pollLiveInterval) {
+        clearInterval(window._pollLiveInterval);
+    }
+    window._pollLiveInterval = setInterval(pollLive, 4000);
 
     const reportLat = initialPayload.report.location.latitude;
     const reportLng = initialPayload.report.location.longitude;
@@ -1716,7 +1748,7 @@
 
 
     // Mitra live location push
-    let mitraWatchId = null;
+    let mitraWatchId = window._mitraWatchId || null;
     function pushMitraLocation() {
         if (!navigator.geolocation) return;
 
@@ -1743,12 +1775,17 @@
             timeout: 5000
         });
 
+        if (window._mitraWatchId) {
+            navigator.geolocation.clearWatch(window._mitraWatchId);
+        }
+
         // Watch position
         mitraWatchId = navigator.geolocation.watchPosition(updateMitraCoords, (err) => {}, {
             enableHighAccuracy: true,
             maximumAge: 0,
             timeout: 10000
         });
+        window._mitraWatchId = mitraWatchId;
     }
 
     if (isMitra && isMitraHandling) {
