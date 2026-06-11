@@ -5,6 +5,8 @@ namespace App\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+use App\Jobs\SendWhatsAppJob;
+
 class FonnteService
 {
     /**
@@ -19,6 +21,26 @@ class FonnteService
     {
         // Format nomor target
         $target = self::formatPhoneNumber($target);
+
+        if (empty($target)) {
+            return;
+        }
+
+        try {
+            dispatch(new SendWhatsAppJob($target, $message));
+        } catch (\Throwable $e) {
+            Log::warning('Queue dispatch failed, sending WhatsApp synchronously: ' . $e->getMessage());
+            self::sendNow($target, $message);
+        }
+    }
+
+    public static function sendNow($target, $message)
+    {
+        $target = self::formatPhoneNumber($target);
+
+        if (empty($target)) {
+            return;
+        }
 
         try {
             $token = config('services.fonnte.token');

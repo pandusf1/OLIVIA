@@ -188,6 +188,13 @@ class AdminController extends Controller
 
         AuditLog::log('manual_resolve_report', 'report', $report->id);
 
+        if ($report->user && $report->user->phone) {
+            $msg = "Safora Info:\nStatus laporan Anda #".strtoupper(substr($report->id, 0, 8))." ({$report->category}) telah diperbarui oleh Admin menjadi *Selesai*.\n\nTautan tracking: " . url('/tracking/' . $report->id);
+            try {
+                FonnteService::send($report->user->phone, $msg);
+            } catch (\Exception $e) {}
+        }
+
         return back()->with('success', 'Laporan ditandai selesai secara manual.');
     }
 }

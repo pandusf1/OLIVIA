@@ -46,12 +46,7 @@ class TrackingController extends Controller
             $report->load($relations);
         }
 
-        // Add report to session/cookie if it is anonymous (user_id is null)
-        if ($report->user_id === null) {
-            if (!in_array($report->id, $newReports)) {
-                $newReports[] = $report->id;
-            }
-        }
+
 
         // Filter out report IDs belonging to other users
         if (!empty($newReports)) {
@@ -275,7 +270,7 @@ class TrackingController extends Controller
                 ];
             })
             ->filter(function ($t) {
-                return $t['distance_km'] <= 10.0;
+                return $t['distance_km'] <= 5.0;
             })
             ->sortBy('distance_km')
             ->take($limit)
@@ -688,14 +683,8 @@ class TrackingController extends Controller
 
     private function relevantMitraRoutings(Report $report)
     {
-        $mitraTypes = Mitra::mitraTypesForCategory($report->category);
-
-        if (empty($mitraTypes)) {
-            return collect();
-        }
-
         return $report->mitraRoutings
-            ->filter(fn ($routing) => $routing->mitra && Mitra::matchesCategory($routing->mitra->mitra_type, $report->category))
+            ->filter(fn ($routing) => !is_null($routing->mitra))
             ->values();
     }
 

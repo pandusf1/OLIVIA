@@ -255,6 +255,23 @@ class MitraController extends Controller
             'actor_id' => $mitraId,
         ]);
 
+        if ($report->user && $report->user->phone) {
+            $statusLabel = match ($request->status) {
+                'Submitted' => 'Diajukan',
+                'Routed' => 'Diteruskan',
+                'Viewed' => 'Ditinjau',
+                'Assigned' => 'Diterima',
+                'In Progress' => 'Diproses',
+                'Resolved' => 'Selesai',
+                'Follow-up Monitoring' => 'Pemantauan Lanjutan',
+                default => $request->status,
+            };
+            $msg = "Safora Info:\nStatus laporan Anda #".strtoupper(substr($report->id, 0, 8))." ({$report->category}) telah diperbarui menjadi *{$statusLabel}*.\n\nTautan tracking: " . url('/tracking/' . $report->id);
+            try {
+                FonnteService::send($report->user->phone, $msg);
+            } catch (\Exception $e) {}
+        }
+
         return back()->with('success', 'Status laporan diperbarui ke "' . $request->status . '".');
     }
 

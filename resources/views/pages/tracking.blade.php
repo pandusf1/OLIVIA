@@ -767,7 +767,7 @@
                     
                     startCountdownTimer(payload.cooldown_seconds);
                 } else {
-                    // Check jika timer client-side tidak aktif baru aktifkan tombol
+                    // Check jika timer client-side tidak aktif baru aktifkan
                     if (!window._countdownActive) {
                         btnReAlert.disabled = false;
                         btnReAlert.classList.add('bg-red-600', 'hover:bg-red-700');

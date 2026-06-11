@@ -14,29 +14,27 @@ class ReportChatAccessTest extends TestCase
 
     public function test_guest_access_tracking_page_registers_in_session_and_grants_chat_access()
     {
-        // 1. Create a report
-        $report = Report::create([
-            'id' => (string) \Illuminate\Support\Str::uuid(),
+        // 1. Submit report as guest
+        $response = $this->post('/emergency', [
             'category' => 'Kekerasan',
-            'status' => 'Submitted',
-            'victim_name' => 'John Doe',
-            'phone' => '6281234567890',
+            'latitude' => -6.980000,
+            'longitude' => 110.420000,
             'anonymous' => true,
         ]);
 
-        // Verify that initially session has no reports and direct access is denied
-        $this->assertEmpty(session()->get('my_reports', []));
+        $response->assertRedirect();
+        $report = Report::first();
+        $this->assertNotNull($report);
 
-        // 2. Access tracking page
-        $response = $this->get('/tracking/' . $report->id);
-
-        $response->assertOk();
-        
         // Assert that the report ID is now registered in session
         $this->assertContains($report->id, session()->get('my_reports', []));
         
         // Assert that the cookie is queued
         $response->assertCookie('safora_my_reports');
+
+        // 2. Access tracking page
+        $trackingResponse = $this->get('/tracking/' . $report->id);
+        $trackingResponse->assertOk();
 
         // 3. Access chat page
         $chatResponse = $this->get('/chat/report/' . $report->id);

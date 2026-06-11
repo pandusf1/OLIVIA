@@ -415,7 +415,7 @@ class EmergencyController extends Controller
                 ];
             })
             ->filter(function ($t) {
-                return $t['distance_km'] <= 10.0;
+                return $t['distance_km'] <= 5.0;
             })
             ->sortBy('distance_km')
             ->take($limit)
