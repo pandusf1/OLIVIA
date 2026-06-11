@@ -15,7 +15,7 @@
         .font-unbounded { font-family: 'Space Grotesk', sans-serif !important; }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
     @include('partials.vercel-analytics')
 </head>
 <body class="min-h-screen bg-gray-50 text-gray-950 antialiased">
