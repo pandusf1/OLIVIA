@@ -11,7 +11,6 @@
             </div>
             <div>
                 <span class="font-bold text-gray-900 text-sm">Safora</span>
-                <span class="text-gray-400 text-xs ml-1">SUARA & PERLINDUNGAN</span>
             </div>
         </div>
         <div class="flex items-center gap-6">

@@ -342,7 +342,7 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                         </button>
                     </div>
-                    <p class="text-gray-400 text-xs mt-1">Pilih kategori — laporan dikirim anonim secara otomatis.</p>
+                    <p class="text-gray-400 text-xs mt-1">Pilih kategori</p>
                 </div>
                 <div class="grid grid-cols-2 gap-2.5 p-5">
                     @foreach(['Kekerasan','Medis & Kecelakaan','Pelecehan & Bullying','Kebakaran & Penyelamatan','Krisis Mental','Hukum & Keamanan','Lainnya'] as $cat)
@@ -377,7 +377,6 @@
                 <div class="px-6 py-5 text-center">
                     <div class="w-10 h-10 border-4 border-red-200 border-t-red-600 rounded-full animate-spin mx-auto mb-3"></div>
                     <p id="modal-status" class="text-gray-500 text-sm">Mengambil lokasi GPS...</p>
-                    <p class="text-xs text-gray-400 mt-2">Laporan dikirim anonim — tidak perlu akun.</p>
                     <button onclick="cancelEmergency()" class="mt-4 text-sm text-gray-400 hover:text-gray-600 underline transition">Batalkan</button>
                 </div>
             </div>
@@ -1207,9 +1206,6 @@
                 // Menghapus quickCheck `/map-search` supaya 1 klik tidak melakukan request tambahan.
 
 
-
-
-
                 // reload mitra list/map
                 await loadNearbyMitras({
                     type: mapTypeEl?.value || '',
@@ -1258,13 +1254,6 @@
             }
         });
     }
-
-
-
-
-
-
-
 
     // ─── Emergency Modal Logic ───────────────────────────────────────────────────
     const isLoggedIn = true;

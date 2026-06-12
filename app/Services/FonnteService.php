@@ -26,10 +26,14 @@ class FonnteService
             return;
         }
 
-        try {
-            dispatch(new SendWhatsAppJob($target, $message));
-        } catch (\Throwable $e) {
-            Log::warning('Queue dispatch failed, sending WhatsApp synchronously: ' . $e->getMessage());
+        if (config('services.fonnte.queue', false)) {
+            try {
+                dispatch(new SendWhatsAppJob($target, $message));
+            } catch (\Throwable $e) {
+                Log::warning('Queue dispatch failed, sending WhatsApp synchronously: ' . $e->getMessage());
+                self::sendNow($target, $message);
+            }
+        } else {
             self::sendNow($target, $message);
         }
     }

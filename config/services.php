@@ -43,6 +43,7 @@ return [
 
     'fonnte' => [
         'token' => env('FONNTE_TOKEN'),
+        'queue' => env('FONNTE_QUEUE', false),
     ],
 
 ];
