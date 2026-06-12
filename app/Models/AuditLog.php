@@ -30,7 +30,7 @@ class AuditLog extends Model
     ];
 
     /**
-     * Shorthand helper to log any action.
+     * Fungsi helper singkat untuk mencatat aktivitas (log).
      */
     public static function log(string $action, string $targetType = null, string $targetId = null): void
     {

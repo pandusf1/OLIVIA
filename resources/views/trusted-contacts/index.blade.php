@@ -42,7 +42,7 @@
             </form>
         </div>
 
-        <!-- Skeleton Loading for Contacts -->
+        <!-- Kerangka (Skeleton) Pemuatan Kontak -->
         <div id="contacts-skeleton" class="bg-white border border-gray-200 rounded-2xl overflow-hidden divide-y divide-gray-50 mb-6">
             <div class="px-5 py-3 border-b border-gray-100 animate-pulse">
                 <div class="h-4 bg-gray-200 rounded w-1/3"></div>
@@ -63,7 +63,7 @@
             </div>
         </div>
 
-        <!-- Real Contacts List (hidden by default) -->
+        <!-- Daftar Kontak Riil (disembunyikan secara default) -->
         <div id="contacts-list" class="bg-white border border-gray-200 rounded-2xl overflow-hidden hidden mb-6">
             <div class="px-5 py-3 border-b border-gray-100">
                 <p id="contacts-count-label" class="font-semibold text-gray-900 text-sm">Kontak Tersimpan (0)</p>
@@ -71,7 +71,7 @@
             <div id="contacts-items" class="divide-y divide-gray-50"></div>
         </div>
 
-        <!-- Empty State (hidden by default) -->
+        <!-- Tampilan Kosong (disembunyikan secara default) -->
         <div id="contacts-empty" class="bg-white border border-gray-200 rounded-2xl p-8 text-center hidden mb-6">
             <p class="text-gray-400 text-sm">Belum ada kontak tersimpan.</p>
         </div>

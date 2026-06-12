@@ -1,16 +1,16 @@
 <?php
-    // show back only when we're inside dashboard flow (user/admin/mitra)
-    // and not on the initial dashboard page (/dashboard).
+    // Tampilkan tombol kembali hanya jika berada di dalam alur dashboard (user/admin/mitra)
+    // dan bukan pada halaman awal dashboard (/dashboard).
     $isDashboardInitial = in_array(request()->route()?->getName(), ['dashboard', 'admin.index', 'mitra.index']);
 
-    // Default fallback to dashboard if opened directly (no history)
+    // Arahkan kembali ke halaman dashboard jika dibuka langsung (tanpa riwayat referer)
     $fallbackUrl = auth()->check() ? route('dashboard') : url('/');
 
-    // If backUrl is provided explicitly (e.g., from controller/view), we use it as fallback.
-    // In many pages, $backUrl is assigned request()->headers->get('referer').
+    // Jika backUrl disediakan secara eksplisit, gunakan URL tersebut.
+    // Di banyak halaman, $backUrl diisi dengan nilai referer header.
     $resolvedFallbackUrl = (isset($backUrl) && $backUrl) ? $backUrl : $fallbackUrl;
 
-    // Prevent redirecting to the same page or temporary/auth pages that can loop/error
+    // Cegah pengalihan ke halaman yang sama atau halaman auth untuk menghindari redirect loop
     $currentPath = trim(parse_url(url()->current(), PHP_URL_PATH), '/');
     $fallbackPath = trim(parse_url($resolvedFallbackUrl, PHP_URL_PATH), '/');
 
@@ -25,7 +25,7 @@
     $resolvedBackLabel = $backLabel ?? 'Kembali';
     $hideBrand = !$isDashboardInitial;
     
-    // Only show back button if not on initial dashboard
+    // Hanya tampilkan tombol kembali jika tidak berada di halaman utama dashboard
     $showBackButton = !$isDashboardInitial;
 
     $authName = auth()->check() ? auth()->user()->name : '';

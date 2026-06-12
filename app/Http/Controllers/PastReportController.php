@@ -23,7 +23,7 @@ class PastReportController extends Controller
     public function uploadEvidenceTemp(Request $request)
     {
         $request->validate([
-            'evidence' => 'required|file', // no size limit
+            'evidence' => 'required|file', // tidak ada batasan ukuran file
         ]);
 
         if ($request->hasFile('evidence')) {
@@ -67,7 +67,7 @@ class PastReportController extends Controller
             'incident_date' => 'required|date',
             'anonymous' => 'nullable|boolean',
             'evidences' => 'nullable|array',
-            'evidences.*' => 'file', // no size limit
+            'evidences.*' => 'file', // tidak ada batasan ukuran file
             'temp_evidences' => 'nullable|array',
             'temp_evidences.*' => 'string',
         ]);
@@ -99,20 +99,20 @@ class PastReportController extends Controller
             'actor_id' => Auth::id(),
         ]);
 
-        // Process temporary uploaded files from ajax
+        // Proses file bukti yang diunggah sementara lewat AJAX
         if ($request->has('temp_evidences')) {
             foreach ($request->input('temp_evidences') as $tempPath) {
                 if (\Illuminate\Support\Facades\Storage::disk('public')->exists($tempPath)) {
                     $fileName = basename($tempPath);
                     $newPath = 'evidences/' . $fileName;
                     
-                    // Move file from temp to evidences
+                    // Pindahkan file dari folder sementara ke folder bukti permanen
                     \Illuminate\Support\Facades\Storage::disk('public')->move($tempPath, $newPath);
                     
                     $fullPath = storage_path('app/public/' . $newPath);
                     $hash = file_exists($fullPath) ? Evidence::generateFastHash($fullPath, $fileName, filesize($fullPath)) : null;
                     
-                    // Detect mime type
+                    // Deteksi tipe MIME
                     $mimeType = \Illuminate\Support\Facades\Storage::disk('public')->mimeType($newPath) ?: 'application/octet-stream';
 
                     Evidence::create([
@@ -129,7 +129,7 @@ class PastReportController extends Controller
             }
         }
 
-        // Process directly uploaded files
+        // Proses file bukti yang diunggah secara langsung
         if ($request->hasFile('evidences')) {
             foreach ($request->file('evidences') as $file) {
                 if ($file->isValid()) {
@@ -154,11 +154,11 @@ class PastReportController extends Controller
             }
         }
 
-        // Feature 2: Route to mitra based on category
+        // Fitur 2: Teruskan ke mitra berdasarkan kategori
         $mitras = Mitra::routeMultipleByCategory($report->category, 5);
         
         if ($mitras->isEmpty()) {
-            // Create dummy mitra for "Lembaga Sosial"
+            // Buat mitra dummy untuk Lembaga Sosial
             $dummyMitra = Mitra::firstOrCreate(
                 ['phone' => '080000000000'],
                 [
@@ -220,7 +220,7 @@ class PastReportController extends Controller
                 'expires_at' => $expiresAt,
             ]);
 
-            // Notify mitra via WA if available
+            // Beritahu mitra via WhatsApp jika tersedia
             if ($mitra->phone && $mitra->phone !== '080000000000') {
                 $trackingLink = url('/mitra/report/' . $report->id);
                 $mitraMessage =
@@ -231,7 +231,7 @@ class PastReportController extends Controller
                 try {
                     FonnteService::send($mitra->phone, $mitraMessage);
                 } catch (\Exception $e) {
-                    // skip
+                    // abaikan jika gagal
                 }
             }
 
@@ -246,7 +246,7 @@ class PastReportController extends Controller
                 try {
                     FonnteService::send(env('ADMIN_PHONE'), $mitraMessage);
                 } catch (\Exception $e) {
-                    // skip
+                    // abaikan jika gagal
                 }
             }
         }

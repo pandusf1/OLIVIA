@@ -34,7 +34,7 @@
      class="chat-layout {{ $hasSelectedChat ? 'chat-open max-w-6xl' : 'chat-closed max-w-4xl' }} mx-auto w-full px-4 sm:px-6 py-6">
     <div id="chat-grid" class="{{ $hasSelectedChat ? 'lg:grid lg:grid-cols-[30%_70%] lg:gap-4' : '' }} transition-all duration-300">
         <aside id="thread-list" class="thread-list">
-            <!-- Skeleton for Thread List -->
+            <!-- Kerangka (Skeleton) untuk Daftar Chat -->
             <div id="threads-skeleton" class="space-y-3">
                 <div class="animate-pulse bg-white border border-gray-200 rounded-2xl p-4 flex items-center gap-3">
                     <div class="w-10 h-10 rounded-xl bg-gray-200"></div>
@@ -52,10 +52,10 @@
                 </div>
             </div>
 
-            <!-- Dynamic Thread List Container (hidden by default) -->
+            <!-- Wadah Daftar Chat Dinamis (disembunyikan secara default) -->
             <div id="threads-container" class="space-y-3 hidden"></div>
 
-            <!-- Empty Threads State (hidden by default) -->
+            <!-- Tampilan Chat Kosong (disembunyikan secara default) -->
             <div id="threads-empty" class="text-center py-12 hidden">
                 <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                     <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/></svg>
@@ -108,7 +108,7 @@
                 </div>
 
                 <div id="msg-container" class="flex-1 overflow-y-auto space-y-3 px-4 py-4 bg-[#faf9f7]">
-                    <!-- Messages loaded dynamically via JS -->
+                    <!-- Pesan akan dimuat secara dinamis via JavaScript -->
                 </div>
 
                 <form method="POST"
@@ -154,7 +154,7 @@
     const avatarWrap = document.getElementById('mitra-avatar-wrap');
     const btnTracking = document.getElementById('btn-tracking');
 
-    // Load initial messages populated by PHP
+    // Muat pesan awal yang dihasilkan oleh PHP
     const initialMessages = [
         @foreach($messages as $m)
         {
@@ -251,7 +251,7 @@
     }
 
     function updateUI() {
-        // Render server messages first, then attach pending messages safely.
+        // Tampilkan pesan server terlebih dahulu, lalu lampirkan pesan tertunda dengan aman.
         const allMessages = [...serverMessages, ...pendingMessages];
 
         const wasScrolledToBottom = container.scrollHeight - container.clientHeight <= container.scrollTop + 50;
@@ -298,18 +298,18 @@
                     if (response.ok) {
                         msg.status = 'sent';
                         const sentMsg = pendingMessages.splice(i, 1)[0];
-                        i--; // adjust index since we removed an item
-                        serverMessages.push(sentMsg); // Add locally instantly to prevent UI flicker
-                        fetchMessages(); // refresh from server asynchronously
+                        i--; // sesuaikan indeks karena satu item dihapus
+                        serverMessages.push(sentMsg); // Tambahkan secara lokal instan untuk mencegah kedipan UI (flicker)
+                        fetchMessages(); // perbarui pesan dari server secara asinkron
                     } else {
-                        msg.status = 'pending'; // revert to pending to retry later
+                        msg.status = 'pending'; // kembalikan status ke pending untuk dicoba lagi nanti
                     }
                 } catch (e) {
-                    msg.status = 'pending'; // network error, keep as pending to retry later
+                    msg.status = 'pending'; // kesalahan jaringan, pertahankan status pending untuk dicoba lagi nanti
                 }
             }
         }
-        updateUI(); // apply final state so single ticks persist if offline
+        updateUI(); // terapkan status akhir agar tanda centang satu tetap ada saat offline
     }
 
     async function fetchMessages() {
@@ -336,7 +336,7 @@
             }
         } catch (e) {
             console.error('Failed to fetch messages', e);
-            // Silently ignore to keep optimistic UI intact during offline mode
+            // Abaikan kesalahan untuk menjaga UI optimistis tetap utuh saat offline
         }
     }
 
@@ -351,7 +351,7 @@
         syncTimer = setInterval(processPendingMessages, 3000);
     }
 
-    // loadThreads dynamically renders the sidebar list
+    // loadThreads merender daftar chat sidebar secara dinamis
     async function loadThreads() {
         const skeleton = document.getElementById('threads-skeleton');
         const container = document.getElementById('threads-container');
@@ -393,7 +393,7 @@
                     `;
                 }).join('');
 
-                // Re-bind click event listeners to dynamic links
+                // Ikat kembali event listener klik ke tautan dinamis
                 container.querySelectorAll('[data-chat-link]').forEach((link) => {
                     link.addEventListener('click', (event) => {
                         event.preventDefault();
@@ -416,7 +416,7 @@
                 if (empty) empty.classList.add('hidden');
                 container.classList.remove('hidden');
 
-                // Initialize chat layout if mitraId is selected in the URL on page load
+                // Inisialisasi tata letak chat jika mitraId dipilih di URL saat halaman dimuat
                 if (currentMitraId) {
                     const activeLink = container.querySelector(`[data-chat-link][data-mitra-id="${currentMitraId}"]`);
                     if (activeLink) {
@@ -488,7 +488,7 @@
 
     window.addEventListener('popstate', () => window.location.reload());
 
-    // Initialize layout on page load
+    // Inisialisasi tata letak saat halaman pertama kali dimuat
     loadThreads();
     if (!currentMitraId) {
         updateUI(); // show empty state

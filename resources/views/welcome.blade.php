@@ -74,7 +74,7 @@
                 </button>
             </div>
 
-            {{-- Status indicator --}}
+            {{-- Indikator status --}}
             <p class="flex items-center gap-1.5 text-gray-500 text-sm mb-1 fade-up d2">
                 <span class="w-2 h-2 bg-green-400 rounded-full inline-block"></span>
                 Anonim
@@ -373,7 +373,7 @@
     {{-- Script untuk Tab Interaktif Cara Kerja --}}
     <script>
         function switchWorkStep(step) {
-            // Remove active style from all buttons
+            // Hapus gaya aktif dari semua tombol
             document.querySelectorAll('.work-step-btn').forEach(btn => {
                 btn.classList.remove('bg-white', 'shadow-md', 'border-red-600');
                 btn.classList.add('bg-transparent', 'border-transparent', 'hover:bg-gray-100/50');
@@ -383,7 +383,7 @@
                 num.classList.add('text-gray-400');
             });
 
-            // Add active style to selected button
+            // Tambahkan gaya aktif ke tombol terpilih
             const activeBtn = document.getElementById('work-step-btn-' + step);
             if (activeBtn) {
                 activeBtn.classList.remove('bg-transparent', 'border-transparent', 'hover:bg-gray-100/50');
@@ -396,12 +396,12 @@
                 }
             }
 
-            // Hide all panels
+            // Sembunyikan semua panel
             document.querySelectorAll('.work-pane').forEach(pane => {
                 pane.classList.add('hidden');
             });
 
-            // Show active panel
+            // Tampilkan panel aktif
             const activePane = document.getElementById('work-pane-' + step);
             if (activePane) {
                 activePane.classList.remove('hidden');
@@ -485,19 +485,19 @@
     </footer>
 
     @if(isset($activeReport) && $activeReport)
-    {{-- FLOATING ACTIVE REPORT BUBBLE FOR GUEST REPORTERS --}}
+    {{-- GELEMBUNG LAPORAN AKTIF MELAYANG UNTUK PELAPOR TAMU --}}
     <div id="floating-report-bubble" class="fixed bottom-6 right-6 z-50" style="animation-duration: 3s;">
         <a href="/tracking/{{ $activeReport->id }}" 
            title="Lacak Laporan Aktif"
            class="w-14 h-14 bg-[#0f172a] hover:bg-[#1e293b] text-white rounded-full shadow-[0_12px_40px_rgba(15,23,42,0.35)] transition-all duration-300 hover:scale-105 active:scale-95 group border border-slate-800 relative flex items-center justify-center">
             
-            {{-- Pulsing Red Indicator Dot --}}
+            {{-- Titik Indikator Merah Berkedip --}}
             <span class="absolute top-0 right-0 flex h-4 w-4">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-4 w-4 bg-red-600 border-2 border-white"></span>
             </span>
 
-            {{-- SVG Report Document Icon --}}
+            {{-- Ikon Dokumen Laporan SVG --}}
             <svg class="w-6 h-6 text-white group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
@@ -513,7 +513,7 @@
 </script>
 
 <script>
-// ─── Emergency Modal Logic ───────────────────────────────────────────────────
+// Logika Modal Darurat
 
 const csrf = document.querySelector('meta[name="csrf-token"]').content;
 const isLoggedIn = @json(auth()->check());
@@ -547,7 +547,7 @@ function closeEmergencyModal() {
 function selectCategory(cat, element) {
     selectedCategory = cat;
 
-    // Reset all category buttons to inactive
+    // Atur ulang semua tombol kategori ke tidak aktif
     document.querySelectorAll('.category-btn').forEach(btn => {
         btn.classList.remove('border-red-600', 'bg-red-50', 'text-red-700');
         btn.classList.add('bg-gray-50', 'border-gray-200');
@@ -558,7 +558,7 @@ function selectCategory(cat, element) {
         }
     });
 
-    // Mark current category button as active
+    // Tandai tombol kategori saat ini sebagai aktif
     if (element) {
         element.classList.remove('bg-gray-50', 'border-gray-200');
         element.classList.add('border-red-600', 'bg-red-50', 'text-red-700');
@@ -569,7 +569,7 @@ function selectCategory(cat, element) {
         }
     }
 
-    // Enable next button
+    // Aktifkan tombol selanjutnya
     const nextBtn = document.getElementById('btn-next-step');
     if (nextBtn) {
         nextBtn.removeAttribute('disabled');
@@ -582,7 +582,7 @@ function goToSendingStep() {
     if (!selectedCategory) return;
     requestLocation();
 
-    // Switch to step 2
+    // Beralih ke langkah 2
     document.getElementById('step-category').classList.add('hidden');
     document.getElementById('step-sending').classList.remove('hidden');
     document.getElementById('modal-category-label').textContent = selectedCategory;
@@ -607,7 +607,7 @@ function cancelEmergency() {
     selectedCategory = null;
     locationPayload = { latitude: null, longitude: null };
 
-    // Reset all category buttons to inactive
+    // Atur ulang semua tombol kategori ke tidak aktif
     document.querySelectorAll('.category-btn').forEach(btn => {
         btn.classList.remove('border-red-600', 'bg-red-50', 'text-red-700');
         btn.classList.add('bg-gray-50', 'border-gray-200');
@@ -618,7 +618,7 @@ function cancelEmergency() {
         }
     });
 
-    // Disable next button
+    // Nonaktifkan tombol selanjutnya
     const nextBtn = document.getElementById('btn-next-step');
     if (nextBtn) {
         nextBtn.setAttribute('disabled', 'true');
@@ -674,7 +674,7 @@ async function submitEmergency() {
         const data = await res.json();
         document.body.style.overflow = '';
 
-        // Save report ID directly to localStorage before redirecting to support transient sessions/cookies on mobile
+        // Simpan ID laporan langsung ke localStorage sebelum mengalihkan halaman untuk mendukung sesi/cookie sementara di perangkat seluler
         if (data.report_id) {
             try {
                 let storedReports = JSON.parse(localStorage.getItem('safora_guest_reports') || '[]');
@@ -687,11 +687,11 @@ async function submitEmergency() {
 
         let redirectUrl = data.tracking_url;
         if (data.call_phone) {
-            // Trigger native phone dialer immediately while we are still inside the user click gesture
+            // Picu dialer telepon bawaan segera selagi kita masih berada di dalam gestur klik pengguna
             window.location.href = 'tel:' + data.call_phone;
             sessionStorage.setItem('safora_call_triggered_' + data.report_id, 'true');
 
-            // Pass phone number to tracking page to avoid timing/redirect race conditions on mobile/deployed sites
+            // Kirim nomor telepon ke halaman pelacakan untuk menghindari race condition pengalihan di seluler/situs web yang dideploy
             try {
                 const urlObj = new URL(redirectUrl, window.location.origin);
                 urlObj.searchParams.set('call', data.call_phone);
@@ -700,7 +700,7 @@ async function submitEmergency() {
                 redirectUrl += (redirectUrl.indexOf('?') !== -1 ? '&' : '?') + 'call=' + encodeURIComponent(data.call_phone);
             }
 
-            // Delay redirection to tracking page slightly so the browser has time to launch the phone dialer
+            // Tunda sedikit pengalihan ke halaman pelacakan agar browser memiliki waktu untuk meluncurkan dialer telepon
             setTimeout(() => {
                 window.location.href = redirectUrl;
             }, 800);

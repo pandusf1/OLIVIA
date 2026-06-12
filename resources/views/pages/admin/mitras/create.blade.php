@@ -135,14 +135,14 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // Default center Semarang Kota
+        // Koordinat default untuk pusat Kota Semarang
         const defaultLat = -6.966667;
         const defaultLng = 110.416664;
 
         const latInput = document.getElementById('lat-input');
         const lngInput = document.getElementById('lng-input');
 
-        // Set default values in inputs
+        // Isi nilai default ke dalam input koordinat
         latInput.value = defaultLat.toFixed(6);
         lngInput.value = defaultLng.toFixed(6);
 

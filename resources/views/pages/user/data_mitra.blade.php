@@ -239,7 +239,7 @@
 
                 <div class="p-4 sm:p-5 overflow-y-auto flex-1">
                     <div id="selectedServicesList" class="space-y-3">
-                        {{-- populated by JS --}}
+                        {{-- Diisi secara dinamis oleh JS --}}
                     </div>
 
                     <div id="selectedServicesEmpty" class="hidden text-sm text-gray-500 bg-[#faf9f7] border border-gray-100 rounded-xl p-3 sm:p-4 mt-1">
@@ -304,7 +304,7 @@
     const selectedServicesList = document.getElementById('selectedServicesList');
     const selectedServicesEmpty = document.getElementById('selectedServicesEmpty');
 
-    // selected ids
+    // ID yang dipilih
     const selected = new Set();
 
     function setCardSelected(card, isSelected) {

@@ -36,7 +36,7 @@
 <?php echo $__env->make('partials.nav-auth', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
 <main class="max-w-6xl mx-auto px-6 py-10">
-    <!-- Back Button -->
+    <!-- Tombol Kembali -->
     <div class="mb-6">
         <a href="<?php echo e(route('mitra.index')); ?>" class="inline-flex items-center gap-2 text-sm font-bold text-gray-600 hover:text-gray-900 transition">
             &larr; Kembali ke Dashboard

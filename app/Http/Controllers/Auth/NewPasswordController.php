@@ -16,7 +16,7 @@ use Illuminate\View\View;
 class NewPasswordController extends Controller
 {
     /**
-     * Display the password reset view.
+     * Tampilkan halaman reset kata sandi.
      */
     public function create(Request $request): View|RedirectResponse
     {
@@ -31,7 +31,7 @@ class NewPasswordController extends Controller
     }
 
     /**
-     * Handle an incoming new password request.
+     * Tangani permintaan kata sandi baru yang masuk.
      */
     public function store(Request $request): RedirectResponse
     {

@@ -29,7 +29,7 @@ class EvidenceController extends Controller
     {
         $report = Report::findOrFail($reportId);
         
-        // If step 2 sends description/show_evidence
+        // Jika langkah 2 mengirimkan deskripsi / show_evidence
         if ($request->has('description') || $request->has('show_evidence')) {
             if ($request->has('description')) {
                 $report->description = $request->description;
@@ -44,12 +44,12 @@ class EvidenceController extends Controller
         if ($request->hasFile('evidence')) {
             $request->validate([
                 'evidence' => 'required|array',
-                'evidence.*' => 'file', // no size limit
+                'evidence.*' => 'file', // tidak ada batasan ukuran file
             ]);
 
             $files = $request->file('evidence');
             
-            // Determine uploader role
+            // Tentukan peran pengunggah
             $isCreator = (auth()->check() && auth()->id() === $report->user_id) 
                 || ($report->user_id === null && in_array($reportId, session()->get('my_reports', [])));
             
@@ -76,13 +76,13 @@ class EvidenceController extends Controller
                     $mimeType = $file->getClientMimeType() ?: 'application/octet-stream';
                     $realPath = $file->getRealPath();
 
-                    // Compress image using TinyPNG API if applicable
+                    // Kompres gambar menggunakan API TinyPNG jika memungkinkan
                     $fileData = Evidence::compressImageIfNeeded($realPath, $mimeType);
                     $hash = hash('sha256', $fileData);
 
                     $path = null;
                     try {
-                        // Attempt to write the compressed data to public disk
+                        // Coba simpan data gambar terkompresi ke disk publik
                         $tempPath = tempnam(sys_get_temp_dir(), 'evidence_');
                         file_put_contents($tempPath, $fileData);
                         $path = \Illuminate\Support\Facades\Storage::disk('public')->putFile('evidences', new \Illuminate\Http\File($tempPath));
@@ -145,7 +145,7 @@ class EvidenceController extends Controller
             return response()->json(['error' => 'Akses ditolak.'], 403);
         }
 
-        // Delete from public storage
+        // Hapus dari penyimpanan publik
         if (\Illuminate\Support\Facades\Storage::disk('public')->exists($evidence->file_url)) {
             \Illuminate\Support\Facades\Storage::disk('public')->delete($evidence->file_url);
         }

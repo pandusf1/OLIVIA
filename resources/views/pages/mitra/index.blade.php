@@ -383,7 +383,7 @@
                 currentActive.innerHTML = newActive.innerHTML;
             }
             
-            updateCountdowns(); // Re-init countdowns on new elements
+            updateCountdowns(); // Inisialisasi ulang penghitung mundur pada elemen baru
         } catch (e) {}
     }, 5000);
 </script>

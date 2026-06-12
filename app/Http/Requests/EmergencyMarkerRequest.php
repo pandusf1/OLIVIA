@@ -7,7 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 class EmergencyMarkerRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Tentukan apakah pengguna memiliki otorisasi untuk membuat permintaan ini.
      */
     public function authorize(): bool
     {
@@ -15,7 +15,7 @@ class EmergencyMarkerRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Ambil aturan validasi yang berlaku untuk permintaan ini.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */

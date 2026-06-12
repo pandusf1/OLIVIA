@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\URL;
 class AppServiceProvider extends ServiceProvider
 {
     /**
-     * Register any application services.
+     * Daftarkan service aplikasi apa pun.
      */
 public function register(): void
 {
@@ -19,7 +19,7 @@ public function register(): void
 }
 
     /**
-     * Bootstrap any application services.
+     * Bootstrap service aplikasi apa pun.
      */
 // app/Providers/AppServiceProvider.php
 
@@ -29,7 +29,7 @@ public function boot(): void
         \Illuminate\Support\Facades\URL::forceScheme('https');
     }
 
-    // Force URL generator to use the current request's scheme and host if it is a web request
+    // Paksa pembuat URL untuk menggunakan skema dan host permintaan saat ini jika berupa permintaan web
     if (!app()->runningInConsole() && request()->getSchemeAndHttpHost()) {
         \Illuminate\Support\Facades\URL::forceRootUrl(request()->getSchemeAndHttpHost());
     }

@@ -24,7 +24,7 @@
             <p class="text-gray-400 text-sm mt-1">Semua bukti otomatis ber-timestamp, hash, dan GPS. Klik laporan untuk melihat & tambah bukti.</p>
         </div>
 
-        <!-- Skeleton for Evidence list -->
+        <!-- Skeleton loading untuk daftar bukti -->
         <div id="evidence-skeleton" class="space-y-4">
             <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden animate-pulse">
                 <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">

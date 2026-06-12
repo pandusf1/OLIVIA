@@ -36,8 +36,8 @@ class Evidence extends Model
     ];
 
     /**
-     * Generate a fast, hybrid SHA-256 hash for small and large files.
-     * Keeps upload execution extremely quick for large files.
+     * Membuat hash SHA-256 hybrid cepat untuk file kecil dan besar.
+     * Menjaga proses unggah tetap cepat untuk file berukuran besar.
      */
     public static function generateFastHash(string $filePath, string $originalName, int $fileSize): ?string
     {
@@ -46,13 +46,13 @@ class Evidence extends Model
         }
 
         try {
-            // If the file is less than 5MB, we hash it fully
+            // Jika ukuran file kurang dari 5MB, lakukan hash secara utuh
             if ($fileSize < 5 * 1024 * 1024) {
                 return hash_file('sha256', $filePath);
             }
 
-            // For large files, hash only the first 1MB and the last 1MB of content
-            // along with metadata to remain extremely fast and secure.
+            // Untuk file besar, hash hanya 1MB awal dan 1MB akhir konten
+            // digabung dengan metadata agar proses sangat cepat dan aman.
             $fp = fopen($filePath, 'rb');
             if (!$fp) {
                 return hash('sha256', $originalName . $fileSize);
@@ -65,14 +65,14 @@ class Evidence extends Model
 
             return hash('sha256', $firstChunk . $lastChunk . $originalName . $fileSize);
         } catch (\Throwable $e) {
-            // Robust fallback if any read error occurs
+            // Fallback aman jika terjadi error pembacaan file
             return hash('sha256', $originalName . $fileSize . microtime(true));
         }
     }
 
     /**
-     * Compress image using TinyPNG API if key is configured and file is JPEG/PNG.
-     * Returns compressed binary data, or original file content on failure/skip.
+     * Mengompres gambar menggunakan API TinyPNG jika key dikonfigurasi dan file berupa JPEG/PNG.
+     * Mengembalikan data biner terkompresi, atau konten asli jika gagal/dilewati.
      */
     public static function compressImageIfNeeded(string $filePath, string $mimeType): string
     {
@@ -114,7 +114,7 @@ class Evidence extends Model
     }
 
     /**
-     * Customize JSON representation to avoid base64 data leaking into API payloads.
+     * Menyesuaikan representasi JSON untuk menghindari kebocoran data base64 ke payload API.
      */
     public function toArray()
     {

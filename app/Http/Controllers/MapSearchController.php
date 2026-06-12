@@ -49,7 +49,7 @@ class MapSearchController extends Controller
             ->whereNotNull('latitude')
             ->whereNotNull('longitude');
 
-        // Map type to mitra_type
+        // Petakan tipe pencarian ke tipe mitra
         if ($type !== '') {
             $normalized = strtolower($type);
 
@@ -89,7 +89,7 @@ class MapSearchController extends Controller
         $paginatedMitras = $mitrasWithDistance->slice($offset, $limit)->values();
         $hasMore = ($offset + $limit) < $mitrasWithDistance->count();
 
-        // Get active emergency reports with locations
+        // Ambil laporan darurat aktif yang memiliki titik koordinat lokasi
         $activeReports = \App\Models\Report::with('user')
             ->where('report_type', 'Emergency')
             ->where('status', '!=', 'Resolved')

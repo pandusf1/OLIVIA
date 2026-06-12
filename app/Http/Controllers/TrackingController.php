@@ -12,7 +12,7 @@ class TrackingController extends Controller
 {
     public function resolveReport($id, array $relations = [])
     {
-        // Auto-sync cookie 'safora_my_reports' to session to avoid client-side reload loops
+        // Sinkronisasi otomatis cookie 'safora_my_reports' ke session untuk menghindari loop muat ulang
         try {
             $sessionReports = session()->get('my_reports', []);
             $cookieReports = request()->hasCookie('safora_my_reports') 
@@ -48,7 +48,7 @@ class TrackingController extends Controller
 
 
 
-        // Filter out report IDs belonging to other users
+        // Saring ID laporan agar tidak menampilkan data milik pengguna lain
         if (!empty($newReports)) {
             $newReports = Report::whereIn('id', $newReports)
                 ->where(function ($query) {
@@ -65,7 +65,7 @@ class TrackingController extends Controller
             session()->put('my_reports', $newReports);
             cookie()->queue(cookie('safora_my_reports', json_encode($newReports), 60 * 24 * 30));
         } catch (\Exception $e) {
-            // ignore session/cookie issues
+            // abaikan kendala session/cookie
         }
 
         return $report;
@@ -123,7 +123,7 @@ class TrackingController extends Controller
         $user = auth()->user();
         $isMitra = $user && $user->role === 'mitra';
 
-        // Allow update if auth user is the creator or session has the report id (and is not a mitra responder)
+        // Izinkan pembaruan lokasi jika pengguna adalah pembuat laporan atau ID laporan ada di session (dan bukan mitra)
         $isCreator = !$isMitra && (
             (auth()->check() && auth()->id() === $report->user_id) 
             || ($report->user_id === null && in_array($report->id, $request->session()->get('my_reports', [])))
@@ -150,7 +150,7 @@ class TrackingController extends Controller
         $report->save();
 
         if ($wasNull) {
-            // Log timeline event
+            // Catat riwayat aktivitas di linimasa
             $report->timelineEvents()->create([
                 'report_id' => $report->id,
                 'event_type' => 'gps_verified',
@@ -161,7 +161,7 @@ class TrackingController extends Controller
             $trackingLink = url('/tracking/' . $report->id);
             $mapsLink = "https://maps.google.com/?q={$report->latitude},{$report->longitude}";
 
-            // Recalculate distance for existing routed mitras
+            // Hitung ulang jarak ke mitra yang sudah diroute
             foreach ($report->mitraRoutings as $routing) {
                 if ($routing->mitra) {
                     $dist = Mitra::distanceKm((float) $report->latitude, (float) $report->longitude, (float) $routing->mitra->latitude, (float) $routing->mitra->longitude);
@@ -169,7 +169,7 @@ class TrackingController extends Controller
                 }
             }
 
-            // Route to nearest mitras if none exists and not unknown_emergency
+            // Teruskan ke mitra terdekat jika belum ada dan bukan kategori darurat tidak diketahui
             $mitras = $report->routingMitras;
             if ($mitras->isEmpty() && strtolower((string) $report->category) !== 'unknown_emergency') {
                 $mitras = Mitra::routeMultipleByCategory(
@@ -179,7 +179,7 @@ class TrackingController extends Controller
                     (float) $report->longitude
                 );
                 
-                // Filter within 20 km
+                // Batasi pencarian dalam radius 20 km
                 $mitras = $mitras->filter(function($p) use ($report) {
                     $dist = Mitra::distanceKm((float) $report->latitude, (float) $report->longitude, (float) $p->latitude, (float) $p->longitude);
                     return $dist <= 20.0;
@@ -204,7 +204,7 @@ class TrackingController extends Controller
                 }
             }
 
-            // Alert via WhatsApp torouted mitras
+            // Kirim notifikasi WhatsApp ke mitra yang diroute
             foreach ($mitras as $mitra) {
                 if ($mitra->phone) {
                     $mitraMessage =
@@ -219,13 +219,13 @@ class TrackingController extends Controller
                 }
             }
 
-            // Alert to admin / test phone
+            // Kirim alert ke nomor admin/nomor tes jika ada
             if (env('ADMIN_PHONE')) {
                 $testMsg = "🚨 *Safora - Laporan Darurat Baru (GPS Updated)*\n\nKategori: *{$report->category}*\n📍 Lokasi:\n{$mapsLink}\n🔗 Tracking:\n{$trackingLink}";
                 try { FonnteService::send(env('ADMIN_PHONE'), $testMsg); } catch(\Exception $e){}
             }
 
-            // Alert to nearest users within 10 km
+            // Kirim alert ke pengguna terdekat dalam radius 10 km
             $this->notifyNearestUsersFromTracking($report, $trackingLink, $mapsLink, 3);
         }
 
@@ -314,7 +314,7 @@ class TrackingController extends Controller
     {
         $report = Report::findOrFail($id);
 
-        // Allow resolve if auth user is the creator, session has the report id, or user is a verified trusted contact
+        // Izinkan penyelesaian laporan jika user adalah pembuat, ID ada di session, atau merupakan kontak terpercaya yang terverifikasi
         $isCreator = (auth()->check() && auth()->id() === $report->user_id) 
             || ($report->user_id === null && in_array($report->id, $request->session()->get('my_reports', [])));
 
@@ -333,7 +333,7 @@ class TrackingController extends Controller
             return redirect()->back()->with('error', 'Anda tidak berhak menyelesaikan laporan ini.');
         }
 
-        // Only allow resolving if currently handled by a mitra (In Progress or Assigned)
+        // Laporan hanya boleh diselesaikan jika statusnya sedang ditangani oleh mitra
         if (!in_array($report->status, ['In Progress', 'Assigned'])) {
             return redirect()->back()->with('error', 'Laporan hanya bisa diselesaikan jika sedang ditangani oleh mitra.');
         }
@@ -346,7 +346,7 @@ class TrackingController extends Controller
                 'event_message' => 'Laporan telah ditandai selesai oleh pelapor.',
             ]);
 
-            // Notify trusted contacts
+            // Beritahu kontak terpercaya via WhatsApp
             if ($report->user && $report->user->trustedContacts()->where('is_verified', true)->count() > 0) {
                 foreach ($report->user->trustedContacts()->where('is_verified', true)->get() as $contact) {
                     $message = "Safora Info:\n\n" .
@@ -374,7 +374,7 @@ class TrackingController extends Controller
             if ($searchId) {
                 $searchId = strtolower($searchId);
                 
-                // If it is a full valid UUID, query directly. Otherwise cast and match prefix (PostgreSQL compatible)
+                // Jika input adalah UUID yang valid, cari langsung. Jika tidak, lakukan pencocokan awalan karakter
                 if (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $searchId)) {
                     $report = Report::where('id', $searchId)->first();
                 } else {

@@ -130,7 +130,7 @@ class ExpireReportRoutings extends Command
                     try {
                         FonnteService::send(env('ADMIN_PHONE', '6285124019353'), $adminMessage);
                     } catch (\Exception $e) {
-                        // ignore admin WA send error
+                        // abaikan error pengiriman WhatsApp admin
                     }
                 }
 
@@ -145,7 +145,7 @@ class ExpireReportRoutings extends Command
                 try {
                     AuditLog::log('escalate_retry_report', 'report', $report->id);
                 } catch (\Exception $e) {
-                    // skip audit log error
+                    // abaikan error log audit
                 }
 
                 $escalatedReportsCount++;

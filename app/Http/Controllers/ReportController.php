@@ -44,7 +44,7 @@ class ReportController extends Controller
         $report->category = $request->category;
         $report->description = $request->description;
         
-        // Reset the 15-minute timer
+        // Atur ulang waktu 15 menit dari pembuatan laporan
         $report->created_at = now();
         $report->save();
 
@@ -63,7 +63,7 @@ class ReportController extends Controller
             );
 
             if ($mitras->isEmpty()) {
-                // Create dummy mitra for "Lembaga Sosial" (Laporan Biasa)
+                // Buat mitra dummy untuk Lembaga Sosial (Laporan Biasa)
                 $dummyMitra = Mitra::firstOrCreate(
                     ['phone' => '080000000000'],
                     [
@@ -98,7 +98,7 @@ class ReportController extends Controller
                     'estimated_response_minutes' => $mitra->mitra_type === 'ambulance' ? 5 : 8,
                 ]);
 
-                // Send WA Notification to new mitra
+                // Kirim notifikasi WhatsApp ke mitra baru
                 if ($mitra->phone) {
                     $trackingLink = url('/tracking/' . $report->id);
                     $mapsLink = $report->latitude
@@ -115,7 +115,7 @@ class ReportController extends Controller
                     try {
                         FonnteService::send($mitra->phone, $mitraMessage);
                     } catch (\Exception $e) {
-                        // skip
+                        // abaikan jika gagal
                     }
                 }
             }

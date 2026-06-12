@@ -2,13 +2,13 @@
     <h1 class="font-unbounded text-xl font-black text-gray-900 mb-1">Lupa Kata Sandi</h1>
     <p class="text-gray-400 text-sm mb-6">Kami akan mengirimkan kode OTP 5-digit ke nomor WhatsApp terdaftar Anda untuk memulihkan akun.</p>
 
-    <!-- Session Status -->
+    <!-- Status Sesi -->
     <x-auth-session-status class="mb-4 bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded-lg text-sm" :status="session('status')" />
 
     <form method="POST" action="{{ route('password.email') }}" class="space-y-4">
         @csrf
 
-        <!-- Email or Phone -->
+        <!-- Email atau Nomor WhatsApp -->
         <div>
             <label class="block text-gray-600 text-xs font-semibold mb-1.5 uppercase tracking-wider">Nomor WhatsApp</label>
             <input type="text" name="identity" value="{{ old('identity') }}" required autofocus

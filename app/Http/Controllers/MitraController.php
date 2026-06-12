@@ -62,7 +62,7 @@ class MitraController extends Controller
             'resolved_month' => $resolvedReports->count(),
         ];
 
-        // For "Semua Laporan" Tab
+        // Untuk Tab "Semua Laporan"
         $allReportsQuery = Report::whereHas('mitraRoutings', function ($q) use ($mitraId) {
             $q->where('mitra_id', $mitraId);
         });
@@ -94,7 +94,7 @@ class MitraController extends Controller
             }
         }
 
-        // Month & Year Filter
+        // Filter Bulan & Tahun
         if ($request->filled('month')) {
             $allReportsQuery->whereMonth('created_at', $request->month);
         }
@@ -395,12 +395,12 @@ class MitraController extends Controller
 
             });
 
-            // Send WhatsApp outside database transaction to prevent deadlocks
+            // Kirim WhatsApp di luar transaksi database untuk mencegah deadlock
             if ($phoneToSend && $messageToSend) {
                 try {
                     FonnteService::send($phoneToSend, $messageToSend);
                 } catch (\Exception $e) {
-                    // skip
+                    // abaikan
                 }
             }
 

@@ -15,7 +15,7 @@ use Illuminate\View\View;
 class PasswordResetLinkController extends Controller
 {
     /**
-     * Display the password reset link request view.
+     * Tampilkan halaman permintaan tautan reset kata sandi.
      */
     public function create(): View
     {
@@ -23,7 +23,7 @@ class PasswordResetLinkController extends Controller
     }
 
     /**
-     * Handle an incoming password reset link request.
+     * Tangani permintaan masuk untuk tautan reset kata sandi.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -84,7 +84,7 @@ class PasswordResetLinkController extends Controller
     }
 
     /**
-     * Display the OTP verification view.
+     * Tampilkan halaman verifikasi OTP.
      */
     public function verifyOtpView(Request $request): View|RedirectResponse
     {
@@ -120,7 +120,7 @@ class PasswordResetLinkController extends Controller
     }
 
     /**
-     * Verify the input OTP.
+     * Verifikasi input kode OTP.
      */
     public function verifyOtp(Request $request): RedirectResponse
     {
@@ -162,7 +162,7 @@ class PasswordResetLinkController extends Controller
     }
 
     /**
-     * Resend the OTP.
+     * Kirim ulang kode OTP.
      */
     public function resendOtp(Request $request): RedirectResponse
     {

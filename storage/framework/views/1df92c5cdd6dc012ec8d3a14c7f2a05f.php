@@ -11,7 +11,7 @@
     <h1 class="font-unbounded text-xl font-black text-gray-900 mb-1">Verifikasi OTP</h1>
     <p class="text-gray-400 text-sm mb-6">Kami telah mengirimkan 5-digit kode OTP ke nomor WhatsApp terdaftar Anda (<strong><?php echo e($maskedPhone); ?></strong>).</p>
 
-    <!-- Session Status -->
+    <!-- Status Sesi -->
     <?php if (isset($component)) { $__componentOriginal7c1bf3a9346f208f66ee83b06b607fb5 = $component; } ?>
 <?php if (isset($attributes)) { $__attributesOriginal7c1bf3a9346f208f66ee83b06b607fb5 = $attributes; } ?>
 <?php $component = Illuminate\View\AnonymousComponent::resolve(['view' => 'components.auth-session-status','data' => ['class' => 'mb-4 bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded-lg text-sm','status' => session('status')]] + (isset($attributes) && $attributes instanceof Illuminate\View\ComponentAttributeBag ? $attributes->all() : [])); ?>

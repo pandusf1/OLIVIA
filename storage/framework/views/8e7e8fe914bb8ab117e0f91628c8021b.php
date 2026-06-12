@@ -21,11 +21,11 @@
         const container = document.getElementById('toast-container');
         if (!container) return;
 
-        // Toast element
+        // Elemen toast
         const toast = document.createElement('div');
         toast.className = 'toast-item pointer-events-auto flex items-start gap-3.5 w-full bg-white/95 border rounded-2xl p-4.5 shadow-[0_10px_30px_rgb(0,0,0,0.08)] backdrop-blur-md';
 
-        // Select styles and icon based on type
+        // Pilih gaya dan ikon berdasarkan tipe
         let iconHtml = '';
         let borderClass = '';
         
@@ -73,12 +73,12 @@
 
         container.appendChild(toast);
 
-        // Trigger transition
+        // Picu transisi
         setTimeout(() => {
             toast.classList.add('show');
         }, 50);
 
-        // Auto dismiss after 5 seconds
+        // Hilangkan otomatis setelah 5 detik
         const autoDismiss = setTimeout(() => {
             dismissToast(toast);
         }, 5000);

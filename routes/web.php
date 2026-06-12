@@ -67,7 +67,7 @@ Route::get('/', function() {
     return view('welcome', compact('activeReport'));
 })->name('home');
 
-// ─── PUBLIC (tanpa login) ────────────────────────────────────────
+// Public routes (no authentication required)
 Route::get('/emergency', function() { return redirect('/'); });
 Route::post('/emergency', [EmergencyController::class, 'store']);
 
@@ -103,19 +103,19 @@ Route::get('/evidences/view/{filename}', function ($filename) {
         }
     }
 
-    // 2. Check storage_path
+    // 2. Periksa storage_path
     $path = storage_path('app/public/evidences/' . $filename);
     if (file_exists($path) && !is_dir($path)) {
         return response()->file($path);
     }
     
-    // 3. Check /tmp/evidences/
+    // 3. Periksa /tmp/evidences/
     $path = '/tmp/evidences/' . $filename;
     if (file_exists($path) && !is_dir($path)) {
         return response()->file($path);
     }
     
-    // 4. Check /tmp/
+    // 4. Periksa /tmp/
     $path = '/tmp/' . $filename;
     if (file_exists($path) && !is_dir($path)) {
         return response()->file($path);
@@ -204,7 +204,7 @@ Route::get('/chat/report/{reportId}', [\App\Http\Controllers\ChatController::cla
 Route::get('/chat/report/{reportId}/poll', [\App\Http\Controllers\ChatController::class, 'pollMessages'])->name('chat.poll');
 Route::post('/chat/report/{reportId}/send', [\App\Http\Controllers\ChatController::class, 'sendMessage'])->name('chat.send.report');
 
-// ─── AUTH REQUIRED ────────────────────────────────────────────────
+// Authenticated routes
 Route::middleware(['auth', 'phone.required'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -254,7 +254,7 @@ Route::middleware(['auth', 'phone.required'])->group(function () {
     // Pencarian di map (type + query)
     Route::get('/map-search', [\App\Http\Controllers\MapSearchController::class, 'search'])->name('map.search');
 
-    // Emergency markers untuk dashboard user terdekat
+    // Penanda darurat untuk dashboard pengguna terdekat
     Route::get('/dashboard/emergency-markers', [\App\Http\Controllers\DashboardEmergencyMarkersController::class, 'index'])
         ->name('dashboard.emergency.markers');
 
@@ -262,7 +262,7 @@ Route::middleware(['auth', 'phone.required'])->group(function () {
     // Data Mitra (info + pricelist)
     Route::get('/data-mitra/{mitraId}', [\App\Http\Controllers\PembayaranMockController::class, 'showDataMitra'])->name('mitra.data');
 
-    // Kompatibilitas: route lama redirect ke page baru
+    // Kompatibilitas: pengalihan rute lama ke halaman baru
     Route::get('/pembayaran/mitra/{mitraId}', function (string $mitraId) {
         return redirect()->route('mitra.data', ['mitraId' => $mitraId]);
     });
@@ -312,7 +312,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::patch('/mitras/{id}/verify', [AdminMitraController::class, 'toggleVerify'])->name('admin.mitras.verify');
     Route::patch('/mitras/{id}/active', [AdminMitraController::class, 'toggleActive'])->name('admin.mitras.active');
 
-    // Export CSV untuk semua user
+    // Ekspor CSV untuk semua pengguna
     Route::get('/users/export-csv', [\App\Http\Controllers\AdminUsersExportController::class, 'exportCsv'])
         ->name('admin.users.exportCsv');
 });

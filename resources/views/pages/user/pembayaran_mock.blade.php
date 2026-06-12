@@ -80,11 +80,11 @@
                 <p class="font-black text-xl text-gray-900">Rp {{ number_format($totalPrice, 0, ',', '.') }}</p>
             </div>
 
-            {{-- Dinamic Payment Instruction Detail --}}
+            {{-- Detail Instruksi Pembayaran Dinamis --}}
             <div class="mt-2 pt-3 border-t border-dashed border-gray-100 flex flex-col gap-1 text-sm bg-gray-50/50 p-3 rounded-xl">
                 <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Instruksi Pembayaran</p>
                 <div id="payment-instruction-detail" class="text-xs text-gray-700 font-medium leading-relaxed">
-                    <!-- filled dynamically -->
+                    <!-- diisi secara dinamis -->
                 </div>
             </div>
         </div>
@@ -235,7 +235,7 @@
 
         detailEl.innerHTML = html;
 
-        // Visual border adjustment for radios
+        // Penyesuaian visual border untuk input radio
         document.querySelectorAll('.payment-option-label').forEach(lbl => {
             const isChecked = lbl.querySelector('.payment-radio').checked;
             lbl.classList.toggle('border-gray-900', isChecked);

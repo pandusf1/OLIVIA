@@ -182,7 +182,7 @@
                     </div>
                 </div>
 
-                <!-- GPS Alert Messages for Saksi -->
+                <!-- Pesan Peringatan GPS untuk Saksi -->
                 <div id="chat-no-gps" class="hidden text-xs text-gray-500 bg-gray-50 px-3 py-2.5 rounded-lg mb-3 flex flex-col gap-1.5">
                     <p class="font-medium">📍 Tidak bisa mengambil lokasi. Chat & tambah kronologi saksi hanya tersedia dalam radius 5 km.</p>
                     <button id="btn-retry-gps" type="button" onclick="retryGeolocation()" class="w-fit text-left text-red-700 font-bold underline hover:text-red-800 transition">
@@ -341,7 +341,6 @@
                 <div class="mb-4 flex items-center justify-between gap-3">
                     <div>
                         <h2 class="text-lg font-black">Diteruskan ke Mitra</h2>
-                        <p class="text-sm text-gray-500">Status ini diperbarui otomatis setiap beberapa detik.</p>
                     </div>
                 </div>
                 <div id="routed-mitras" class="space-y-3"></div>
@@ -382,7 +381,7 @@
     const isMitraHandling = <?php echo json_encode($isMitraHandling, 15, 512) ?>;
     let lastPayload = null;
 
-    // Check if we need to launch the native phone dialer immediately (forwarded from emergency submission)
+    // Hubungi nomor darurat otomatis jika diarahkan dari proses pelaporan
     try {
         const urlParams = new URLSearchParams(window.location.search);
         const callPhone = urlParams.get('call');
@@ -393,7 +392,7 @@
             } else {
                 sessionStorage.removeItem('safora_call_triggered_' + reportId);
             }
-            // Clean up the URL search param so refresh doesn't trigger dialer again
+            // Hapus parameter URL agar tidak memicu panggilan ulang saat halaman direfresh
             urlParams.delete('call');
             const searchString = urlParams.toString();
             const newUrl = window.location.pathname + (searchString ? '?' + searchString : '');
@@ -443,7 +442,7 @@
         const container = document.getElementById('tracking-map');
         if (!container) return;
 
-        // If container changed (e.g. Livewire page update), destroy old map instance
+        // Jika kontainer berubah, hapus objek peta lama
         if (map && map.getContainer() !== container) {
             try {
                 map.remove();
@@ -468,7 +467,7 @@
                 attribution: '&copy; OpenStreetMap'
             }).addTo(map);
             
-            // Victim marker
+            // Penanda lokasi korban
             marker = L.circleMarker(victimLatLng, {
                 color: 'red',
                 fillColor: '#f03',
@@ -483,7 +482,7 @@
         if (mitraLat && mitraLng) {
             const mitraLatLng = [mitraLat, mitraLng];
             if (!mitraMarker) {
-                // Mitra marker (blue div icon with pulsating effect)
+                // Penanda lokasi mitra (ikon biru dengan efek denyut)
                 mitraMarker = L.marker(mitraLatLng, {
                     icon: L.divIcon({
                         className: 'mitra-map-icon',
@@ -505,7 +504,7 @@
                 mitraMarker.setLatLng(mitraLatLng);
             }
             
-            // Fit bounds to show both
+            // Atur batas peta untuk menampilkan korban dan mitra sekaligus
             const bounds = L.latLngBounds([victimLatLng, mitraLatLng]);
             map.fitBounds(bounds, { padding: [30, 30] });
         } else {
@@ -704,10 +703,10 @@
                 
                 const chatLink = document.getElementById('chat-link');
                 if (chatLink) {
-                    // Set chat URL with current user location
+                    // Atur URL chat dengan lokasi pengguna saat ini
                     const qs = (window._userLat && window._userLng) ? `?lat=${window._userLat}&lng=${window._userLng}` : '';
                     chatLink.href = `/chat/report/${reportId}${qs}`;
-                    // Show/hide based on distance check result
+                    // Tampilkan/sembunyikan berdasarkan hasil pemeriksaan jarak
                     if (window._chatAllowed) {
                         chatLink.classList.remove('hidden');
                         chatLink.classList.add('inline-flex');
@@ -1093,9 +1092,9 @@
 
     function haversineKm(lat1, lon1, lat2, lon2) {
         const R = 6371;
-        const dLat = (lat2 - lon1) * Math.PI / 180; // Wait, actually:
+        const dLat = (lat2 - lon1) * Math.PI / 180; // Tunggu, sebenarnya:
         // const dLat = (lat2 - lat1) * Math.PI / 180;
-        // let's write it standardly:
+        // mari kita tulis secara standar:
         const dLatRad = (lat2 - lat1) * Math.PI / 180;
         const dLonRad = (lon2 - lon1) * Math.PI / 180;
         const a = Math.sin(dLatRad/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLonRad/2)**2;
@@ -1122,7 +1121,7 @@
                 const lat = pos.coords.latitude;
                 const lng = pos.coords.longitude;
 
-                // Store on window so render can use it
+                // Simpan di window agar fungsi render dapat menggunakannya
                 window._userLat = lat;
                 window._userLng = lng;
 
@@ -1456,7 +1455,7 @@
                 const bar = document.getElementById(`progress-${uniqueId}`);
                 if (bar) bar.classList.replace('bg-green-500', 'bg-red-500');
                 
-                // Show remove button for failed item
+                // Tampilkan tombol hapus untuk item yang gagal
                 const actionContainer = document.getElementById(`action-${uniqueId}`);
                 if (actionContainer) {
                     actionContainer.innerHTML = `
@@ -1479,7 +1478,7 @@
             const bar = document.getElementById(`progress-${uniqueId}`);
             if (bar) bar.classList.replace('bg-green-500', 'bg-red-500');
             
-            // Show remove button for failed connection
+            // Tampilkan tombol hapus untuk koneksi yang gagal
             const actionContainer = document.getElementById(`action-${uniqueId}`);
             if (actionContainer) {
                 actionContainer.innerHTML = `
@@ -1750,7 +1749,7 @@
 
 
 
-    // Mitra live location push
+    // Pengiriman lokasi terkini mitra secara real-time
     let mitraWatchId = window._mitraWatchId || null;
     function pushMitraLocation() {
         if (!navigator.geolocation) return;
@@ -1772,7 +1771,7 @@
             } catch (e) {}
         };
 
-        // Get initial position
+        // Ambil posisi awal
         navigator.geolocation.getCurrentPosition(updateMitraCoords, () => {}, {
             enableHighAccuracy: true,
             timeout: 5000
@@ -1782,7 +1781,7 @@
             navigator.geolocation.clearWatch(window._mitraWatchId);
         }
 
-        // Watch position
+        // Pantau perubahan posisi secara real-time
         mitraWatchId = navigator.geolocation.watchPosition(updateMitraCoords, (err) => {}, {
             enableHighAccuracy: true,
             maximumAge: 0,
@@ -1820,7 +1819,7 @@
         const submitBtn = event.target.querySelector('button[type="submit"]');
         const originalBtnHtml = submitBtn.innerHTML;
 
-        // Set loading state manually
+        // Atur status memuat secara manual
         submitBtn.disabled = true;
         submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
         submitBtn.innerHTML = `
@@ -1884,7 +1883,7 @@
         }
     }
 
-    // Show "+ Tambah Kronologi" button if Korban or Trusted Contact, and not another mitra handling
+    // Tampilkan tombol "+ Tambah Kronologi" jika pelapor adalah Korban atau Kontak Darurat, dan kasus tidak sedang ditangani oleh mitra lain
     const isTrustedContact = <?php echo json_encode($isTrustedContact, 15, 512) ?>;
     const isOtherMitraHandling = <?php echo json_encode($isOtherMitraHandling, 15, 512) ?>;
     if ((isCreator || isTrustedContact) && !isOtherMitraHandling) {

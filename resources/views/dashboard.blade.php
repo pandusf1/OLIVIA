@@ -543,7 +543,7 @@
             
             map.on('dragstart', () => { window.__mapUserPanned = true; });
 
-            // Reload markers if they were loaded before map initialized
+            // Muat ulang marker jika marker sudah dimuat sebelum peta diinisialisasi
             if (window.__lastNearbyItems) {
                 renderMapMarkers(window.__lastNearbyItems);
             }
@@ -909,7 +909,7 @@
                 totalText.textContent = json.totalReports + ' laporan tercatat';
             }
 
-            // 2. Update view all button visibility
+            // 2. Perbarui visibilitas tombol lihat semua
             if (viewAllBtn) {
                 if (json.totalReports > 7) {
                     viewAllBtn.classList.remove('hidden');
@@ -1122,7 +1122,7 @@
     if(allTypeEl) allTypeEl.addEventListener('change', ()=>allTriggerSearch());
     if(allQueryEl) allQueryEl.addEventListener('input', ()=>allTriggerSearch());
 
-    // close on backdrop click
+    // Tutup jika bagian luar modal (backdrop) diklik
     const allModal = document.getElementById('all-mitras-modal');
     allModal && allModal.addEventListener('click', function(e){
         if(e.target === this) closeAllMitrasModal();
@@ -1206,7 +1206,7 @@
                 // Menghapus quickCheck `/map-search` supaya 1 klik tidak melakukan request tambahan.
 
 
-                // reload mitra list/map
+                // Muat ulang daftar/peta mitra
                 await loadNearbyMitras({
                     type: mapTypeEl?.value || '',
                     query: mapQueryEl?.value || ''
@@ -1255,7 +1255,7 @@
         });
     }
 
-    // ─── Emergency Modal Logic ───────────────────────────────────────────────────
+    // Logika Modal Darurat
     const isLoggedIn = true;
     window.hasActiveReport = false;
     let locationPayload = { latitude: null, longitude: null };
@@ -1283,7 +1283,7 @@
     function selectCategory(cat, element) {
         selectedCategory = cat;
 
-        // Reset all category buttons to inactive
+        // Atur ulang semua tombol kategori menjadi tidak aktif
         document.querySelectorAll('.category-btn').forEach(btn => {
             btn.classList.remove('border-red-600', 'bg-red-50', 'text-red-700');
             btn.classList.add('bg-gray-50', 'border-gray-200');
@@ -1294,7 +1294,7 @@
             }
         });
 
-        // Mark current category button as active
+        // Tandai tombol kategori yang dipilih sebagai aktif
         if (element) {
             element.classList.remove('bg-gray-50', 'border-gray-200');
             element.classList.add('border-red-600', 'bg-red-50', 'text-red-700');
@@ -1318,7 +1318,7 @@
         if (!selectedCategory) return;
         requestLocation();
 
-        // Switch to step 2
+        // Pindah ke langkah 2
         document.getElementById('step-category').classList.add('hidden');
         document.getElementById('step-sending').classList.remove('hidden');
         document.getElementById('modal-category-label').textContent = selectedCategory;
@@ -1343,7 +1343,7 @@
         selectedCategory = null;
         locationPayload = { latitude: null, longitude: null };
 
-        // Reset all category buttons to inactive
+        // Atur ulang semua tombol kategori menjadi tidak aktif
         document.querySelectorAll('.category-btn').forEach(btn => {
             btn.classList.remove('border-red-600', 'bg-red-50', 'text-red-700');
             btn.classList.add('bg-gray-50', 'border-gray-200');
@@ -1410,7 +1410,7 @@
             const data = await res.json();
             document.body.style.overflow = '';
 
-            // Save report ID directly to localStorage before redirecting to support transient sessions/cookies on mobile
+            // Simpan ID laporan langsung ke localStorage sebelum mengalihkan untuk mendukung sesi/cookie sementara di perangkat seluler
             if (data.report_id) {
                 try {
                     let storedReports = JSON.parse(localStorage.getItem('safora_guest_reports') || '[]');
@@ -1423,11 +1423,11 @@
 
             let redirectUrl = data.tracking_url;
             if (data.call_phone) {
-                // Trigger native phone dialer immediately while we are still inside the user click gesture
+                // Panggil dialer telepon bawaan perangkat segera selagi masih dalam aksi klik pengguna
                 window.location.href = 'tel:' + data.call_phone;
                 sessionStorage.setItem('safora_call_triggered_' + data.report_id, 'true');
 
-                // Pass phone number to tracking page to avoid timing/redirect race conditions on mobile/deployed sites
+                // Teruskan nomor telepon ke halaman pelacakan untuk menghindari masalah race condition waktu/pengalihan di perangkat seluler/situs web yang dideploy
                 try {
                     const urlObj = new URL(redirectUrl, window.location.origin);
                     urlObj.searchParams.set('call', data.call_phone);
@@ -1436,7 +1436,7 @@
                     redirectUrl += (redirectUrl.indexOf('?') !== -1 ? '&' : '?') + 'call=' + encodeURIComponent(data.call_phone);
                 }
 
-                // Delay redirection slightly to allow native dialer to launch
+                // Tunda sedikit pengalihan halaman agar dialer bawaan perangkat sempat terbuka
                 setTimeout(() => {
                     window.location.href = redirectUrl;
                 }, 800);
@@ -1455,9 +1455,9 @@
         openEmergencyModal();
     }
 
-    // Removed backdrop click listener to prevent closing when clicking outside the popup
+    // Listener klik backdrop dihapus untuk mencegah modal tertutup ketika mengklik di luar area popup
 
-    // ===== EDIT LAPORAN MODAL FUNCTIONS =====
+    // Fungsi Modal Edit Laporan
     function openEditReportModal(btn) {
         const id = btn.getAttribute('data-id');
         const category = btn.getAttribute('data-category');
@@ -1504,7 +1504,7 @@
     checkReportActionTime();
     setInterval(checkReportActionTime, 10000);
 
-    // ===== ALL REPORTS MODAL =====
+    // Modal Semua Laporan
     let _arPage = 1;
     let _arHasMore = false;
     let _arFetching = false;

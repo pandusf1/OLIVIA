@@ -9,7 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 class EnsurePhoneIsFilled
 {
     /**
-     * Handle an incoming request.
+     * Tangani permintaan masuk.
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */

@@ -18,7 +18,7 @@ class DashboardEmergencyMarkersController extends Controller
         $lat = (float) $userLocation->latitude;
         $lng = (float) $userLocation->longitude;
 
-        // Laporan emergency yang active dan ditujukan ke user login
+        // Laporan darurat yang aktif dan tidak dibuat oleh pengguna login
         $activeStatuses = ['Submitted', 'Routed', 'Viewed', 'In Progress'];
 
         $markers = \App\Models\Report::query()

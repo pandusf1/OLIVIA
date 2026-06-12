@@ -83,7 +83,7 @@
         </div>
         @endif
 
-        {{-- Update Status --}}
+        {{-- Perbarui Status --}}
         @if($isHandling)
         <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
             <h2 class="font-bold text-gray-900 mb-4">Update Status</h2>
@@ -99,7 +99,7 @@
         </div>
         @endif
 
-        {{-- Status Timeline --}}
+        {{-- Linimasa Status --}}
         <div class="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
             <h2 class="font-bold text-gray-900 mb-5">Timeline Status</h2>
 

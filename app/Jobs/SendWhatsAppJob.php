@@ -17,7 +17,7 @@ class SendWhatsAppJob implements ShouldQueue
     protected $message;
 
     /**
-     * Create a new job instance.
+     * Buat instance job baru.
      */
     public function __construct(string $target, string $message)
     {
@@ -26,7 +26,7 @@ class SendWhatsAppJob implements ShouldQueue
     }
 
     /**
-     * Execute the job.
+     * Jalankan tugas job.
      */
     public function handle(): void
     {

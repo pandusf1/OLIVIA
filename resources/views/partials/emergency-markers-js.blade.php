@@ -65,10 +65,10 @@
         }
     }
 
-    // first load
+    // pemuatan pertama
     await loadEmergencyMarkers();
 
-    // expose for reload button
+    // ekspos fungsi untuk tombol muat ulang
     window.__loadEmergencyMarkers = loadEmergencyMarkers;
 })();
 </script>

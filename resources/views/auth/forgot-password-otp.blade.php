@@ -2,7 +2,7 @@
     <h1 class="font-unbounded text-xl font-black text-gray-900 mb-1">Verifikasi OTP</h1>
     <p class="text-gray-400 text-sm mb-6">Kami telah mengirimkan 5-digit kode OTP ke nomor WhatsApp terdaftar Anda (<strong>{{ $maskedPhone }}</strong>).</p>
 
-    <!-- Session Status -->
+    <!-- Status Sesi -->
     <x-auth-session-status class="mb-4 bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded-lg text-sm" :status="session('status')" />
 
     <form method="POST" action="{{ route('password.otp-verify') }}">

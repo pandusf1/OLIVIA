@@ -36,7 +36,7 @@
 @include('partials.nav-auth')
 
 <main class="max-w-6xl mx-auto px-6 py-10">
-    <!-- Back Button -->
+    <!-- Tombol Kembali -->
     <div class="mb-6">
         <a href="{{ route('mitra.index') }}" class="inline-flex items-center gap-2 text-sm font-bold text-gray-600 hover:text-gray-900 transition">
             &larr; Kembali ke Dashboard

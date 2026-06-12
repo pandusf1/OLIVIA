@@ -351,9 +351,8 @@ class ChatController extends Controller
         return response()->json(['messages' => $msgs]);
     }
 
-    // ─── Legacy methods (kept for backward compat, deprecated) ──────────────
-
-    // ─── Direct User Chat methods ───────────────────────────────────────────
+    // Legacy methods
+    // Direct User Chat methods
 
     public function indexThreads(Request $request)
     {

@@ -163,7 +163,7 @@
                     uploadFileAsync(processedFile, fileId);
                 });
             });
-            // Clear input value so same file can be selected again
+            // Kosongkan nilai input agar file yang sama dapat dipilih kembali
             fileInput.value = '';
         });
 
@@ -206,7 +206,7 @@
             
             uploadList.appendChild(item);
 
-            // AJAX Upload using XMLHttpRequest to get real-time upload progress
+            // Upload AJAX menggunakan XMLHttpRequest untuk mendapatkan progres upload secara real-time
             const xhr = new XMLHttpRequest();
             const formData = new FormData();
             formData.append('_token', '{{ csrf_token() }}');
@@ -227,7 +227,7 @@
                     try {
                         const res = JSON.parse(xhr.responseText);
                         if (res.success && res.path) {
-                            // Turn item into success view
+                            // Ubah tampilan item menjadi tampilan sukses
                             const progressPercent = item.querySelector('.upload-percent');
                             if (progressPercent) progressPercent.textContent = 'Selesai';
                             
@@ -329,7 +329,7 @@
         }
 
         form.addEventListener('submit', function(e) {
-            // Using setTimeout to guarantee the browser initiates form submission before disabling button
+            // Menggunakan setTimeout untuk memastikan browser memulai pengiriman formulir sebelum menonaktifkan tombol
             setTimeout(() => {
                 submitBtn.disabled = true;
                 submitBtn.classList.add('opacity-70', 'cursor-not-allowed');

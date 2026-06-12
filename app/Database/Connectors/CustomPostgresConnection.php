@@ -7,7 +7,7 @@ use Illuminate\Database\PostgresConnection;
 class CustomPostgresConnection extends PostgresConnection
 {
     /**
-     * Prepare the query bindings for execution.
+     * Siapkan query binding untuk dieksekusi.
      *
      * @param  array  $bindings
      * @return array

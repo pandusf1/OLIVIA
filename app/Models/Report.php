@@ -100,7 +100,7 @@ public function assignedMitra()
     }
 
     /**
-     * Map database statuses to professional 1-word Indonesian status labels.
+     * Petakan status database ke label Indonesia 1 kata yang profesional.
      */
     public function getStatusLabelIndonesianAttribute(): string
     {

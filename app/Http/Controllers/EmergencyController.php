@@ -29,7 +29,7 @@ class EmergencyController extends Controller
             'category' => 'required|string',
         ]);
 
-        // Limit guest users to only 1 active unresolved report on the same device
+        // Batasi pengguna tamu hanya 1 laporan aktif yang belum selesai di perangkat yang sama
         if (!auth()->check()) {
             $cookieIds = [];
             if ($request->hasCookie('safora_my_reports')) {
@@ -91,7 +91,7 @@ class EmergencyController extends Controller
             }
         }
         $firstMitra = $mitras->first();
-        $expiresAt = null; // No static expiration for emergency reports
+        $expiresAt = null; // Tidak ada batas waktu kedaluwarsa statis untuk laporan darurat
 
 
         $urgency = $this->determineUrgency($request->category);
@@ -228,13 +228,13 @@ class EmergencyController extends Controller
             $response = redirect('/tracking/' . $report->id);
         }
 
-        // Kirim response dan tutup koneksi ke browser seketika jika FastCGI tersedia
+        // Kirim respon awal ke client
         if (function_exists('fastcgi_finish_request')) {
             $response->send();
             fastcgi_finish_request();
         }
 
-        // --- SELURUH PROSES BERAT DIJALANKAN DI BACKGROUND ---
+        // Kirim notifikasi WhatsApp ke mitra
         foreach ($mitras as $mitra) {
             if ($mitra->phone) {
                 $mitraMessage =
@@ -252,7 +252,7 @@ class EmergencyController extends Controller
             }
         }
 
-        // Juga kirim ke ADMIN_PHONE sebagai testing jika dalam mode testing
+        // Kirim ke admin untuk testing
         if (env('ADMIN_PHONE') && $mitras->isNotEmpty()) {
             $mitraMessage =
                 "🚨 *Safora - Laporan Darurat Baru (Test Mitra)*\n\n" .

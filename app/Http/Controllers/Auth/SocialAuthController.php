@@ -30,7 +30,7 @@ class SocialAuthController extends Controller
                     'email' => $googleUser->getEmail(),
                     'google_id' => $googleUser->getId(),
                     'role' => 'user',
-                    'email_verified_at' => now(), // Auto verify email if from google
+                    'email_verified_at' => now(), // Verifikasi email otomatis jika masuk dengan akun Google
                 ]);
             } elseif (!$user->google_id) {
                 $user->update([

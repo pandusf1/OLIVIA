@@ -107,7 +107,7 @@ class Mitra extends Model
         $normalized = preg_replace('/\s+/', ' ', $normalized);
 
         if ($normalized === 'lainnya') {
-            // Get all active mitras of the five types
+            // Ambil semua mitra aktif dari lima tipe utama
             $query = self::query()
                 ->whereIn('mitra_type', ['ambulance', 'legal', 'counselor', 'pemadam', 'pppa']);
 
@@ -117,7 +117,7 @@ class Mitra extends Model
 
             $allMitras = $query->get();
 
-            // Calculate distance for all mitras
+            // Hitung jarak untuk setiap mitra
             if ($latitude !== null && $longitude !== null) {
                 $allMitras = $allMitras->map(function ($mitra) use ($latitude, $longitude) {
                     $mitra->distance_km = ($mitra->latitude !== null && $mitra->longitude !== null)
@@ -132,13 +132,13 @@ class Mitra extends Model
                 });
             }
 
-            // Group all mitras by type
+            // Kelompokkan semua mitra berdasarkan tipenya
             $grouped = $allMitras->groupBy('mitra_type');
 
             $selectedMitras = collect();
             $types = ['ambulance', 'legal', 'counselor', 'pemadam', 'pppa'];
 
-            // 1. For each type, get the closest (verified desc, distance_km asc) mitra
+            // 1. Untuk setiap tipe, ambil mitra terdekat (prioritas terverifikasi desc, lalu jarak terdekat asc)
             foreach ($types as $type) {
                 $mitrasOfType = $grouped->get($type, collect());
                 if ($mitrasOfType->isNotEmpty()) {
@@ -150,7 +150,7 @@ class Mitra extends Model
                 }
             }
 
-            // 2. We need to backfill up to $limit mitras from the remaining pool
+            // 2. Ambil sisa mitra dari pool jika jumlahnya kurang dari limit
             $selectedIds = $selectedMitras->pluck('id')->toArray();
             $remainingPool = $allMitras->reject(function ($mitra) use ($selectedIds) {
                 return in_array($mitra->id, $selectedIds);
@@ -168,7 +168,7 @@ class Mitra extends Model
                 }
             }
 
-            // Finally, sort the limit mitras by verified desc and distance_km asc
+            // Terakhir, urutkan daftar mitra berdasarkan status verifikasi dan jarak terdekat
             return $selectedMitras->sortBy([
                 ['verified', 'desc'],
                 ['distance_km', 'asc'],
