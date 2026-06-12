@@ -45,16 +45,16 @@
             </div>
         </div>
 
-        <div class="mt-5 grid gap-3 sm:grid-cols-3">
-            <div class="rounded-lg bg-gray-50 p-4">
+        <div class="mt-5 flex flex-col sm:flex-row gap-3">
+            <div class="flex-1 rounded-lg bg-gray-50 p-4">
                 <p class="text-xs font-bold uppercase text-gray-500">Kategori</p>
                 <p class="mt-1 font-black" data-field="category">{{ $livePayload['report']['category'] }}</p>
             </div>
-            <div class="rounded-lg bg-gray-50 p-4" id="incident-date-container">
+            <div class="flex-1 rounded-lg bg-gray-50 p-4 {{ empty($livePayload['report']['incident_date']) ? 'hidden' : '' }}" id="incident-date-container">
                 <p class="text-xs font-bold uppercase text-gray-500">Waktu Kejadian</p>
                 <p class="mt-1 font-black" data-field="incident_date">{{ $livePayload['report']['incident_date'] ?? '-' }}</p>
             </div>
-            <div class="rounded-lg bg-gray-50 p-4">
+            <div class="flex-1 rounded-lg bg-gray-50 p-4">
                 <p class="text-xs font-bold uppercase text-gray-500">Estimasi Respons</p>
                 <p class="mt-1 font-black" data-field="eta">{{ $livePayload['eta'] }}</p>
             </div>
