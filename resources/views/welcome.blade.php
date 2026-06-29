@@ -479,7 +479,7 @@
                 <span class="text-gray-600 text-md">©</span>
                 <span id="year" class="text-gray-600 text-sm"></span>
                 <span class="text-gray-600 text-sm">Nexi Team</span>
-                <span class="text-gray-600 text-sm">— All rights reserved.</span>
+                <span class="text-gray-600 text-sm">— Pandu Safrilio, Naufal Dzaki, Indah Putri.</span>
             </div>
         </div>
     </footer>
